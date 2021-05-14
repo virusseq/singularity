@@ -16,14 +16,19 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.all;
+package org.cancogenvirusseq.all.api.model;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import io.swagger.annotations.ApiModel;
+import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NonNull;
 
-@SpringBootTest
-class AllApplicationTests {
-
-  @Test
-  void contextLoads() {}
+@Data
+@Builder
+@AllArgsConstructor
+@ApiModel(description = "A list response containing entities of the requested type")
+public class EntityListResponse<T> {
+  @NonNull List<T> data;
 }

@@ -16,14 +16,27 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.all;
+package org.cancogenvirusseq.all.api.model;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import io.swagger.annotations.ApiModel;
+import java.util.Map;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
-@SpringBootTest
-class AllApplicationTests {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@ApiModel(description = "An object that can optionally include information about the error.")
+public class ErrorResponse {
+  private HttpStatus status;
+  private String message;
+  private Map<String, Object> errorInfo;
 
-  @Test
-  void contextLoads() {}
+  public static ResponseEntity<ErrorResponse> errorResponseEntity(
+      HttpStatus status, String message) {
+    return new ResponseEntity<>(new ErrorResponse(status, message, Map.of()), status);
+  }
 }

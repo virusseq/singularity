@@ -1,1 +1,17 @@
+spring:
+  application:
+    name: "All"
+    version: @project.version@
+    description: "All contributors, All files"
 
+server:
+  port: 8080
+
+elastic:
+  host: localhost
+  port: 9200
+  useHttps: false
+  useAuthentication: false
+  username: elastic
+  password: testing
+  fileCentricIndex: file_centric

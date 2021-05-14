@@ -16,14 +16,25 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.all;
+package org.cancogenvirusseq.all.api.model;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.cancogenvirusseq.all.api.ApiDefinition;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
-@SpringBootTest
-class AllApplicationTests {
+@Slf4j
+@RestController
+@RequiredArgsConstructor
+public class ApiController implements ApiDefinition {
+  public Mono<EntityListResponse<String>> getSubmissions() {
+    return null;
+  }
 
-  @Test
-  void contextLoads() {}
+  public ResponseEntity<Mono<DataBuffer>> download() {
+    return null;
+  }
 }
