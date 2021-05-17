@@ -38,19 +38,22 @@ public class Contributors {
 
   public Mono<Set<String>> getContributors() {
     return Mono.just(
-            AggregationBuilders.terms("contributions")
-                .field("analysis.sample_collection.sample_collected_by"))
-        .map(aggregation -> new SearchSourceBuilder().aggregation(aggregation))
+            new SearchSourceBuilder()
+                .aggregation(
+                    AggregationBuilders.terms("collectors")
+                        .field("analysis.sample_collection.sample_collected_by"))
+                .aggregation(
+                    AggregationBuilders.terms("submitters")
+                        .field("analysis.sample_collection.sequence_submitted_by"))
+                .size(0))
         .map(
             source ->
-                new SearchRequest()
-                    .indices(elasticsearchProperties.getFileCentricIndex())
-                    .source(source))
-        .map(
-            searchRequest ->
                 reactiveElasticSearchClientConfig
                     .reactiveElasticsearchClient()
-                    .aggregate(searchRequest))
+                    .aggregate(
+                        new SearchRequest()
+                            .indices(elasticsearchProperties.getFileCentricIndex())
+                            .source(source)))
         .flatMapMany(
             aggregationFlux ->
                 aggregationFlux.map(aggregation -> ((ParsedStringTerms) aggregation).getBuckets()))
@@ -59,6 +62,7 @@ public class Contributors {
                 buckets.stream()
                     .map(bucket -> bucket.getKey().toString())
                     .collect(Collectors.toSet()))
+        // TODO: filter out "NOT PROVIDED"? ... also what about similar names ie. LSPQ issue
         .collect(Collectors.toSet());
   }
 }
