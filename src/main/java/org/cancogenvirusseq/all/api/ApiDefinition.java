@@ -50,7 +50,7 @@ public interface ApiDefinition {
       value = "/contributors",
       produces = MediaType.APPLICATION_JSON_VALUE,
       method = RequestMethod.GET)
-  Mono<EntityListResponse<String>> getSubmissions();
+  Mono<EntityListResponse<String>> getContributors();
 
   @ApiOperation(
       value = "Download all molecular files as a single .fasta.gz gzip compressed file",

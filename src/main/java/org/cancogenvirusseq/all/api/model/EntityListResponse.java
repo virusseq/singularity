@@ -19,7 +19,7 @@
 package org.cancogenvirusseq.all.api.model;
 
 import io.swagger.annotations.ApiModel;
-import java.util.List;
+import java.util.Collection;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,5 +30,5 @@ import lombok.NonNull;
 @AllArgsConstructor
 @ApiModel(description = "A list response containing entities of the requested type")
 public class EntityListResponse<T> {
-  @NonNull List<T> data;
+  @NonNull Collection<T> data;
 }

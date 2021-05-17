@@ -16,11 +16,13 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.all.api.model;
+package org.cancogenvirusseq.all.api;
 
+import java.util.Collection;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.cancogenvirusseq.all.api.ApiDefinition;
+import org.cancogenvirusseq.all.api.model.EntityListResponse;
+import org.cancogenvirusseq.all.service.Contributors;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,11 +32,18 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequiredArgsConstructor
 public class ApiController implements ApiDefinition {
-  public Mono<EntityListResponse<String>> getSubmissions() {
-    return null;
+  private final Contributors contributors;
+
+  public Mono<EntityListResponse<String>> getContributors() {
+    return contributors.getContributors().transform(this::listResponseTransform);
   }
 
   public ResponseEntity<Mono<DataBuffer>> download() {
     return null;
+  }
+
+  private <T> Mono<EntityListResponse<T>> listResponseTransform(
+      Mono<? extends Collection<T>> entities) {
+    return entities.map(entityList -> EntityListResponse.<T>builder().data(entityList).build());
   }
 }

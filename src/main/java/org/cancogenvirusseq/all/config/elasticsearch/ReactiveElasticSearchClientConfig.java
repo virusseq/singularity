@@ -18,8 +18,10 @@
 
 package org.cancogenvirusseq.all.config.elasticsearch;
 
+import static java.lang.String.format;
+
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.elasticsearch.client.ClientConfiguration;
@@ -27,15 +29,14 @@ import org.springframework.data.elasticsearch.client.reactive.ReactiveElasticsea
 import org.springframework.data.elasticsearch.client.reactive.ReactiveRestClients;
 import org.springframework.data.elasticsearch.config.AbstractReactiveElasticsearchConfiguration;
 
-import java.util.Optional;
-
-import static java.lang.String.format;
-
 @Configuration
 @RequiredArgsConstructor
-public class ReactiveRestClientConfig extends AbstractReactiveElasticsearchConfiguration {
+public class ReactiveElasticSearchClientConfig extends AbstractReactiveElasticsearchConfiguration {
 
   private final ElasticsearchProperties elasticsearchProperties;
+
+  private static final Integer connectTimeout = 15_000;
+  private static final Integer socketTimeout = 15_000;
 
   @Override
   @Bean
@@ -61,6 +62,8 @@ public class ReactiveRestClientConfig extends AbstractReactiveElasticsearchConfi
                             elasticsearchProperties.getPassword())
                         : configBuilder)
             .get()
+            .withConnectTimeout(connectTimeout)
+            .withSocketTimeout(socketTimeout)
             .build());
   }
 }
