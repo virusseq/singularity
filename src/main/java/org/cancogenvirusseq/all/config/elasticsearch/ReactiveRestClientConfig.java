@@ -18,6 +18,8 @@
 
 package org.cancogenvirusseq.all.config.elasticsearch;
 
+import lombok.RequiredArgsConstructor;
+import lombok.val;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.elasticsearch.client.ClientConfiguration;
@@ -25,15 +27,40 @@ import org.springframework.data.elasticsearch.client.reactive.ReactiveElasticsea
 import org.springframework.data.elasticsearch.client.reactive.ReactiveRestClients;
 import org.springframework.data.elasticsearch.config.AbstractReactiveElasticsearchConfiguration;
 
+import java.util.Optional;
+
+import static java.lang.String.format;
+
 @Configuration
+@RequiredArgsConstructor
 public class ReactiveRestClientConfig extends AbstractReactiveElasticsearchConfiguration {
+
+  private final ElasticsearchProperties elasticsearchProperties;
+
   @Override
   @Bean
   public ReactiveElasticsearchClient reactiveElasticsearchClient() {
-    final ClientConfiguration clientConfiguration =
-        ClientConfiguration.builder()
-            .connectedTo("localhost:9200") // TODO make config with security
-            .build();
-    return ReactiveRestClients.create(clientConfiguration);
+    return ReactiveRestClients.create(
+        Optional.of(ClientConfiguration.builder())
+            .map(
+                configBuilder ->
+                    configBuilder.connectedTo(
+                        format(
+                            "%s:%s",
+                            elasticsearchProperties.getHost(), elasticsearchProperties.getPort())))
+            .map(
+                configBuilder ->
+                    elasticsearchProperties.getUseHttps()
+                        ? configBuilder.usingSsl()
+                        : configBuilder)
+            .map(
+                configBuilder ->
+                    elasticsearchProperties.getUseAuthentication()
+                        ? configBuilder.withBasicAuth(
+                            elasticsearchProperties.getUsername(),
+                            elasticsearchProperties.getPassword())
+                        : configBuilder)
+            .get()
+            .build());
   }
 }

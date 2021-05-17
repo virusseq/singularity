@@ -18,11 +18,11 @@
 
 package org.cancogenvirusseq.all.config.elasticsearch;
 
-import lombok.Getter;
+import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
-@Getter
+@Data
 @Configuration
 @ConfigurationProperties(prefix = "elastic")
 public class ElasticsearchProperties {
