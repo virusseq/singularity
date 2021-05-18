@@ -15,3 +15,7 @@ elastic:
   username: elastic
   password: testing
   fileCentricIndex: file_centric
+
+contributors:
+  filterList:
+  appendList:

@@ -18,34 +18,47 @@
 
 package org.cancogenvirusseq.all.service;
 
+import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.cancogenvirusseq.all.config.elasticsearch.ElasticsearchProperties;
 import org.cancogenvirusseq.all.config.elasticsearch.ReactiveElasticSearchClientConfig;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
+@ConfigurationProperties("contributors")
 public class Contributors {
   private final ElasticsearchProperties elasticsearchProperties;
   private final ReactiveElasticSearchClientConfig reactiveElasticSearchClientConfig;
+
+  @Getter @Setter private String[] filterList = new String[] {};
+  @Getter @Setter private String[] appendList = new String[] {};
+
+  private static final Integer MAX_AGGREGATE_BUCKETS = 1000;
 
   public Mono<Set<String>> getContributors() {
     return Mono.just(
             new SearchSourceBuilder()
                 .aggregation(
                     AggregationBuilders.terms("collectors")
-                        .field("analysis.sample_collection.sample_collected_by"))
+                        .field("analysis.sample_collection.sample_collected_by")
+                        .size(MAX_AGGREGATE_BUCKETS))
                 .aggregation(
                     AggregationBuilders.terms("submitters")
-                        .field("analysis.sample_collection.sequence_submitted_by"))
-                .size(0))
+                        .field("analysis.sample_collection.sequence_submitted_by")
+                        .size(MAX_AGGREGATE_BUCKETS))
+                .size(0)) // number of documents returned by query set to zero, buckets set above
         .map(
             source ->
                 reactiveElasticSearchClientConfig
@@ -62,7 +75,10 @@ public class Contributors {
                 buckets.stream()
                     .map(bucket -> bucket.getKey().toString())
                     .collect(Collectors.toSet()))
-        // TODO: filter out "NOT PROVIDED"? ... also what about similar names ie. LSPQ issue
+        .filter(
+            contributor ->
+                Arrays.stream(filterList).noneMatch(filter -> filter.equals(contributor)))
+        .concatWith(Flux.fromStream(Arrays.stream(appendList)))
         .collect(Collectors.toSet());
   }
 }
