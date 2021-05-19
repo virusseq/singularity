@@ -39,7 +39,7 @@ public class ApiController implements ApiDefinition {
   }
 
   public Mono<String> getFiles() {
-    return downloadService.isIndexBeingUpdated().map(Object::toString);
+    return downloadService.downloadAllFiles();
   }
 
   //  public ResponseEntity<Mono<DataBuffer>> getFiles() {
