@@ -38,10 +38,11 @@ import reactor.core.publisher.Mono;
 @Service
 @RequiredArgsConstructor
 @ConfigurationProperties("contributors")
-public class Contributors {
+public class ContributorService {
   private final ElasticsearchProperties elasticsearchProperties;
   private final ReactiveElasticSearchClientConfig reactiveElasticSearchClientConfig;
 
+  // Config values
   @Getter @Setter private String[] filterList = new String[] {};
   @Getter @Setter private String[] appendList = new String[] {};
 
