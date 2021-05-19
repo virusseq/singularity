@@ -19,3 +19,6 @@ elastic:
 contributors:
   filterList:
   appendList:
+
+download:
+  isUpdatingWindowMinutes: 10

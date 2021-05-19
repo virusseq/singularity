@@ -21,7 +21,6 @@ package org.cancogenvirusseq.all.service;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.cancogenvirusseq.all.config.elasticsearch.ElasticsearchProperties;
@@ -43,8 +42,8 @@ public class ContributorService {
   private final ReactiveElasticSearchClientConfig reactiveElasticSearchClientConfig;
 
   // Config values
-  @Getter @Setter private String[] filterList = new String[] {};
-  @Getter @Setter private String[] appendList = new String[] {};
+  @Setter private String[] filterList = new String[] {};
+  @Setter private String[] appendList = new String[] {};
 
   private static final Integer MAX_AGGREGATE_BUCKETS = 1000;
 

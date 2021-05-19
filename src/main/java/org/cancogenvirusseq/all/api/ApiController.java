@@ -24,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.all.api.model.EntityListResponse;
 import org.cancogenvirusseq.all.service.ContributorService;
 import org.cancogenvirusseq.all.service.DownloadService;
-import org.cancogenvirusseq.all.service.model.AnalysisSnippet;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
@@ -39,8 +38,8 @@ public class ApiController implements ApiDefinition {
     return contributorService.getContributors().transform(this::listResponseTransform);
   }
 
-  public Mono<EntityListResponse<AnalysisSnippet>> getFiles() {
-    return downloadService.getAllAnalyses().collectList().transform(this::listResponseTransform);
+  public Mono<String> getFiles() {
+    return downloadService.isIndexBeingUpdated().map(Object::toString);
   }
 
   //  public ResponseEntity<Mono<DataBuffer>> getFiles() {

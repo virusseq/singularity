@@ -24,7 +24,6 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.cancogenvirusseq.all.api.model.EntityListResponse;
 import org.cancogenvirusseq.all.api.model.ErrorResponse;
-import org.cancogenvirusseq.all.service.model.AnalysisSnippet;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -53,18 +52,18 @@ public interface ApiDefinition {
   @ApiOperation(
       value = "Download all molecular files as a single .fasta.gz gzip compressed file",
       nickname = "Download Files",
-      response = EntityListResponse.class,
+      response = String.class,
       tags = "All")
   @ApiResponses(
       value = {
-        @ApiResponse(code = 200, message = "", response = EntityListResponse.class),
+        @ApiResponse(code = 200, message = "", response = String.class),
         @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
       })
   @RequestMapping(
       value = "/files",
-      produces = MediaType.APPLICATION_JSON_VALUE,
+      produces = MediaType.TEXT_PLAIN_VALUE,
       method = RequestMethod.GET)
-  Mono<EntityListResponse<AnalysisSnippet>> getFiles();
+  Mono<String> getFiles();
 
   //  @ApiOperation(
   //      value = "Download all molecular files as a single .fasta.gz gzip compressed file",

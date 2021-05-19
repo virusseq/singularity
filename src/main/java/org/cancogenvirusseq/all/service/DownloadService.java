@@ -18,34 +18,64 @@
 
 package org.cancogenvirusseq.all.service;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
-import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.cancogenvirusseq.all.config.elasticsearch.ElasticsearchProperties;
 import org.cancogenvirusseq.all.config.elasticsearch.ReactiveElasticSearchClientConfig;
-import org.cancogenvirusseq.all.service.model.AnalysisSnippet;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
+@ConfigurationProperties("download")
 public class DownloadService {
   private final ElasticsearchProperties elasticsearchProperties;
   private final ReactiveElasticSearchClientConfig reactiveElasticSearchClientConfig;
 
-  public Flux<AnalysisSnippet> getAllAnalyses() {
+  @Setter private Integer isUpdatingWindowMinutes = 10; // default to 10 minutes
+
+  public Mono<Boolean> isIndexBeingUpdated() {
+    return Mono.just(
+            new SearchSourceBuilder()
+                .query(QueryBuilders.matchAllQuery())
+                .size(1)
+                .sort(new FieldSortBuilder("analysis.updated_at").order(SortOrder.DESC))
+                .fetchSource("analysis.updated_at", null))
+        .flatMapMany(
+            source ->
+                reactiveElasticSearchClientConfig
+                    .reactiveElasticsearchClient()
+                    .search(
+                        new SearchRequest()
+                            .indices(elasticsearchProperties.getFileCentricIndex())
+                            .source(source)))
+        .map(hit -> ((Map<String, Long>) hit.getSourceAsMap().get("analysis")).get("updated_at"))
+        .reduce(
+            false,
+            (acc, curr) ->
+                acc
+                    ? acc
+                    : Duration.between(Instant.ofEpochMilli(curr), Instant.now())
+                        .minus(Duration.ofMinutes(isUpdatingWindowMinutes))
+                        .isNegative());
+  }
+
+  public Mono<String> getAllFileIds() {
     return Mono.just(
             new SearchSourceBuilder()
                 .query(QueryBuilders.matchAllQuery())
                 .sort(new FieldSortBuilder("analysis.updated_at").order(SortOrder.DESC))
-                .fetchSource(
-                    new String[] {"analysis.updated_at", "file.index_file.object_id"}, null))
+                .fetchSource("object_id", null))
         .flatMapMany(
             source ->
                 reactiveElasticSearchClientConfig
@@ -54,13 +84,7 @@ public class DownloadService {
                         new SearchRequest()
                             .indices(elasticsearchProperties.getFileCentricIndex())
                             .source(source)))
-        .map(
-            hit ->
-                Optional.of(hit.getSourceAsMap())
-                    .map(
-                        hitSource ->
-                            new AnalysisSnippet(
-                                ((Map) hitSource.get("analysis")).get("updated_at").toString()))
-                    .orElseThrow());
+        .map(hit -> hit.getSourceAsMap().get("object_id").toString())
+        .collect(Collectors.joining(","));
   }
 }
