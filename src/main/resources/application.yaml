@@ -16,9 +16,19 @@ elastic:
   password: testing
   fileCentricIndex: file_centric
 
+kafka:
+  bootstrapServer: localhost:9092
+  clientId: all-instance
+  groupId:  all-instance
+  autoOffsetReset: latest
+  topic: song_analysis
+
 contributors:
   filterList:
   appendList:
 
-download:
-  isUpdatingWindowMinutes: 10
+fileEventEmitter:
+  intervalTimerMinutes: 10
+
+files:
+  triggerUpdateDelaySeconds: 60

@@ -18,102 +18,50 @@
 
 package org.cancogenvirusseq.all.service;
 
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import org.apache.commons.codec.digest.Md5Crypt;
 import org.cancogenvirusseq.all.config.elasticsearch.ElasticsearchProperties;
 import org.cancogenvirusseq.all.config.elasticsearch.ReactiveElasticSearchClientConfig;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.common.util.concurrent.AtomicArray;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.sort.FieldSortBuilder;
-import org.elasticsearch.search.sort.SortOrder;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import javax.annotation.PostConstruct;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 @RequiredArgsConstructor
-@ConfigurationProperties("download")
 public class DownloadService {
   private final ElasticsearchProperties elasticsearchProperties;
   private final ReactiveElasticSearchClientConfig reactiveElasticSearchClientConfig;
 
-  @Setter private Integer isUpdatingWindowMinutes = 10; // default to 10 minutes
-
   private final AtomicReference<String> latestFileName = new AtomicReference<>();
 
-  @PostConstruct
-  public void init() {
-    latestFileName.set(getAllFileObjectIds().map(DownloadService::encodeIdsAsMd5).block());
-  }
-
   public Mono<String> downloadAllFiles() {
-    return isIndexBeingUpdated().flatMap(indexBeingUpdate -> indexBeingUpdate ? Mono.just(latestFileName.get()) : rebuildFileBundle());
+    return Mono.just("wip");
   }
 
-  public Mono<String> rebuildFileBundle() {
-    return getAllFileObjectIds().map(DownloadService::encodeIdsAsMd5).doOnNext(latestFileName::set);
-  }
-
-  public Mono<Boolean> isIndexBeingUpdated() {
-    return Mono.just(
-            new SearchSourceBuilder()
-                .query(QueryBuilders.matchAllQuery())
-                .size(1)
-                .sort(new FieldSortBuilder("analysis.updated_at").order(SortOrder.DESC))
-                .fetchSource("analysis.updated_at", null))
-        .flatMapMany(
-            source ->
-                reactiveElasticSearchClientConfig
-                    .reactiveElasticsearchClient()
-                    .search(
-                        new SearchRequest()
-                            .indices(elasticsearchProperties.getFileCentricIndex())
-                            .source(source)))
-        .map(hit -> ((Map<String, Long>) hit.getSourceAsMap().get("analysis")).get("updated_at"))
-        .reduce(
-            false,
-            (acc, curr) ->
-                acc
-                    ? acc
-                    : Duration.between(Instant.ofEpochMilli(curr), Instant.now())
-                        .minus(Duration.ofMinutes(isUpdatingWindowMinutes))
-                        .isNegative());
-  }
-
-  public Mono<String> getAllFileObjectIds() {
-    return Mono.just(
-            new SearchSourceBuilder()
-                .query(QueryBuilders.matchAllQuery())
-                .sort(new FieldSortBuilder("analysis.updated_at").order(SortOrder.DESC))
-                .fetchSource(false))
-        .flatMapMany(
-            source ->
-                reactiveElasticSearchClientConfig
-                    .reactiveElasticsearchClient()
-                    .scroll(
-                        new SearchRequest()
-                            .indices(elasticsearchProperties.getFileCentricIndex())
-                            .source(source)))
-        .map(SearchHit::getId)
-        .collect(Collectors.joining(","));
-  }
-
-  private static String encodeIdsAsMd5(String ids) {
-    return Md5Crypt.md5Crypt(ids.getBytes(StandardCharsets.UTF_8));
-  }
+  //  public Mono<Boolean> isIndexBeingUpdated() {
+  //    return Mono.just(
+  //            new SearchSourceBuilder()
+  //                .query(QueryBuilders.matchAllQuery())
+  //                .size(1)
+  //                .sort(new FieldSortBuilder("analysis.updated_at").order(SortOrder.DESC))
+  //                .fetchSource("analysis.updated_at", null))
+  //        .flatMapMany(
+  //            source ->
+  //                reactiveElasticSearchClientConfig
+  //                    .reactiveElasticsearchClient()
+  //                    .search(
+  //                        new SearchRequest()
+  //                            .indices(elasticsearchProperties.getFileCentricIndex())
+  //                            .source(source)))
+  //        .map(hit -> ((Map<String, Long>)
+  // hit.getSourceAsMap().get("analysis")).get("updated_at"))
+  //        .reduce(
+  //            false,
+  //            (acc, curr) ->
+  //                acc
+  //                    ? acc
+  //                    : Duration.between(Instant.ofEpochMilli(curr), Instant.now())
+  //                        .minus(Duration.ofMinutes(isUpdatingWindowMinutes))
+  //                        .isNegative());
+  //  }
 }
