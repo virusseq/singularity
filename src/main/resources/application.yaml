@@ -27,8 +27,8 @@ contributors:
   filterList:
   appendList:
 
-fileEventEmitter:
-  intervalTimerMinutes: 10
+intervalEventEmitter:
+  intervalTimerSeconds: 600
 
 files:
   triggerUpdateDelaySeconds: 60

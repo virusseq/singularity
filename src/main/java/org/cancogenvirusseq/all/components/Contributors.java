@@ -16,7 +16,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.all.service;
+package org.cancogenvirusseq.all.components;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -30,14 +30,14 @@ import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-@Service
+@Component
 @RequiredArgsConstructor
 @ConfigurationProperties("contributors")
-public class ContributorService {
+public class Contributors {
   private final ElasticsearchProperties elasticsearchProperties;
   private final ReactiveElasticSearchClientConfig reactiveElasticSearchClientConfig;
 

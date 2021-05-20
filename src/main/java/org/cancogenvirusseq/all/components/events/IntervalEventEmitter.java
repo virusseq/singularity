@@ -16,21 +16,31 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.all.config.kafka;
+package org.cancogenvirusseq.all.components.events;
 
-import lombok.Data;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+import java.time.Duration;
+import java.time.Instant;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 
-@Data
-@Configuration
-@Profile("kafka")
-@ConfigurationProperties(prefix = "kafka")
-public class KafkaProperties {
-  private String bootstrapServer;
-  private String clientId;
-  private String groupId;
-  private String autoOffsetReset;
-  private String topic;
+@Slf4j
+@Component
+@Profile("!kafka")
+@RequiredArgsConstructor
+public class IntervalEventEmitter implements EventEmitter {
+  @Value("${intervalEventEmitter.intervalTimerSeconds}")
+  private final Integer intervalTimerSeconds = 600; // default to 10 minutes interval
+
+  public Flux<Instant> receive() {
+    return Flux.interval(Duration.ZERO, Duration.ofSeconds(intervalTimerSeconds))
+        .map(value -> Instant.now())
+        .onErrorContinue(
+            ((throwable, value) ->
+                log.debug("intervalEmit emission {}, threw: {}", throwable, value)))
+        .log("FileEventEmitter::intervalEmit");
+  }
 }

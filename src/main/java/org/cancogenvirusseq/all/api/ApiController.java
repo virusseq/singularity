@@ -22,8 +22,8 @@ import java.util.Collection;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.all.api.model.EntityListResponse;
-import org.cancogenvirusseq.all.service.ContributorService;
-import org.cancogenvirusseq.all.service.DownloadService;
+import org.cancogenvirusseq.all.components.Contributors;
+import org.cancogenvirusseq.all.components.Files;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
@@ -31,15 +31,15 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequiredArgsConstructor
 public class ApiController implements ApiDefinition {
-  private final ContributorService contributorService;
-  private final DownloadService downloadService;
+  private final Contributors contributors;
+  private final Files files;
 
   public Mono<EntityListResponse<String>> getContributors() {
-    return contributorService.getContributors().transform(this::listResponseTransform);
+    return contributors.getContributors().transform(this::listResponseTransform);
   }
 
   public Mono<String> getFiles() {
-    return downloadService.downloadAllFiles();
+    return Mono.just(files.getFileBundle());
   }
 
   //  public ResponseEntity<Mono<DataBuffer>> getFiles() {

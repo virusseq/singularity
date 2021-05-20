@@ -18,10 +18,15 @@
 
 package org.cancogenvirusseq.all.components;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.cancogenvirusseq.all.components.events.EventEmitter;
 import org.cancogenvirusseq.all.config.elasticsearch.ElasticsearchProperties;
 import org.cancogenvirusseq.all.config.elasticsearch.ReactiveElasticSearchClientConfig;
 import org.elasticsearch.action.search.SearchRequest;
@@ -30,31 +35,25 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Bean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.Disposable;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.Sinks;
-
-import javax.annotation.PostConstruct;
-import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConfigurationProperties("files")
 public class Files {
   private final ElasticsearchProperties elasticsearchProperties;
   private final ReactiveElasticSearchClientConfig reactiveElasticSearchClientConfig;
-  private final Sinks.Many<Instant> sink = Sinks.many().unicast().onBackpressureBuffer();
+  private final EventEmitter eventEmitter;
 
-  @Setter private Integer triggerUpdateDelaySeconds = 60; // default to 1 minute
+  @Value("${files.triggerUpdateDelaySeconds}")
+  private final Integer triggerUpdateDelaySeconds = 60; // default to 1 minute
 
-  @Getter private final AtomicReference<String> latestFileName = new AtomicReference<>();
+  private static final AtomicLong lastEvent = new AtomicLong();
+  private static final AtomicReference<String> latestFileName = new AtomicReference<>();
 
   @Getter private Disposable updateFileBundleDisposable;
 
@@ -63,16 +62,34 @@ public class Files {
     updateFileBundleDisposable = createUpdateFileBundleDisposable();
   }
 
-  @Bean
-  public Sinks.Many<Instant> fileEventSink() {
-    return sink;
+  // TODO this will return the file zip
+  public String getFileBundle() {
+    return latestFileName.get();
   }
 
+  /**
+   * This disposable subscribes to the eventEmitter flux, be that an interval timer based one or a
+   * kafka based one, it records every event received to the static AtomicLong property. After the
+   * configured delay it checks to see if the instant recorded is still the same one, meaning there
+   * have been no further events, because this is done within a filter, all the intermediary event
+   * (ie. those between the first new event inclusive and the last event) are removed, the final
+   * event that does make it through will trigger a bundle rebuild.
+   *
+   * @return disposable of flux that is operating the update mechanism
+   */
   private Disposable createUpdateFileBundleDisposable() {
-    return sink.asFlux().doOnNext(event -> log.info(event.toString())).subscribe();
+    return eventEmitter
+        .receive()
+        .map(Instant::toEpochMilli)
+        .doOnNext(lastEvent::set)
+        .delayElements(Duration.ofSeconds(triggerUpdateDelaySeconds))
+        .filter(instant -> instant.equals(lastEvent.get()))
+        .flatMap(instant -> getAllFileObjectIds())
+        .doOnNext(log::info)
+        .subscribe();
   }
 
-  public Mono<String> getAllFileObjectIds() {
+  private Flux<String> getAllFileObjectIds() {
     return Mono.just(
             new SearchSourceBuilder()
                 .query(QueryBuilders.matchAllQuery())
@@ -86,7 +103,6 @@ public class Files {
                         new SearchRequest()
                             .indices(elasticsearchProperties.getFileCentricIndex())
                             .source(source)))
-        .map(SearchHit::getId)
-        .collect(Collectors.joining(","));
+        .map(SearchHit::getId);
   }
 }

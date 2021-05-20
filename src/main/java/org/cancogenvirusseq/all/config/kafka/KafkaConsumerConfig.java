@@ -18,6 +18,9 @@
 
 package org.cancogenvirusseq.all.config.kafka;
 
+import java.util.AbstractMap;
+import java.util.Collections;
+import java.util.Map;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -25,10 +28,6 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.context.annotation.Profile;
 import reactor.kafka.receiver.KafkaReceiver;
 import reactor.kafka.receiver.ReceiverOptions;
-
-import java.util.AbstractMap;
-import java.util.Collections;
-import java.util.Map;
 
 @Slf4j
 @Profile("kafka")
