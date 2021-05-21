@@ -20,18 +20,17 @@ package org.cancogenvirusseq.all.components;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.cancogenvirusseq.all.components.events.EventEmitter;
 import org.cancogenvirusseq.all.config.elasticsearch.ElasticsearchProperties;
 import org.cancogenvirusseq.all.config.elasticsearch.ReactiveElasticSearchClientConfig;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
@@ -48,11 +47,12 @@ public class Files {
   private final ElasticsearchProperties elasticsearchProperties;
   private final ReactiveElasticSearchClientConfig reactiveElasticSearchClientConfig;
   private final EventEmitter eventEmitter;
+  private final Download download;
 
   @Value("${files.triggerUpdateDelaySeconds}")
   private final Integer triggerUpdateDelaySeconds = 60; // default to 1 minute
 
-  private static final AtomicLong lastEvent = new AtomicLong();
+  private static final AtomicReference<Instant> lastEvent = new AtomicReference<>();
   private static final AtomicReference<String> latestFileName = new AtomicReference<>();
 
   @Getter private Disposable updateFileBundleDisposable;
@@ -60,6 +60,14 @@ public class Files {
   @PostConstruct
   public void init() {
     updateFileBundleDisposable = createUpdateFileBundleDisposable();
+
+    // build a bundle on app start
+    downloadAndSave(Instant.now())
+        .doOnNext(latestFileName::set)
+        .doFinally(
+            signalType ->
+                log.info("Startup file bundle created and saved at: {}", latestFileName.get()))
+        .blockFirst();
   }
 
   // TODO this will return the file zip
@@ -80,13 +88,17 @@ public class Files {
   private Disposable createUpdateFileBundleDisposable() {
     return eventEmitter
         .receive()
-        .map(Instant::toEpochMilli)
         .doOnNext(lastEvent::set)
         .delayElements(Duration.ofSeconds(triggerUpdateDelaySeconds))
         .filter(instant -> instant.equals(lastEvent.get()))
-        .flatMap(instant -> getAllFileObjectIds())
+        .flatMap(this::downloadAndSave)
+        .doOnNext(latestFileName::set)
         .doOnNext(log::info)
         .subscribe();
+  }
+
+  private Flux<String> downloadAndSave(Instant instant) {
+    return getAllFileObjectIds().transform(download.makeDownloadGzipFunction(instant));
   }
 
   private Flux<String> getAllFileObjectIds() {
@@ -103,6 +115,6 @@ public class Files {
                         new SearchRequest()
                             .indices(elasticsearchProperties.getFileCentricIndex())
                             .source(source)))
-        .map(SearchHit::getId);
+        .map(hit -> hit.getId());
   }
 }

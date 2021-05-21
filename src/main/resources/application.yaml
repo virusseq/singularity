@@ -23,20 +23,18 @@ kafka:
   autoOffsetReset: latest
   topic: song_analysis
 
-scoreClient:
-  rootUrl: "http://localhost:8087/"
-  tokenUrl: http://localhost:8081/oauth/token
-  clientId: adminId
-  clientSecret: adminSecret
-  retryMaxAttempts: 3
-  retryDelaySec: 10
-
 contributors:
   filterList:
   appendList:
 
-intervalEventEmitter:
-  intervalTimerSeconds: 600
+download:
+  museDownloadUrl: "localhost:8087/download"
+  retryMaxAttempts: 3
+  retryDelaySec: 10
+  batchSize: 100
 
 files:
   triggerUpdateDelaySeconds: 60
+
+intervalEventEmitter:
+  intervalTimerSeconds: 600

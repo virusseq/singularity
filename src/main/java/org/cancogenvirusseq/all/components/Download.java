@@ -19,31 +19,101 @@
 package org.cancogenvirusseq.all.components;
 
 import com.google.common.io.ByteStreams;
-import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.val;
+import org.cancogenvirusseq.all.components.model.MuseErrorResponse;
+import org.cancogenvirusseq.all.components.model.MuseException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
+import reactor.util.retry.RetryBackoffSpec;
 
+import java.io.FileOutputStream;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+import java.util.function.Function;
 import java.util.zip.GZIPOutputStream;
 
 @Component
-@RequiredArgsConstructor
 public class Download {
 
-  private final ScoreClient scoreClient;
+  private final String museHost;
+  private final RetryBackoffSpec clientsRetrySpec;
+  private final Integer batchSize;
+
+  private static final String DOWNLOAD_DIR = "/tmp";
+  private static final String FILE_NAME_TEMPLATE = "virusseq-consensus-export-all-";
+  public static final String FASTA_FILE_EXTENSION = ".fasta";
+
+  public Download(
+      @Value("${download.museHost}") String museHost,
+      @Value("${download.retryMaxAttempts}") Integer retryMaxAttempts,
+      @Value("${download.retryDelaySec}") Integer retryDelaySec,
+      @Value("${download.batchSize}") Integer batchSize) {
+    this.museHost = museHost;
+
+    this.clientsRetrySpec =
+        Retry.fixedDelay(retryMaxAttempts, Duration.ofSeconds(retryDelaySec))
+            // Retry on non 5xx errors, 4xx is bad request no point retrying
+            .filter(
+                t ->
+                    t instanceof MuseException
+                        && ((MuseException) t).getStatus().is5xxServerError())
+            .onRetryExhaustedThrow(((retryBackoffSpec, retrySignal) -> retrySignal.failure()));
+
+    this.batchSize = batchSize;
+  }
+
+  public Function<Flux<String>, Flux<String>> makeDownloadGzipFunction(Instant instant) {
+    return objectIds ->
+        objectIds
+            .buffer(batchSize)
+            .concatMap(batchedIds -> Flux.concat(downloadFromMuse(batchedIds), newLineBuffer()))
+            .reduce(makeGzipOutputStream(instant), this::addToGzipStream)
+            .map(this::closeStream)
+            .then(
+                Mono.just(
+                    String.format(
+                        "%s%s%s.gz", FILE_NAME_TEMPLATE, instant.toString(), FASTA_FILE_EXTENSION)))
+            .flux();
+  }
 
   @SneakyThrows
-  public Mono<GZIPOutputStream> getObjectIdsAsGZIPOutputStream(Flux<String> objectIds) {
-    return objectIds
-        .concatMap(objectId -> Flux.concat(scoreClient.downloadObject(objectId), newLineBuffer()))
-        .reduce(
-            new GZIPOutputStream(new DefaultDataBufferFactory().allocateBuffer().asOutputStream()),
-            this::addToGzipStream)
-        .map(this::closeStream);
+  private GZIPOutputStream makeGzipOutputStream(Instant instant) {
+    return new GZIPOutputStream(
+        new FileOutputStream(
+            String.format(
+                "%s/%s%s%s.gz",
+                DOWNLOAD_DIR, FILE_NAME_TEMPLATE, instant.toString(), FASTA_FILE_EXTENSION)));
+  }
+
+  private Flux<DataBuffer> downloadFromMuse(List<String> objectIds) {
+    return WebClient.create()
+        .get()
+        .uri(
+            uriBuilder ->
+                uriBuilder
+                    .scheme("https")
+                    .host(museHost)
+                    .path("download")
+                    .queryParam("objectIds", String.join(",", objectIds))
+                    .build())
+        .exchangeToFlux(
+            clientResponse ->
+                clientResponse.statusCode().is2xxSuccessful()
+                    ? clientResponse.bodyToFlux(DataBuffer.class)
+                    : clientResponse
+                        .bodyToMono(MuseErrorResponse.class)
+                        .flux()
+                        .flatMap(res -> Mono.error(new MuseException(res))))
+        .log("Download::downloadFromMuse")
+        .retryWhen(clientsRetrySpec);
   }
 
   @SneakyThrows
