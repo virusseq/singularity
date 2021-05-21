@@ -1,11 +1,10 @@
 package org.cancogenvirusseq.all.components.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.util.Map;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.http.HttpStatus;
-
-import java.util.Map;
 
 @Data
 @NoArgsConstructor

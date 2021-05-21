@@ -19,6 +19,12 @@
 package org.cancogenvirusseq.all.components;
 
 import com.google.common.io.ByteStreams;
+import java.io.FileOutputStream;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+import java.util.function.Function;
+import java.util.zip.GZIPOutputStream;
 import lombok.SneakyThrows;
 import lombok.val;
 import org.cancogenvirusseq.all.components.model.MuseErrorResponse;
@@ -32,13 +38,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 import reactor.util.retry.RetryBackoffSpec;
-
-import java.io.FileOutputStream;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.List;
-import java.util.function.Function;
-import java.util.zip.GZIPOutputStream;
 
 @Component
 public class Download {
@@ -73,6 +72,7 @@ public class Download {
   public Function<Flux<String>, Flux<String>> makeDownloadGzipFunction(Instant instant) {
     return objectIds ->
         objectIds
+            .take(1000) // todo: temp for testing
             .buffer(batchSize)
             .concatMap(batchedIds -> Flux.concat(downloadFromMuse(batchedIds), newLineBuffer()))
             .reduce(makeGzipOutputStream(instant), this::addToGzipStream)
@@ -82,6 +82,10 @@ public class Download {
                     String.format(
                         "%s%s%s.gz", FILE_NAME_TEMPLATE, instant.toString(), FASTA_FILE_EXTENSION)))
             .flux();
+  }
+
+  public static String getDownloadPathForFileBundle(String filename) {
+    return String.format("%s/%s", DOWNLOAD_DIR, filename);
   }
 
   @SneakyThrows

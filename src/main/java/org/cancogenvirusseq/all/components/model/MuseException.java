@@ -1,13 +1,12 @@
 package org.cancogenvirusseq.all.components.model;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.Value;
-import org.springframework.http.HttpStatus;
+import static java.lang.String.format;
 
 import java.util.Map;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.springframework.http.HttpStatus;
 
-import static java.lang.String.format;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class MuseException extends Throwable {

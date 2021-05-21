@@ -36,7 +36,7 @@ public class IntervalEventEmitter implements EventEmitter {
   private final Integer intervalTimerSeconds = 600; // default to 10 minutes interval
 
   public Flux<Instant> receive() {
-    return Flux.interval(Duration.ZERO, Duration.ofSeconds(intervalTimerSeconds))
+    return Flux.interval(Duration.ofSeconds(intervalTimerSeconds))
         .map(value -> Instant.now())
         .onErrorContinue(
             ((throwable, value) ->

@@ -24,9 +24,12 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.cancogenvirusseq.all.api.model.EntityListResponse;
 import org.cancogenvirusseq.all.api.model.ErrorResponse;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Mono;
 
 @Api(value = "All Contributors, All Files, All", tags = "All")
@@ -52,32 +55,16 @@ public interface ApiDefinition {
   @ApiOperation(
       value = "Download all molecular files as a single .fasta.gz gzip compressed file",
       nickname = "Download Files",
-      response = String.class,
+      response = MultipartFile.class,
       tags = "All")
   @ApiResponses(
       value = {
-        @ApiResponse(code = 200, message = "", response = String.class),
+        @ApiResponse(code = 200, message = "", response = MultipartFile.class),
         @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
       })
   @RequestMapping(
       value = "/files",
-      produces = MediaType.TEXT_PLAIN_VALUE,
+      produces = MediaType.APPLICATION_OCTET_STREAM_VALUE,
       method = RequestMethod.GET)
-  Mono<String> getFiles();
-
-  //  @ApiOperation(
-  //      value = "Download all molecular files as a single .fasta.gz gzip compressed file",
-  //      nickname = "Download Files",
-  //      response = MultipartFile.class,
-  //      tags = "All")
-  //  @ApiResponses(
-  //      value = {
-  //        @ApiResponse(code = 200, message = "", response = MultipartFile.class),
-  //        @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
-  //      })
-  //  @RequestMapping(
-  //      value = "/files",
-  //      produces = MediaType.APPLICATION_OCTET_STREAM_VALUE,
-  //      method = RequestMethod.GET)
-  //  ResponseEntity<Mono<DataBuffer>> download();
+  ResponseEntity<Mono<Resource>> getFiles();
 }

@@ -25,12 +25,12 @@ import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.cancogenvirusseq.all.components.events.EventEmitter;
 import org.cancogenvirusseq.all.config.elasticsearch.ElasticsearchProperties;
 import org.cancogenvirusseq.all.config.elasticsearch.ReactiveElasticSearchClientConfig;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
@@ -70,8 +70,7 @@ public class Files {
         .blockFirst();
   }
 
-  // TODO this will return the file zip
-  public String getFileBundle() {
+  public String getFileBundleName() {
     return latestFileName.get();
   }
 
@@ -115,6 +114,6 @@ public class Files {
                         new SearchRequest()
                             .indices(elasticsearchProperties.getFileCentricIndex())
                             .source(source)))
-        .map(hit -> hit.getId());
+        .map(SearchHit::getId);
   }
 }
