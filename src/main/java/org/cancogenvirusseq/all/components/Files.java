@@ -97,7 +97,7 @@ public class Files {
   }
 
   private Flux<String> downloadAndSave(Instant instant) {
-    return getAllFileObjectIds().transform(download.makeDownloadGzipFunction(instant));
+    return getAllFileObjectIds().transform(download.downloadGzipFunctionWithInstant(instant));
   }
 
   private Flux<String> getAllFileObjectIds() {

@@ -24,6 +24,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.function.Function;
+import java.util.logging.Level;
 import java.util.zip.GZIPOutputStream;
 import lombok.SneakyThrows;
 import lombok.val;
@@ -45,6 +46,7 @@ public class Download {
   private final String museHost;
   private final RetryBackoffSpec clientsRetrySpec;
   private final Integer batchSize;
+  private final Integer concurrentRequests;
 
   private static final String DOWNLOAD_DIR = "/tmp";
   private static final String FILE_NAME_TEMPLATE = "virusseq-consensus-export-all-";
@@ -54,7 +56,8 @@ public class Download {
       @Value("${download.museHost}") String museHost,
       @Value("${download.retryMaxAttempts}") Integer retryMaxAttempts,
       @Value("${download.retryDelaySec}") Integer retryDelaySec,
-      @Value("${download.batchSize}") Integer batchSize) {
+      @Value("${download.batchSize}") Integer batchSize,
+      @Value("${download.concurrentRequests}") Integer concurrentRequests) {
     this.museHost = museHost;
 
     this.clientsRetrySpec =
@@ -67,14 +70,16 @@ public class Download {
             .onRetryExhaustedThrow(((retryBackoffSpec, retrySignal) -> retrySignal.failure()));
 
     this.batchSize = batchSize;
+    this.concurrentRequests = concurrentRequests;
   }
 
-  public Function<Flux<String>, Flux<String>> makeDownloadGzipFunction(Instant instant) {
+  public Function<Flux<String>, Flux<String>> downloadGzipFunctionWithInstant(Instant instant) {
     return objectIds ->
         objectIds
-            .take(1000) // todo: temp for testing
             .buffer(batchSize)
-            .concatMap(batchedIds -> Flux.concat(downloadFromMuse(batchedIds), newLineBuffer()))
+            .flatMap(
+                batchedIds -> Flux.concat(downloadFromMuse(batchedIds), newLineBuffer()),
+                concurrentRequests)
             .reduce(makeGzipOutputStream(instant), this::addToGzipStream)
             .map(this::closeStream)
             .then(
@@ -116,7 +121,7 @@ public class Download {
                         .bodyToMono(MuseErrorResponse.class)
                         .flux()
                         .flatMap(res -> Mono.error(new MuseException(res))))
-        .log("Download::downloadFromMuse")
+        .log("Download::downloadFromMuse", Level.FINE)
         .retryWhen(clientsRetrySpec);
   }
 

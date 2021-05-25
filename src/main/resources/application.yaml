@@ -32,6 +32,7 @@ download:
   retryMaxAttempts: 3
   retryDelaySec: 10
   batchSize: 100
+  concurrentRequests: 5
 
 files:
   triggerUpdateDelaySeconds: 60
