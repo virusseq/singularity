@@ -16,15 +16,34 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.all;
+package org.cancogenvirusseq.all.health;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import java.util.Optional;
+import java.util.function.Predicate;
+import lombok.RequiredArgsConstructor;
+import org.cancogenvirusseq.all.components.Files;
+import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.stereotype.Component;
+import reactor.core.Disposable;
 
-@SpringBootTest
-class AllApplicationTests {
+@Component
+@RequiredArgsConstructor
+public class UpdateFileBundleHealthCheck implements HealthIndicator {
 
-  //  @Test
-  //  void contextLoads() {}
-  // todo: either remove or update to no load Elastic in test context
+  private static final String MESSAGE_KEY = "updateFileBundleDisposable";
+  private final Files files;
+
+  @Override
+  public Health health() {
+    return Optional.of(isDisposableRunning.test(files.getUpdateFileBundleDisposable()))
+        .filter(Boolean::booleanValue)
+        .map(
+            isRunning ->
+                Health.up().withDetail(MESSAGE_KEY, "Update File Bundle disposable is running."))
+        .orElse(Health.down().withDetail(MESSAGE_KEY, "Update File Bundle disposable has stopped."))
+        .build();
+  }
+
+  Predicate<Disposable> isDisposableRunning = disposable -> !disposable.isDisposed();
 }

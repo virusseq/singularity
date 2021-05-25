@@ -24,7 +24,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.cancogenvirusseq.all.api.model.EntityListResponse;
 import org.cancogenvirusseq.all.api.model.ErrorResponse;
-import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -66,5 +66,5 @@ public interface ApiDefinition {
       value = "/files",
       produces = MediaType.APPLICATION_OCTET_STREAM_VALUE,
       method = RequestMethod.GET)
-  ResponseEntity<Mono<DataBuffer>> download();
+  ResponseEntity<Mono<Resource>> getFiles();
 }

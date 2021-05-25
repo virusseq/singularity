@@ -16,15 +16,11 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.all;
+package org.cancogenvirusseq.all.components.events;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import java.time.Instant;
+import reactor.core.publisher.Flux;
 
-@SpringBootTest
-class AllApplicationTests {
-
-  //  @Test
-  //  void contextLoads() {}
-  // todo: either remove or update to no load Elastic in test context
+public interface EventEmitter {
+  Flux<Instant> receive();
 }

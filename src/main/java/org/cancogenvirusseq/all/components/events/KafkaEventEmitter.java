@@ -16,15 +16,35 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.all;
+package org.cancogenvirusseq.all.components.events;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import java.time.Instant;
+import java.util.logging.Level;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.cancogenvirusseq.all.config.kafka.KafkaConsumerConfig;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 
-@SpringBootTest
-class AllApplicationTests {
+@Slf4j
+@Component
+@Profile("kafka")
+@RequiredArgsConstructor
+public class KafkaEventEmitter implements EventEmitter {
+  private final KafkaConsumerConfig kafkaConsumerConfig;
 
-  //  @Test
-  //  void contextLoads() {}
-  // todo: either remove or update to no load Elastic in test context
+  public Flux<Instant> receive() {
+    return kafkaConsumerConfig
+        .getReceiver()
+        .receiveAtmostOnce()
+        .doOnNext(value -> log.debug("Message received from Kafka: {}", value.toString()))
+        // we dont' actually care about the message contents so we just emit and Instant here
+        // instead
+        .map(value -> Instant.now())
+        .onErrorContinue(
+            ((throwable, value) ->
+                log.debug("intervalEmit emission {}, threw: {}", throwable, value)))
+        .log("KafkaEventEmitter::emit", Level.FINE);
+  }
 }

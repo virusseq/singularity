@@ -18,12 +18,19 @@
 
 package org.cancogenvirusseq.all.api;
 
+import static java.lang.String.format;
+import static org.cancogenvirusseq.all.components.Download.getDownloadPathForFileBundle;
+
 import java.util.Collection;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.all.api.model.EntityListResponse;
-import org.cancogenvirusseq.all.service.Contributors;
-import org.springframework.core.io.buffer.DataBuffer;
+import org.cancogenvirusseq.all.components.Contributors;
+import org.cancogenvirusseq.all.components.Files;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
@@ -33,13 +40,21 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class ApiController implements ApiDefinition {
   private final Contributors contributors;
+  private final Files files;
 
   public Mono<EntityListResponse<String>> getContributors() {
     return contributors.getContributors().transform(this::listResponseTransform);
   }
 
-  public ResponseEntity<Mono<DataBuffer>> download() {
-    return null;
+  public ResponseEntity<Mono<Resource>> getFiles() {
+    return ResponseEntity.ok()
+        .header(
+            HttpHeaders.CONTENT_DISPOSITION,
+            format("attachment; filename=%s", files.getFileBundleName()))
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM_VALUE)
+        .body(
+            Mono.just(
+                new FileSystemResource(getDownloadPathForFileBundle(files.getFileBundleName()))));
   }
 
   private <T> Mono<EntityListResponse<T>> listResponseTransform(

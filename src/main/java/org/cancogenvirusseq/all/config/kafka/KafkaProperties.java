@@ -16,15 +16,21 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.all;
+package org.cancogenvirusseq.all.config.kafka;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
-@SpringBootTest
-class AllApplicationTests {
-
-  //  @Test
-  //  void contextLoads() {}
-  // todo: either remove or update to no load Elastic in test context
+@Data
+@Configuration
+@Profile("kafka")
+@ConfigurationProperties(prefix = "kafka")
+public class KafkaProperties {
+  private String bootstrapServer;
+  private String clientId;
+  private String groupId;
+  private String autoOffsetReset;
+  private String topic;
 }
