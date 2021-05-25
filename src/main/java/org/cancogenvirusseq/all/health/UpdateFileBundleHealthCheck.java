@@ -18,15 +18,14 @@
 
 package org.cancogenvirusseq.all.health;
 
+import java.util.Optional;
+import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.cancogenvirusseq.all.components.Files;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.stereotype.Component;
 import reactor.core.Disposable;
-
-import java.util.Optional;
-import java.util.function.Predicate;
 
 @Component
 @RequiredArgsConstructor
