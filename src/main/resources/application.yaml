@@ -28,7 +28,7 @@ contributors:
   appendList:
 
 download:
-  museDownloadUrl: "localhost:8087/download"
+  museHost: "localhost:8087/download"
   retryMaxAttempts: 3
   retryDelaySec: 10
   batchSize: 100

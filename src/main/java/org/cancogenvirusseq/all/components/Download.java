@@ -20,18 +20,24 @@ package org.cancogenvirusseq.all.components;
 
 import com.google.common.io.ByteStreams;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.zip.GZIPOutputStream;
 import lombok.SneakyThrows;
-import lombok.val;
+import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.all.components.model.MuseErrorResponse;
 import org.cancogenvirusseq.all.components.model.MuseException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DefaultDataBuffer;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -40,6 +46,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 import reactor.util.retry.RetryBackoffSpec;
 
+@Slf4j
 @Component
 public class Download {
 
@@ -125,14 +132,22 @@ public class Download {
         .retryWhen(clientsRetrySpec);
   }
 
-  @SneakyThrows
   private GZIPOutputStream addToGzipStream(GZIPOutputStream gzip, DataBuffer inputDataBuffer) {
-    val inputDataBufferStream = inputDataBuffer.asInputStream();
-    val bytes = ByteStreams.toByteArray(inputDataBufferStream);
-    gzip.write(bytes);
-    inputDataBufferStream.close();
-    return gzip;
+    return inputStreamToGzipStream.apply(inputDataBuffer.asInputStream(), gzip);
   }
+
+  private static final BiFunction<InputStream, GZIPOutputStream, GZIPOutputStream>
+      inputStreamToGzipStream =
+          (input, output) -> {
+            try {
+              output.write(ByteStreams.toByteArray(input));
+              input.close();
+            } catch (IOException e) {
+              log.error("Error processing input stream to gzip stream.", e);
+            }
+
+            return output;
+          };
 
   @SneakyThrows
   private GZIPOutputStream closeStream(GZIPOutputStream gzip) {
@@ -141,9 +156,9 @@ public class Download {
   }
 
   private static Flux<DataBuffer> newLineBuffer() {
-    val buffer = new DefaultDataBufferFactory().allocateBuffer(4);
-    val newLIne = "\n";
-    buffer.write(newLIne.getBytes());
-    return Flux.just(buffer);
+    return Flux.just(newLineBufferSupplier.get().write("\n".getBytes(StandardCharsets.UTF_8)));
   }
+
+  private static final Supplier<DefaultDataBuffer> newLineBufferSupplier =
+      () -> new DefaultDataBufferFactory().allocateBuffer(4);
 }
