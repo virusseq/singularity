@@ -19,6 +19,7 @@
 package org.cancogenvirusseq.all.components.events;
 
 import java.time.Instant;
+import java.util.logging.Level;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.all.config.kafka.KafkaConsumerConfig;
@@ -41,6 +42,6 @@ public class KafkaEventEmitter implements EventEmitter {
         .onErrorContinue(
             ((throwable, value) ->
                 log.debug("intervalEmit emission {}, threw: {}", throwable, value)))
-        .log("KafkaEventEmitter::emit");
+        .log("KafkaEventEmitter::emit", Level.FINE);
   }
 }

@@ -20,6 +20,7 @@ package org.cancogenvirusseq.all.components.events;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.logging.Level;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,6 +42,6 @@ public class IntervalEventEmitter implements EventEmitter {
         .onErrorContinue(
             ((throwable, value) ->
                 log.debug("intervalEmit emission {}, threw: {}", throwable, value)))
-        .log("FileEventEmitter::intervalEmit");
+        .log("FileEventEmitter::intervalEmit", Level.FINE);
   }
 }
