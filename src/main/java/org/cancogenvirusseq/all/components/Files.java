@@ -61,8 +61,11 @@ public class Files {
   public void init() {
     updateFileBundleDisposable = createUpdateFileBundleDisposable();
 
+    // set the lastEvent to now (app startup)
+    lastEvent.set(Instant.now());
+
     // build a bundle on app start
-    downloadAndSave(Instant.now())
+    downloadAndSave(lastEvent.get())
         .doOnNext(latestFileName::set)
         .doFinally(
             signalType ->

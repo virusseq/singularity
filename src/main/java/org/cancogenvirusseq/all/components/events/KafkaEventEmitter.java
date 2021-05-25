@@ -37,7 +37,10 @@ public class KafkaEventEmitter implements EventEmitter {
   public Flux<Instant> receive() {
     return kafkaConsumerConfig
         .getReceiver()
-        .receive()
+        .receiveAtmostOnce()
+        .doOnNext(value -> log.debug("Message received from Kafka: {}", value.toString()))
+        // we dont' actually care about the message contents so we just emit and Instant here
+        // instead
         .map(value -> Instant.now())
         .onErrorContinue(
             ((throwable, value) ->
