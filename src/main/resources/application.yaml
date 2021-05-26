@@ -1,8 +1,8 @@
 spring:
   application:
-    name: "All"
+    name: "Singularity"
     version: @project.version@
-    description: "All contributors, All files"
+    description: "Singularity - All contributors, All files"
 
 server:
   port: 8080
@@ -18,8 +18,8 @@ elastic:
 
 kafka:
   bootstrapServer: localhost:9092
-  clientId: all-instance
-  groupId: all-instance
+  clientId: singularity-instance
+  groupId: singularity-instance
   autoOffsetReset: latest
   topic: song_analysis
 

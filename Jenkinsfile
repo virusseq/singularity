@@ -1,5 +1,5 @@
-def dockerRepo = "ghcr.io/cancogen-virus-seq/all"
-def gitHubRepo = "cancogen-virus-seq/all"
+def dockerRepo = "ghcr.io/cancogen-virus-seq/singularity"
+def gitHubRepo = "cancogen-virus-seq/singularity"
 def commit = "UNKNOWN"
 def version = "UNKNOWN"
 
@@ -101,7 +101,7 @@ spec:
            steps {
                build(job: "virusseq/update-app-version", parameters: [
                    [$class: 'StringParameterValue', name: 'CANCOGEN_ENV', value: 'dev' ],
-                   [$class: 'StringParameterValue', name: 'TARGET_RELEASE', value: 'all'],
+                   [$class: 'StringParameterValue', name: 'TARGET_RELEASE', value: 'singularity'],
                    [$class: 'StringParameterValue', name: 'NEW_APP_VERSION', value: "${version}-${commit}" ]
                ])
            }

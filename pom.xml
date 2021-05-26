@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>org.cancogen-virus-seq</groupId>
-    <artifactId>all</artifactId>
+    <artifactId>singularity</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>all</name>
-    <description>all contributors, all files</description>
+    <name>singularity</name>
+    <description>Singularity - All contributors, All files</description>
     <properties>
         <java.version>11</java.version>
         <springfox.version>3.0.0</springfox.version>

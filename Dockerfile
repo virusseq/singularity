@@ -17,7 +17,7 @@ ENV APP_UID 9999
 ENV APP_GID 9999
 
 
-COPY --from=builder /usr/src/app/target/all-*.jar $APP_HOME/all.jar
+COPY --from=builder /usr/src/app/target/singularity-*.jar $APP_HOME/singularity.jar
 
 RUN addgroup -S -g $APP_GID $APP_USER  \
     && adduser -S -u $APP_UID -G $APP_USER $APP_USER \
@@ -28,5 +28,5 @@ WORKDIR $APP_HOME
 
 USER $APP_UID
 
-CMD ["java", "-ea", "-jar", "/srv/all.jar"]
+CMD ["java", "-ea", "-jar", "/srv/singularity.jar"]
 EXPOSE 8080/tcp
