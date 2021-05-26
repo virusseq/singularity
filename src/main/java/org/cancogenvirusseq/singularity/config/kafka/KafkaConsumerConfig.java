@@ -24,12 +24,14 @@ import java.util.Map;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import reactor.kafka.receiver.KafkaReceiver;
 import reactor.kafka.receiver.ReceiverOptions;
 
 @Slf4j
+@Configuration
 @Profile("kafka")
 public class KafkaConsumerConfig {
   @Getter private final KafkaReceiver<String, String> receiver;
@@ -48,9 +50,9 @@ public class KafkaConsumerConfig {
                 new AbstractMap.SimpleEntry<>(
                     ConsumerConfig.GROUP_ID_CONFIG, properties.getGroupId()),
                 new AbstractMap.SimpleEntry<>(
-                    ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringSerializer.class),
+                    ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class),
                 new AbstractMap.SimpleEntry<>(
-                    ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringSerializer.class),
+                    ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class),
                 new AbstractMap.SimpleEntry<>(
                     ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, properties.getAutoOffsetReset())))
         .subscription(Collections.singleton(properties.getTopic()))
