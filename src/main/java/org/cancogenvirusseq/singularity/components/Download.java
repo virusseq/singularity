@@ -33,6 +33,7 @@ import java.util.logging.Level;
 import java.util.zip.GZIPOutputStream;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.cancogenvirusseq.singularity.components.model.AnalysisDocument;
 import org.cancogenvirusseq.singularity.components.model.MuseErrorResponse;
 import org.cancogenvirusseq.singularity.components.model.MuseException;
 import org.springframework.beans.factory.annotation.Value;
@@ -80,9 +81,11 @@ public class Download {
     this.concurrentRequests = concurrentRequests;
   }
 
-  public Function<Flux<String>, Flux<String>> downloadGzipFunctionWithInstant(Instant instant) {
-    return objectIds ->
-        objectIds
+  public Function<Flux<AnalysisDocument>, Flux<String>> downloadGzipFunctionWithInstant(
+      Instant instant) {
+    return analysisDocs ->
+        analysisDocs
+            .map(AnalysisDocument::getObjectId)
             .buffer(batchSize)
             .flatMap(
                 batchedIds -> Flux.concat(downloadFromMuse(batchedIds), newLineBuffer()),

@@ -18,21 +18,23 @@
 
 package org.cancogenvirusseq.singularity.components.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Data;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.elasticsearch.annotations.Document;
-
-import java.time.OffsetDateTime;
 
 @Data
-@Document(indexName = "${elastic.fileCentricIndex}", createIndex = false)
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class AnalysisDocument {
-  @Id private String objectId;
+  private String objectId;
   private String studyId;
   private Analysis analysis;
   private Donor[] donors;
 
   @Data
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   private static class Analysis {
     private Experiment experiment;
     private Host host;
@@ -42,18 +44,22 @@ public class AnalysisDocument {
   }
 
   @Data
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   private static class Experiment {
     private String purposeOfSequencing;
     private String purposeOfSequencingDetails;
-    private OffsetDateTime sequencingDate;
+    private String sequencingDate;
     private String libraryId;
     private String sequencingInstrument;
     private String sequencingProtocolName;
   }
 
   @Data
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   private static class Host {
-    private String hostAge;
+    private Long hostAge;
     private String hostGender;
     private String hostAgeBin;
     private String hostDisease;
@@ -62,6 +68,8 @@ public class AnalysisDocument {
   }
 
   @Data
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   private static class LineageAnalysis {
     private String lineageName;
     private String variantEvidence;
@@ -72,6 +80,8 @@ public class AnalysisDocument {
   }
 
   @Data
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   private static class SampleCollection {
     private String isolate;
     private String organism;
@@ -88,32 +98,38 @@ public class AnalysisDocument {
     private String sampleCollectedBy;
     private String sequenceSubmittedBy;
     private String environmentalMaterial;
-    private OffsetDateTime sampleCollectionDate;
+    private String sampleCollectionDate;
     private String nmlSubmittedSpecimenType;
     private String purposeOfSamplingDetails;
     private String sampleCollectionDatePrecision;
   }
 
   @Data
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   private static class SequenceAnalysis {
-    private Metrics metrics;
-    private String nsPer100kbp;
-    private String depthOfCoverage;
-    private String breadthOfCoverage;
-    private String consensusGenomeLength;
-  }
-
-  @Data
-  private static class Metrics {
-    private String dehostingMethod;
-    private String bioinformaticsProtocol;
-    private String referenceGenomeAccession;
     private String consensusSequenceSoftwareName;
     private String consensusSequenceSoftwareVersion;
+    private String dehostingMethod;
+    private Metrics metrics;
+    private String referenceGenomeAccession;
     private String rawSequenceDataProcessingMethod;
+    private String bioinformaticsProtocol;
   }
 
   @Data
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+  private static class Metrics {
+    private Long nsPer100kbp;
+    private String depthOfCoverage;
+    private Long consensusGenomeLength;
+    private String breadthOfCoverage;
+  }
+
+  @Data
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   private static class Donor {
     private String submitterDonorId;
   }

@@ -28,8 +28,6 @@ import org.springframework.data.elasticsearch.client.ClientConfiguration;
 import org.springframework.data.elasticsearch.client.reactive.ReactiveElasticsearchClient;
 import org.springframework.data.elasticsearch.client.reactive.ReactiveRestClients;
 import org.springframework.data.elasticsearch.config.AbstractReactiveElasticsearchConfiguration;
-import org.springframework.data.mapping.model.FieldNamingStrategy;
-import org.springframework.data.mapping.model.SnakeCaseFieldNamingStrategy;
 
 @Configuration
 @RequiredArgsConstructor
@@ -67,10 +65,5 @@ public class ReactiveElasticSearchClientConfig extends AbstractReactiveElasticse
             .withConnectTimeout(connectTimeout)
             .withSocketTimeout(socketTimeout)
             .build());
-  }
-
-  @Override
-  protected FieldNamingStrategy fieldNamingStrategy() {
-    return new SnakeCaseFieldNamingStrategy();
   }
 }
