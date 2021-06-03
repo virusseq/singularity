@@ -18,26 +18,23 @@
 
 package org.cancogenvirusseq.singularity.components;
 
-import com.google.common.io.ByteStreams;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Level;
-import java.util.zip.GZIPOutputStream;
+import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.cancogenvirusseq.singularity.components.model.AnalysisDocument;
-import org.cancogenvirusseq.singularity.components.model.MuseErrorResponse;
-import org.cancogenvirusseq.singularity.components.model.MuseException;
+import org.cancogenvirusseq.singularity.components.model.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.core.io.buffer.DefaultDataBuffer;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.stereotype.Component;
@@ -81,38 +78,39 @@ public class Download {
     this.concurrentRequests = concurrentRequests;
   }
 
-  public Function<Flux<AnalysisDocument>, Flux<String>> downloadGzipFunctionWithInstant(
-      Instant instant) {
-    return analysisDocs ->
-        analysisDocs
-            .map(AnalysisDocument::getObjectId)
-            .buffer(batchSize)
-            .flatMap(
-                batchedIds -> Flux.concat(downloadFromMuse(batchedIds), newLineBuffer()),
-                concurrentRequests)
-            .reduce(makeGzipOutputStream(instant), this::addToGzipStream)
-            .map(this::closeStream)
-            .then(
-                Mono.just(
-                    String.format(
-                        "%s%s%s.gz", FILE_NAME_TEMPLATE, instant.toString(), FASTA_FILE_EXTENSION)))
-            .flux();
-  }
-
   public static String getDownloadPathForFileBundle(String filename) {
     return String.format("%s/%s", DOWNLOAD_DIR, filename);
   }
 
-  @SneakyThrows
-  private GZIPOutputStream makeGzipOutputStream(Instant instant) {
-    return new GZIPOutputStream(
-        new FileOutputStream(
-            String.format(
-                "%s/%s%s%s.gz",
-                DOWNLOAD_DIR, FILE_NAME_TEMPLATE, instant.toString(), FASTA_FILE_EXTENSION)));
+  private final BiFunction<FileBundle, BatchedDownloadPair, FileBundle> addToFileBundle =
+      (fileBundle, batchedDownloadPair) -> {
+        writeToFileStream(
+            fileBundle.getMolecularFile(),
+            dataBufferToBytes(batchedDownloadPair.getMolecularData()));
+        writeToFileStream(
+            fileBundle.getMetadataFile(),
+            TsvWriter.analysisDocumentsToTsvRowsBytes(batchedDownloadPair.getAnalysisDocuments()));
+        return fileBundle;
+      };
+
+  public Function<Flux<AnalysisDocument>, Flux<String>> downloadGzipFunctionWithInstant(
+      Instant instant) {
+    return analysisDocs ->
+        analysisDocs
+            .buffer(batchSize)
+            .flatMap(
+                batchedAnalyses -> Flux.concat(downloadFromMuse(batchedAnalyses)),
+                concurrentRequests)
+            .reduce(new FileBundle(instant), addToFileBundle)
+            .map(
+                fileBundle -> {
+                  fileBundle.closeFileStreams();
+                  return fileBundle.getDirectory();
+                })
+            .flux();
   }
 
-  private Flux<DataBuffer> downloadFromMuse(List<String> objectIds) {
+  private Flux<BatchedDownloadPair> downloadFromMuse(List<AnalysisDocument> analysisDocuments) {
     return WebClient.create()
         .get()
         .uri(
@@ -121,41 +119,23 @@ public class Download {
                     .scheme("https")
                     .host(museHost)
                     .path("download")
-                    .queryParam("objectIds", String.join(",", objectIds))
+                    .queryParam(
+                        "objectIds",
+                        analysisDocuments.stream()
+                            .map(AnalysisDocument::getObjectId)
+                            .collect(Collectors.joining(",")))
                     .build())
         .exchangeToFlux(
             clientResponse ->
                 clientResponse.statusCode().is2xxSuccessful()
-                    ? clientResponse.bodyToFlux(DataBuffer.class)
+                    ? clientResponse.bodyToFlux(DataBuffer.class).concatWith(newLineBuffer())
                     : clientResponse
                         .bodyToMono(MuseErrorResponse.class)
                         .flux()
                         .flatMap(res -> Mono.error(new MuseException(res))))
+        .map(dataBuffer -> new BatchedDownloadPair(analysisDocuments, dataBuffer))
         .log("Download::downloadFromMuse", Level.FINE)
         .retryWhen(clientsRetrySpec);
-  }
-
-  private GZIPOutputStream addToGzipStream(GZIPOutputStream gzip, DataBuffer inputDataBuffer) {
-    return inputStreamToGzipStream.apply(inputDataBuffer.asInputStream(), gzip);
-  }
-
-  private static final BiFunction<InputStream, GZIPOutputStream, GZIPOutputStream>
-      inputStreamToGzipStream =
-          (input, output) -> {
-            try {
-              output.write(ByteStreams.toByteArray(input));
-              input.close();
-            } catch (IOException e) {
-              log.error("Error processing input stream to gzip stream.", e);
-            }
-
-            return output;
-          };
-
-  @SneakyThrows
-  private GZIPOutputStream closeStream(GZIPOutputStream gzip) {
-    gzip.close();
-    return gzip;
   }
 
   private static Flux<DataBuffer> newLineBuffer() {
@@ -164,4 +144,20 @@ public class Download {
 
   private static final Supplier<DefaultDataBuffer> newLineBufferSupplier =
       () -> new DefaultDataBufferFactory().allocateBuffer(4);
+
+  @SneakyThrows
+  private void writeToFileStream(FileOutputStream stream, byte[] bytes) {
+    stream.write(bytes);
+  }
+
+  private byte[] dataBufferToBytes(DataBuffer dataBuffer) {
+    return Optional.of(new byte[dataBuffer.readableByteCount()])
+        .map(
+            bytes -> {
+              dataBuffer.read(bytes);
+              DataBufferUtils.release(dataBuffer);
+              return bytes;
+            })
+        .orElseThrow();
+  }
 }

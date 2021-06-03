@@ -22,6 +22,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Data;
+import lombok.NonNull;
+
+import java.util.List;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -30,12 +33,12 @@ public class AnalysisDocument {
   private String objectId;
   private String studyId;
   private Analysis analysis;
-  private Donor[] donors;
+  @NonNull private List<Donor> donors;
 
   @Data
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-  private static class Analysis {
+  public static class Analysis {
     private Experiment experiment;
     private Host host;
     private LineageAnalysis lineageAnalysis;
@@ -46,7 +49,7 @@ public class AnalysisDocument {
   @Data
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-  private static class Experiment {
+  public static class Experiment {
     private String purposeOfSequencing;
     private String purposeOfSequencingDetails;
     private String sequencingDate;
@@ -58,7 +61,7 @@ public class AnalysisDocument {
   @Data
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-  private static class Host {
+  public static class Host {
     private Long hostAge;
     private String hostGender;
     private String hostAgeBin;
@@ -70,7 +73,7 @@ public class AnalysisDocument {
   @Data
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-  private static class LineageAnalysis {
+  public static class LineageAnalysis {
     private String lineageName;
     private String variantEvidence;
     private String variantDesignation;
@@ -82,7 +85,7 @@ public class AnalysisDocument {
   @Data
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-  private static class SampleCollection {
+  public static class SampleCollection {
     private String isolate;
     private String organism;
     private String bodyProduct;
@@ -107,7 +110,7 @@ public class AnalysisDocument {
   @Data
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-  private static class SequenceAnalysis {
+  public static class SequenceAnalysis {
     private String consensusSequenceSoftwareName;
     private String consensusSequenceSoftwareVersion;
     private String dehostingMethod;
@@ -120,7 +123,7 @@ public class AnalysisDocument {
   @Data
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-  private static class Metrics {
+  public static class Metrics {
     private Long nsPer100kbp;
     private String depthOfCoverage;
     private Long consensusGenomeLength;
@@ -130,7 +133,7 @@ public class AnalysisDocument {
   @Data
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-  private static class Donor {
-    private String submitterDonorId;
+  public static class Donor {
+    @NonNull private String submitterDonorId;
   }
 }
