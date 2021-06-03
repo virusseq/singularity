@@ -93,20 +93,18 @@ public class Download {
         return fileBundle;
       };
 
+  // todo: rename this method
   public Function<Flux<AnalysisDocument>, Flux<String>> downloadGzipFunctionWithInstant(
       Instant instant) {
     return analysisDocs ->
         analysisDocs
+            .take(batchSize) // todo: temp for testing
             .buffer(batchSize)
             .flatMap(
                 batchedAnalyses -> Flux.concat(downloadFromMuse(batchedAnalyses)),
                 concurrentRequests)
             .reduce(new FileBundle(instant), addToFileBundle)
-            .map(
-                fileBundle -> {
-                  fileBundle.closeFileStreams();
-                  return fileBundle.getDirectory();
-                })
+            .map(FileBundle.tarGzipBundleAndClose)
             .flux();
   }
 

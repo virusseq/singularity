@@ -21,32 +21,35 @@ package org.cancogenvirusseq.singularity.components.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import java.util.List;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
-import java.util.List;
-
 @Data
+@NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class AnalysisDocument {
-  private String objectId;
-  private String studyId;
-  private Analysis analysis;
+  @NonNull private String objectId;
+  @NonNull private String studyId;
+  @NonNull private Analysis analysis;
   @NonNull private List<Donor> donors;
 
   @Data
+  @NoArgsConstructor
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class Analysis {
-    private Experiment experiment;
-    private Host host;
-    private LineageAnalysis lineageAnalysis;
-    private SampleCollection sampleCollection;
-    private SequenceAnalysis sequenceAnalysis;
+    @NonNull private Experiment experiment;
+    @NonNull private Host host;
+    @NonNull private LineageAnalysis lineageAnalysis;
+    @NonNull private SampleCollection sampleCollection;
+    @NonNull private SequenceAnalysis sequenceAnalysis;
   }
 
   @Data
+  @NoArgsConstructor
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class Experiment {
@@ -59,10 +62,11 @@ public class AnalysisDocument {
   }
 
   @Data
+  @NoArgsConstructor
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class Host {
-    private Long hostAge;
+    private String hostAge;
     private String hostGender;
     private String hostAgeBin;
     private String hostDisease;
@@ -71,6 +75,7 @@ public class AnalysisDocument {
   }
 
   @Data
+  @NoArgsConstructor
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class LineageAnalysis {
@@ -83,6 +88,7 @@ public class AnalysisDocument {
   }
 
   @Data
+  @NoArgsConstructor
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class SampleCollection {
@@ -108,29 +114,32 @@ public class AnalysisDocument {
   }
 
   @Data
+  @NoArgsConstructor
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class SequenceAnalysis {
     private String consensusSequenceSoftwareName;
     private String consensusSequenceSoftwareVersion;
     private String dehostingMethod;
-    private Metrics metrics;
+    @NonNull private Metrics metrics;
     private String referenceGenomeAccession;
     private String rawSequenceDataProcessingMethod;
     private String bioinformaticsProtocol;
   }
 
   @Data
+  @NoArgsConstructor
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class Metrics {
-    private Long nsPer100kbp;
+    private String nsPer100kbp;
     private String depthOfCoverage;
-    private Long consensusGenomeLength;
+    private String consensusGenomeLength;
     private String breadthOfCoverage;
   }
 
   @Data
+  @NoArgsConstructor
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class Donor {
