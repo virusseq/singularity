@@ -18,7 +18,7 @@
 
 package org.cancogenvirusseq.singularity.components;
 
-import static org.cancogenvirusseq.singularity.components.model.FileBundle.DOWNLOAD_DIR;
+import static org.cancogenvirusseq.singularity.components.FilesArchive.DOWNLOAD_DIR;
 
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
@@ -80,15 +80,15 @@ public class Download {
     return String.format("%s/%s", DOWNLOAD_DIR, filename);
   }
 
-  private final BiFunction<FileBundle, BatchedDownloadPair, FileBundle> addToFileBundle =
-      (fileBundle, batchedDownloadPair) -> {
+  private final BiFunction<FilesArchive, BatchedDownloadPair, FilesArchive> addToFileBundle =
+      (filesArchive, batchedDownloadPair) -> {
         writeToFileStream(
-            fileBundle.getMolecularFile(),
+            filesArchive.getMolecularFile(),
             dataBufferToBytes(batchedDownloadPair.getMolecularData()));
         writeToFileStream(
-            fileBundle.getMetadataFile(),
+            filesArchive.getMetadataFile(),
             TsvWriter.analysisDocumentsToTsvRowsBytes(batchedDownloadPair.getAnalysisDocuments()));
-        return fileBundle;
+        return filesArchive;
       };
 
   // todo: rename this method
@@ -101,8 +101,8 @@ public class Download {
             .flatMap(
                 batchedAnalyses -> Flux.concat(downloadFromMuse(batchedAnalyses)),
                 concurrentRequests)
-            .reduce(new FileBundle(instant), addToFileBundle)
-            .map(FileBundle.tarGzipBundleAndClose)
+            .reduce(new FilesArchive(instant), addToFileBundle)
+            .map(FilesArchive.tarGzipBundleAndClose)
             .flux();
   }
 

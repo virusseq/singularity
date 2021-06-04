@@ -16,7 +16,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.singularity.components.model;
+package org.cancogenvirusseq.singularity.components;
 
 import static java.lang.String.format;
 
@@ -34,12 +34,11 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
-import org.cancogenvirusseq.singularity.components.TsvWriter;
 import org.springframework.util.FileSystemUtils;
 
 @Slf4j
 @Getter
-public class FileBundle {
+public class FilesArchive {
   public static final String DOWNLOAD_DIR = "/tmp";
   public static final String FILE_NAME_TEMPLATE = "virusseq-consensus-export-all-";
   public static final String MOLECULAR_FILE_EXTENSION = ".fasta";
@@ -54,7 +53,7 @@ public class FileBundle {
   private final FileOutputStream metadataFile;
 
   @SneakyThrows
-  public FileBundle(Instant instant) {
+  public FilesArchive(Instant instant) {
     // record archive name
     this.archiveFilename = format("%s%s%s", FILE_NAME_TEMPLATE, instant, ARCHIVE_EXTENSION);
 
@@ -77,39 +76,43 @@ public class FileBundle {
     this.metadataFile.write(TsvWriter.getHeader());
   }
 
-  private static final UnaryOperator<FileBundle> closeFiles =
-      fileBundle -> {
+  private static final UnaryOperator<FilesArchive> closeFiles =
+          filesArchive -> {
         try {
-          fileBundle.getMolecularFile().close();
-          fileBundle.getMetadataFile().close();
+          filesArchive.getMolecularFile().close();
+          filesArchive.getMetadataFile().close();
         } catch (IOException e) {
           log.error(e.getLocalizedMessage(), e);
         }
-        return fileBundle;
+        return filesArchive;
       };
 
-  private static final UnaryOperator<FileBundle> tarGzipDirectory =
-      fileBundle ->
-          Optional.of(getArchiveFileOutputStream(fileBundle.getArchiveFilename()))
+  private static final UnaryOperator<FilesArchive> tarGzipDirectory =
+          filesArchive ->
+          Optional.of(getArchiveFileOutputStream(filesArchive.getArchiveFilename()))
               .map(BufferedOutputStream::new)
-              .map(FileBundle::getGzipCompressorOutputStream)
+              .map(FilesArchive::getGzipCompressorOutputStream)
               .map(TarArchiveOutputStream::new)
               .map(
                   tarArchiveOutputStream ->
-                      putBundleFilesInArchive(tarArchiveOutputStream, fileBundle))
+                      putBundleFilesInArchive(tarArchiveOutputStream, filesArchive))
               .orElseThrow();
 
-  private static final Function<FileBundle, String> finalize =
-      fileBundle -> {
+  private static final Function<FilesArchive, String> finalize =
+          filesArchive -> {
         try {
-          FileSystemUtils.deleteRecursively(Paths.get(fileBundle.getDownloadDirectory()));
+          FileSystemUtils.deleteRecursively(Paths.get(filesArchive.getDownloadDirectory()));
         } catch (IOException e) {
           log.error(e.getLocalizedMessage(), e);
         }
-        return fileBundle.getArchiveFilename();
+        return filesArchive.getArchiveFilename();
       };
 
-  public static final Function<FileBundle, String> tarGzipBundleAndClose =
+  /**
+   * Function that takes a fileBundle, closes it's files, generates the tar.gz, deletes the download
+   * directory and returns the archive filename
+   */
+  public static final Function<FilesArchive, String> tarGzipBundleAndClose =
       closeFiles.andThen(tarGzipDirectory).andThen(finalize);
 
   @SneakyThrows
@@ -124,24 +127,24 @@ public class FileBundle {
   }
 
   @SneakyThrows
-  private static FileBundle putBundleFilesInArchive(
-      TarArchiveOutputStream tarArchiveOutputStream, FileBundle fileBundle) {
+  private static FilesArchive putBundleFilesInArchive(
+      TarArchiveOutputStream tarArchiveOutputStream, FilesArchive filesArchive) {
 
     // put both bundle files in the archive
     archiveFile(
         tarArchiveOutputStream,
         new File(
-            getFileLocation(fileBundle.getDownloadDirectory(), fileBundle.getMolecularFilename())));
+            getFileLocation(filesArchive.getDownloadDirectory(), filesArchive.getMolecularFilename())));
     archiveFile(
         tarArchiveOutputStream,
         new File(
-            getFileLocation(fileBundle.getDownloadDirectory(), fileBundle.getMetadataFilename())));
+            getFileLocation(filesArchive.getDownloadDirectory(), filesArchive.getMetadataFilename())));
 
     // close the archive
     tarArchiveOutputStream.close();
 
     // return the FileBundle
-    return fileBundle;
+    return filesArchive;
   }
 
   @SneakyThrows
