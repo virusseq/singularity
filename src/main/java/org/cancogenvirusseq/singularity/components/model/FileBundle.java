@@ -18,14 +18,7 @@
 
 package org.cancogenvirusseq.singularity.components.model;
 
-import lombok.Getter;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
-import org.apache.commons.compress.utils.IOUtils;
-import org.cancogenvirusseq.singularity.components.TsvWriter;
+import static java.lang.String.format;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -34,8 +27,15 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
-
-import static java.lang.String.format;
+import lombok.Getter;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+import org.apache.commons.compress.utils.IOUtils;
+import org.cancogenvirusseq.singularity.components.TsvWriter;
+import org.springframework.util.FileSystemUtils;
 
 @Slf4j
 @Getter
@@ -44,8 +44,10 @@ public class FileBundle {
   public static final String FILE_NAME_TEMPLATE = "virusseq-consensus-export-all-";
   public static final String MOLECULAR_FILE_EXTENSION = ".fasta";
   public static final String METADATA_FILE_EXTENSION = ".tsv";
+  public static final String ARCHIVE_EXTENSION = ".tar.gz";
 
-  private final String directory;
+  private final String archiveFilename;
+  private final String downloadDirectory;
   private final String molecularFilename;
   private final String metadataFilename;
   private final FileOutputStream molecularFile;
@@ -53,20 +55,23 @@ public class FileBundle {
 
   @SneakyThrows
   public FileBundle(Instant instant) {
-    // create bundle directory
-    this.directory = format("%s/%s%s", DOWNLOAD_DIR, FILE_NAME_TEMPLATE, instant);
-    Files.createDirectory(Paths.get(this.directory));
+    // record archive name
+    this.archiveFilename = format("%s%s%s", FILE_NAME_TEMPLATE, instant, ARCHIVE_EXTENSION);
+
+    // create download directory for file downloads
+    this.downloadDirectory = format("%s/%s%s", DOWNLOAD_DIR, FILE_NAME_TEMPLATE, instant);
+    Files.createDirectory(Paths.get(this.downloadDirectory));
 
     // record molecular filename and create FileOutputStream
     this.molecularFilename =
         format("%s%s%s", FILE_NAME_TEMPLATE, instant, MOLECULAR_FILE_EXTENSION);
     this.molecularFile =
-        new FileOutputStream(getFileLocation(this.directory, this.molecularFilename));
+        new FileOutputStream(getFileLocation(this.downloadDirectory, this.molecularFilename));
 
     // record molecular filename and create FileOutputStream
     this.metadataFilename = format("%s%s%s", FILE_NAME_TEMPLATE, instant, METADATA_FILE_EXTENSION);
     this.metadataFile =
-        new FileOutputStream(getFileLocation(this.directory, this.metadataFilename));
+        new FileOutputStream(getFileLocation(this.downloadDirectory, this.metadataFilename));
 
     // write the tsv header
     this.metadataFile.write(TsvWriter.getHeader());
@@ -85,7 +90,7 @@ public class FileBundle {
 
   private static final UnaryOperator<FileBundle> tarGzipDirectory =
       fileBundle ->
-          Optional.of(getFileOutputStream(fileBundle.getDirectory()))
+          Optional.of(getArchiveFileOutputStream(fileBundle.getArchiveFilename()))
               .map(BufferedOutputStream::new)
               .map(FileBundle::getGzipCompressorOutputStream)
               .map(TarArchiveOutputStream::new)
@@ -96,20 +101,20 @@ public class FileBundle {
 
   private static final Function<FileBundle, String> finalize =
       fileBundle -> {
-        // todo: delete directory
-        return getArchivePath(fileBundle.getDirectory());
+        try {
+          FileSystemUtils.deleteRecursively(Paths.get(fileBundle.getDownloadDirectory()));
+        } catch (IOException e) {
+          log.error(e.getLocalizedMessage(), e);
+        }
+        return fileBundle.getArchiveFilename();
       };
 
   public static final Function<FileBundle, String> tarGzipBundleAndClose =
       closeFiles.andThen(tarGzipDirectory).andThen(finalize);
 
   @SneakyThrows
-  private static FileOutputStream getFileOutputStream(String directory) {
-    return new FileOutputStream(getArchivePath(directory));
-  }
-
-  private static String getArchivePath(String directory) {
-    return format("%s.tar.gz", directory);
+  private static FileOutputStream getArchiveFileOutputStream(String archiveFilename) {
+    return new FileOutputStream(format("%s/%s", DOWNLOAD_DIR, archiveFilename));
   }
 
   @SneakyThrows
@@ -121,34 +126,29 @@ public class FileBundle {
   @SneakyThrows
   private static FileBundle putBundleFilesInArchive(
       TarArchiveOutputStream tarArchiveOutputStream, FileBundle fileBundle) {
-    // add entries
-    tarArchiveOutputStream.putArchiveEntry(
-        new TarArchiveEntry(
-            new File(getFileLocation(fileBundle.getDirectory(), fileBundle.getMolecularFilename())),
-            fileBundle.getMolecularFilename()));
-    tarArchiveOutputStream.putArchiveEntry(
-        new TarArchiveEntry(
-            new File(getFileLocation(fileBundle.getDirectory(), fileBundle.getMetadataFilename())),
-            fileBundle.getMetadataFilename()));
-    
-    // copy files
-    IOUtils.copy(
-        new BufferedInputStream(
-            new FileInputStream(
-                getFileLocation(fileBundle.getDirectory(), fileBundle.getMolecularFilename()))),
-        tarArchiveOutputStream);
-    IOUtils.copy(
-        new BufferedInputStream(
-            new FileInputStream(
-                getFileLocation(fileBundle.getDirectory(), fileBundle.getMetadataFilename()))),
-        tarArchiveOutputStream);
 
-    // close and finish
-    tarArchiveOutputStream.closeArchiveEntry();
-    tarArchiveOutputStream.finish();
+    // put both bundle files in the archive
+    archiveFile(
+        tarArchiveOutputStream,
+        new File(
+            getFileLocation(fileBundle.getDownloadDirectory(), fileBundle.getMolecularFilename())));
+    archiveFile(
+        tarArchiveOutputStream,
+        new File(
+            getFileLocation(fileBundle.getDownloadDirectory(), fileBundle.getMetadataFilename())));
+
+    // close the archive
+    tarArchiveOutputStream.close();
 
     // return the FileBundle
     return fileBundle;
+  }
+
+  @SneakyThrows
+  private static void archiveFile(TarArchiveOutputStream tarArchiveOutputStream, File file) {
+    tarArchiveOutputStream.putArchiveEntry(new TarArchiveEntry(file, file.getName()));
+    IOUtils.copy(new BufferedInputStream(new FileInputStream(file)), tarArchiveOutputStream);
+    tarArchiveOutputStream.closeArchiveEntry();
   }
 
   private static String getFileLocation(String directory, String filename) {

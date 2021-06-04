@@ -23,10 +23,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import lombok.Getter;
 import org.cancogenvirusseq.singularity.components.model.AnalysisDocument;
-
-import javax.annotation.Nullable;
 
 public class TsvWriter {
   @Getter
@@ -162,7 +161,7 @@ public class TsvWriter {
                     },
                     StringBuilder::append)
                 .toString())
-        .map(row -> row.substring(0, row.length() - 2)) // trim trailing "\t"
+        .map(row -> row.substring(0, row.length() - 1)) // trim trailing "\t"
         .orElse("");
   }
 

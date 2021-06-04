@@ -18,6 +18,8 @@
 
 package org.cancogenvirusseq.singularity.components;
 
+import static org.cancogenvirusseq.singularity.components.model.FileBundle.DOWNLOAD_DIR;
+
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -52,10 +54,6 @@ public class Download {
   private final RetryBackoffSpec clientsRetrySpec;
   private final Integer batchSize;
   private final Integer concurrentRequests;
-
-  private static final String DOWNLOAD_DIR = "/tmp";
-  private static final String FILE_NAME_TEMPLATE = "virusseq-consensus-export-all-";
-  public static final String FASTA_FILE_EXTENSION = ".fasta";
 
   public Download(
       @Value("${download.museHost}") String museHost,
