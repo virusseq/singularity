@@ -19,10 +19,6 @@
 package org.cancogenvirusseq.singularity.components;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.concurrent.atomic.AtomicReference;
-import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -40,6 +36,11 @@ import org.springframework.stereotype.Component;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import javax.annotation.PostConstruct;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 @Component
@@ -102,11 +103,14 @@ public class Files {
   }
 
   private Flux<String> downloadAndSave(Instant instant) {
-    return getAllAnalysisDocuments().transform(download.downloadGzipFunctionWithInstant(instant));
+    return getAllAnalysisDocuments().transform(download.downloadAndArchiveFunctionWithInstant(instant));
   }
 
   private Flux<AnalysisDocument> getAllAnalysisDocuments() {
-    return Mono.just(new SearchSourceBuilder().query(QueryBuilders.matchAllQuery()))
+    return Mono.just(
+            new SearchSourceBuilder()
+                .query(QueryBuilders.matchAllQuery())
+                .fetchSource(AnalysisDocument.getEsIncludeFields(), null))
         .flatMapMany(
             source ->
                 reactiveElasticSearchClientConfig

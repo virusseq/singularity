@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import java.util.List;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
@@ -145,4 +146,65 @@ public class AnalysisDocument {
   public static class Donor {
     @NonNull private String submitterDonorId;
   }
+
+  @Getter
+  private static final String[] esIncludeFields =
+      new String[] {
+        "object_id",
+        "study_id",
+        // experiment
+        "analysis.experiment.purpose_of_sequencing",
+        "analysis.experiment.purpose_of_sequencing_details",
+        "analysis.experiment.sequencing_date",
+        "analysis.experiment.library_id",
+        "analysis.experiment.sequencing_instrument",
+        "analysis.experiment.sequencing_protocol_name",
+        // host
+        "analysis.host.host_age",
+        "analysis.host.host_gender",
+        "analysis.host.host_age_bin",
+        "analysis.host.host_disease",
+        "analysis.host.host_age_unit",
+        "analysis.host.host_scientific_name",
+        // lineage_analysis
+        "analysis.lineage_analysis.lineage_name",
+        "analysis.lineage_analysis.variant_evidence",
+        "analysis.lineage_analysis.variant_designation",
+        "analysis.lineage_analysis.variant_evidence_details",
+        "analysis.lineage_analysis.lineage_analysis_software_name",
+        "analysis.lineage_analysis.lineage_analysis_software_version",
+        // sample_collection
+        "analysis.sample_collection.isolate",
+        "analysis.sample_collection.organism",
+        "analysis.sample_collection.body_product",
+        "analysis.sample_collection.geo_loc_city",
+        "analysis.sample_collection.anatomical_part",
+        "analysis.sample_collection.geo_loc_country",
+        "analysis.sample_collection.geo_loc_province",
+        "analysis.sample_collection.collection_device",
+        "analysis.sample_collection.collection_method",
+        "analysis.sample_collection.environmental_site",
+        "analysis.sample_collection.anatomical_material",
+        "analysis.sample_collection.purpose_of_sampling",
+        "analysis.sample_collection.sample_collected_by",
+        "analysis.sample_collection.sequence_submitted_by",
+        "analysis.sample_collection.environmental_material",
+        "analysis.sample_collection.sample_collection_date",
+        "analysis.sample_collection.nml_submitted_specimen_type",
+        "analysis.sample_collection.purpose_of_sampling_details",
+        "analysis.sample_collection.sample_collection_date_precision",
+        // sequence_analysis
+        "analysis.sequence_analysis.consensus_sequence_software_name",
+        "analysis.sequence_analysis.consensus_sequence_software_version",
+        "analysis.sequence_analysis.dehosting_method",
+        "analysis.sequence_analysis.metrics.Ns_per_100kbp",
+        "analysis.sequence_analysis.metrics.breadth_of_coverage",
+        "analysis.sequence_analysis.metrics.consensus_genome_length",
+        "analysis.sequence_analysis.metrics.depth_of_coverage",
+        "analysis.sequence_analysis.reference_genome_accession",
+        "analysis.sequence_analysis.raw_sequence_data_processing_method",
+        "analysis.sequence_analysis.bioinformatics_protocol",
+        // donors
+        "donors.submitter_donor_id"
+      };
 }

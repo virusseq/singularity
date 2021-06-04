@@ -91,8 +91,7 @@ public class Download {
         return filesArchive;
       };
 
-  // todo: rename this method
-  public Function<Flux<AnalysisDocument>, Flux<String>> downloadGzipFunctionWithInstant(
+  public Function<Flux<AnalysisDocument>, Flux<String>> downloadAndArchiveFunctionWithInstant(
       Instant instant) {
     return analysisDocs ->
         analysisDocs
