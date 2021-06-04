@@ -77,7 +77,7 @@ public class FilesArchive {
   }
 
   private static final UnaryOperator<FilesArchive> closeFiles =
-          filesArchive -> {
+      filesArchive -> {
         try {
           filesArchive.getMolecularFile().close();
           filesArchive.getMetadataFile().close();
@@ -88,7 +88,7 @@ public class FilesArchive {
       };
 
   private static final UnaryOperator<FilesArchive> tarGzipDirectory =
-          filesArchive ->
+      filesArchive ->
           Optional.of(getArchiveFileOutputStream(filesArchive.getArchiveFilename()))
               .map(BufferedOutputStream::new)
               .map(FilesArchive::getGzipCompressorOutputStream)
@@ -99,7 +99,7 @@ public class FilesArchive {
               .orElseThrow();
 
   private static final Function<FilesArchive, String> finalize =
-          filesArchive -> {
+      filesArchive -> {
         try {
           FileSystemUtils.deleteRecursively(Paths.get(filesArchive.getDownloadDirectory()));
         } catch (IOException e) {
@@ -134,11 +134,13 @@ public class FilesArchive {
     archiveFile(
         tarArchiveOutputStream,
         new File(
-            getFileLocation(filesArchive.getDownloadDirectory(), filesArchive.getMolecularFilename())));
+            getFileLocation(
+                filesArchive.getDownloadDirectory(), filesArchive.getMolecularFilename())));
     archiveFile(
         tarArchiveOutputStream,
         new File(
-            getFileLocation(filesArchive.getDownloadDirectory(), filesArchive.getMetadataFilename())));
+            getFileLocation(
+                filesArchive.getDownloadDirectory(), filesArchive.getMetadataFilename())));
 
     // close the archive
     tarArchiveOutputStream.close();

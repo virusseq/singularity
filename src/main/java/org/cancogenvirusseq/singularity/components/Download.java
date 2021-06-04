@@ -33,7 +33,10 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.cancogenvirusseq.singularity.components.model.*;
+import org.cancogenvirusseq.singularity.components.model.AnalysisDocument;
+import org.cancogenvirusseq.singularity.components.model.BatchedDownloadPair;
+import org.cancogenvirusseq.singularity.components.model.MuseErrorResponse;
+import org.cancogenvirusseq.singularity.components.model.MuseException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
@@ -95,7 +98,6 @@ public class Download {
       Instant instant) {
     return analysisDocs ->
         analysisDocs
-            .take(batchSize) // todo: temp for testing
             .buffer(batchSize)
             .flatMap(
                 batchedAnalyses -> Flux.concat(downloadFromMuse(batchedAnalyses)),
