@@ -49,8 +49,8 @@ public class FilesArchive {
   private final String downloadDirectory;
   private final String molecularFilename;
   private final String metadataFilename;
-  private final FileOutputStream molecularFile;
-  private final FileOutputStream metadataFile;
+  private final FileOutputStream molecularFileOutputStream;
+  private final FileOutputStream metadataFileOutputStream;
 
   @SneakyThrows
   public FilesArchive(Instant instant) {
@@ -64,23 +64,23 @@ public class FilesArchive {
     // record molecular filename and create FileOutputStream
     this.molecularFilename =
         format("%s%s%s", FILE_NAME_TEMPLATE, instant, MOLECULAR_FILE_EXTENSION);
-    this.molecularFile =
+    this.molecularFileOutputStream =
         new FileOutputStream(getFileLocation(this.downloadDirectory, this.molecularFilename));
 
     // record molecular filename and create FileOutputStream
     this.metadataFilename = format("%s%s%s", FILE_NAME_TEMPLATE, instant, METADATA_FILE_EXTENSION);
-    this.metadataFile =
+    this.metadataFileOutputStream =
         new FileOutputStream(getFileLocation(this.downloadDirectory, this.metadataFilename));
 
     // write the tsv header
-    this.metadataFile.write(TsvWriter.getHeader());
+    this.metadataFileOutputStream.write(TsvWriter.getHeader());
   }
 
   private static final UnaryOperator<FilesArchive> closeFiles =
       filesArchive -> {
         try {
-          filesArchive.getMolecularFile().close();
-          filesArchive.getMetadataFile().close();
+          filesArchive.getMolecularFileOutputStream().close();
+          filesArchive.getMetadataFileOutputStream().close();
         } catch (IOException e) {
           log.error(e.getLocalizedMessage(), e);
         }

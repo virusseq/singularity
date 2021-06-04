@@ -20,6 +20,7 @@ package org.cancogenvirusseq.singularity.components;
 
 import static org.cancogenvirusseq.singularity.components.FilesArchive.DOWNLOAD_DIR;
 
+import io.netty.buffer.PooledByteBufAllocator;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -40,8 +41,8 @@ import org.cancogenvirusseq.singularity.components.model.MuseException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
-import org.springframework.core.io.buffer.DefaultDataBuffer;
-import org.springframework.core.io.buffer.DefaultDataBufferFactory;
+import org.springframework.core.io.buffer.NettyDataBuffer;
+import org.springframework.core.io.buffer.NettyDataBufferFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -86,10 +87,10 @@ public class Download {
   private final BiFunction<FilesArchive, BatchedDownloadPair, FilesArchive> addToFileBundle =
       (filesArchive, batchedDownloadPair) -> {
         writeToFileStream(
-            filesArchive.getMolecularFile(),
+            filesArchive.getMolecularFileOutputStream(),
             dataBufferToBytes(batchedDownloadPair.getMolecularData()));
         writeToFileStream(
-            filesArchive.getMetadataFile(),
+            filesArchive.getMetadataFileOutputStream(),
             TsvWriter.analysisDocumentsToTsvRowsBytes(batchedDownloadPair.getAnalysisDocuments()));
         return filesArchive;
       };
@@ -125,22 +126,23 @@ public class Download {
         .exchangeToFlux(
             clientResponse ->
                 clientResponse.statusCode().is2xxSuccessful()
-                    ? clientResponse.bodyToFlux(DataBuffer.class).concatWith(newLineBuffer())
+                    ? clientResponse.bodyToFlux(NettyDataBuffer.class).concatWith(newLineBuffer())
                     : clientResponse
                         .bodyToMono(MuseErrorResponse.class)
                         .flux()
                         .flatMap(res -> Mono.error(new MuseException(res))))
+        .transform(DataBufferUtils::join) // collect dataBuffers into single dataBuffer
         .map(dataBuffer -> new BatchedDownloadPair(analysisDocuments, dataBuffer))
         .log("Download::downloadFromMuse", Level.FINE)
         .retryWhen(clientsRetrySpec);
   }
 
-  private static Flux<DataBuffer> newLineBuffer() {
+  private static Flux<NettyDataBuffer> newLineBuffer() {
     return Flux.just(newLineBufferSupplier.get().write("\n".getBytes(StandardCharsets.UTF_8)));
   }
 
-  private static final Supplier<DefaultDataBuffer> newLineBufferSupplier =
-      () -> new DefaultDataBufferFactory().allocateBuffer(4);
+  private static final Supplier<NettyDataBuffer> newLineBufferSupplier =
+      () -> new NettyDataBufferFactory(new PooledByteBufAllocator()).allocateBuffer(4);
 
   @SneakyThrows
   private void writeToFileStream(FileOutputStream stream, byte[] bytes) {
