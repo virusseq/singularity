@@ -88,7 +88,8 @@ public class TsvWriter {
   public static byte[] analysisDocumentsToTsvRowsBytes(List<AnalysisDocument> analysisDocuments) {
     return analysisDocuments.stream()
         .map(TsvWriter::analysisDocumentToTsvRow)
-        .collect(Collectors.joining("\n"))
+        .collect(Collectors.joining("\n")) // join rows with newline
+        .concat("\n") // append newline to final batch of rows
         .getBytes(StandardCharsets.UTF_8);
   }
 
