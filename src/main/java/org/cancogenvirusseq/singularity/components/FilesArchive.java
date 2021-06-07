@@ -49,8 +49,8 @@ public class FilesArchive {
   private final String downloadDirectory;
   private final String molecularFilename;
   private final String metadataFilename;
-  private final FileOutputStream molecularFileOutputStream;
-  private final FileOutputStream metadataFileOutputStream;
+  private final BufferedOutputStream molecularFileOutputStream;
+  private final BufferedOutputStream metadataFileOutputStream;
 
   @SneakyThrows
   public FilesArchive(Instant instant) {
@@ -61,16 +61,18 @@ public class FilesArchive {
     this.downloadDirectory = format("%s/%s%s", DOWNLOAD_DIR, FILE_NAME_TEMPLATE, instant);
     Files.createDirectory(Paths.get(this.downloadDirectory));
 
-    // record molecular filename and create FileOutputStream
+    // record molecular filename and create FileOutputStream (buffered)
     this.molecularFilename =
         format("%s%s%s", FILE_NAME_TEMPLATE, instant, MOLECULAR_FILE_EXTENSION);
     this.molecularFileOutputStream =
-        new FileOutputStream(getFileLocation(this.downloadDirectory, this.molecularFilename));
+        new BufferedOutputStream(
+            new FileOutputStream(getFileLocation(this.downloadDirectory, this.molecularFilename)));
 
-    // record molecular filename and create FileOutputStream
+    // record metadata filename and create FileOutputStream (buffered)
     this.metadataFilename = format("%s%s%s", FILE_NAME_TEMPLATE, instant, METADATA_FILE_EXTENSION);
     this.metadataFileOutputStream =
-        new FileOutputStream(getFileLocation(this.downloadDirectory, this.metadataFilename));
+        new BufferedOutputStream(
+            new FileOutputStream(getFileLocation(this.downloadDirectory, this.metadataFilename)));
 
     // write the tsv header
     this.metadataFileOutputStream.write(TsvWriter.getHeader());

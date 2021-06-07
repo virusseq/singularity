@@ -21,7 +21,7 @@ package org.cancogenvirusseq.singularity.components;
 import static org.cancogenvirusseq.singularity.components.FilesArchive.DOWNLOAD_DIR;
 
 import io.netty.buffer.PooledByteBufAllocator;
-import java.io.FileOutputStream;
+import java.io.BufferedOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -145,7 +145,7 @@ public class Download {
       () -> new NettyDataBufferFactory(new PooledByteBufAllocator()).allocateBuffer(4);
 
   @SneakyThrows
-  private void writeToFileStream(FileOutputStream stream, byte[] bytes) {
+  private void writeToFileStream(BufferedOutputStream stream, byte[] bytes) {
     stream.write(bytes);
   }
 

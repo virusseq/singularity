@@ -30,66 +30,68 @@ import org.cancogenvirusseq.singularity.components.model.AnalysisDocument;
 public class TsvWriter {
   @Getter
   private static final byte[] header =
-      String.join(
-              "\t",
-              List.of(
-                  "specimen collector sample ID",
-                  "sample collected by",
-                  "sequence submitted by",
-                  "sample collection date",
-                  "sample collection date precision",
-                  "geo_loc_name (country)",
-                  "geo_loc_name (state/province/territory)",
-                  "geo_loc_name (city)",
-                  "organism",
-                  "isolate",
-                  "purpose of sampling",
-                  "purpose of sampling details",
-                  "NML submitted specimen type",
-                  "anatomical material",
-                  "anatomical part",
-                  "body product",
-                  "environmental material",
-                  "environmental site",
-                  "collection device",
-                  "collection method",
-                  "host (scientific name)",
-                  "host disease",
-                  "host age",
-                  "host age unit",
-                  "host age bin",
-                  "host gender",
-                  "purpose of sequencing",
-                  "purpose of sequencing details",
-                  "sequencing date",
-                  "library ID",
-                  "sequencing instrument",
-                  "sequencing protocol name",
-                  "raw sequence data processing method",
-                  "dehosting method",
-                  "consensus sequence software name",
-                  "consensus sequence software version",
-                  "breadth of coverage value",
-                  "depth of coverage value",
-                  "consensus genome length",
-                  "Ns per 100 kbp",
-                  "reference genome accession",
-                  "bioinformatics protocol",
-                  "lineage/clade name",
-                  "lineage/clade analysis software name",
-                  "lineage/clade analysis software version",
-                  "variant designation",
-                  "variant evidence",
-                  "variant evidence details",
-                  "study_id"))
-          .concat("\n")
+      (String.join(
+                  "\t",
+                  List.of(
+                      "specimen collector sample ID",
+                      "sample collected by",
+                      "sequence submitted by",
+                      "sample collection date",
+                      "sample collection date precision",
+                      "geo_loc_name (country)",
+                      "geo_loc_name (state/province/territory)",
+                      "geo_loc_name (city)",
+                      "organism",
+                      "isolate",
+                      "purpose of sampling",
+                      "purpose of sampling details",
+                      "NML submitted specimen type",
+                      "anatomical material",
+                      "anatomical part",
+                      "body product",
+                      "environmental material",
+                      "environmental site",
+                      "collection device",
+                      "collection method",
+                      "host (scientific name)",
+                      "host disease",
+                      "host age",
+                      "host age unit",
+                      "host age bin",
+                      "host gender",
+                      "purpose of sequencing",
+                      "purpose of sequencing details",
+                      "sequencing date",
+                      "library ID",
+                      "sequencing instrument",
+                      "sequencing protocol name",
+                      "raw sequence data processing method",
+                      "dehosting method",
+                      "consensus sequence software name",
+                      "consensus sequence software version",
+                      "breadth of coverage value",
+                      "depth of coverage value",
+                      "consensus genome length",
+                      "Ns per 100 kbp",
+                      "reference genome accession",
+                      "bioinformatics protocol",
+                      "lineage/clade name",
+                      "lineage/clade analysis software name",
+                      "lineage/clade analysis software version",
+                      "variant designation",
+                      "variant evidence",
+                      "variant evidence details",
+                      "study_id"))
+              + "\n")
           .getBytes(StandardCharsets.UTF_8);
 
   public static byte[] analysisDocumentsToTsvRowsBytes(List<AnalysisDocument> analysisDocuments) {
-    return analysisDocuments.stream()
-        .map(TsvWriter::analysisDocumentToTsvRow)
-        .collect(Collectors.joining("\n")) // join rows with newline
-        .concat("\n") // append newline to final batch of rows
+    return (analysisDocuments.stream()
+                .map(TsvWriter::analysisDocumentToTsvRow)
+                .collect(Collectors.joining("\n"))
+            + // join rows with newline
+            "\n" // append newline to final batch of rows
+        )
         .getBytes(StandardCharsets.UTF_8);
   }
 
