@@ -31,7 +31,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
-import org.cancogenvirusseq.singularity.components.TsvWriter;
+import org.cancogenvirusseq.singularity.utils.TsvUtils;
 
 @Slf4j
 @Getter
@@ -79,10 +79,6 @@ public class FilesArchive {
             new FileOutputStream(format("%s/%s", this.downloadDirectory, this.metadataFilename)));
 
     // write the tsv header
-    this.metadataFileOutputStream.write(TsvWriter.getHeader());
-  }
-
-  public static String getFileArchivePath(String filename) {
-    return String.format("%s/%s", DOWNLOAD_DIR, filename);
+    this.metadataFileOutputStream.write(TsvUtils.getHeader());
   }
 }

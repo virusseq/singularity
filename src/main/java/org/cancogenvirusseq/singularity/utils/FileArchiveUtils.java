@@ -16,11 +16,11 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.singularity.components;
+package org.cancogenvirusseq.singularity.utils;
 
 import static java.lang.String.format;
-import static org.cancogenvirusseq.singularity.components.CommonUtils.dataBufferToBytes;
-import static org.cancogenvirusseq.singularity.components.CommonUtils.writeToFileStream;
+import static org.cancogenvirusseq.singularity.utils.CommonUtils.dataBufferToBytes;
+import static org.cancogenvirusseq.singularity.utils.CommonUtils.writeToFileStream;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -39,12 +39,10 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.cancogenvirusseq.singularity.components.model.BatchedDownloadPair;
 import org.cancogenvirusseq.singularity.components.model.FilesArchive;
-import org.springframework.stereotype.Component;
 import org.springframework.util.FileSystemUtils;
 import reactor.core.publisher.Flux;
 
 @Slf4j
-@Component
 public class FileArchiveUtils {
 
   public static Function<Flux<BatchedDownloadPair>, Flux<String>>
@@ -65,7 +63,7 @@ public class FileArchiveUtils {
                 dataBufferToBytes.apply(batchedDownloadPair.getMolecularData()));
             writeToFileStream.accept(
                 filesArchive.getMetadataFileOutputStream(),
-                TsvWriter.analysisDocumentsToTsvRowsBytes(
+                TsvUtils.analysisDocumentsToTsvRowsBytes(
                     batchedDownloadPair.getAnalysisDocuments()));
             return filesArchive;
           };

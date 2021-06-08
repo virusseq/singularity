@@ -18,7 +18,7 @@
 
 package org.cancogenvirusseq.singularity.components;
 
-import static org.cancogenvirusseq.singularity.components.FileArchiveUtils.batchedDownloadPairsToFileArchiveWithInstant;
+import static org.cancogenvirusseq.singularity.utils.FileArchiveUtils.batchedDownloadPairsToFileArchiveWithInstant;
 
 import java.time.Duration;
 import java.time.Instant;

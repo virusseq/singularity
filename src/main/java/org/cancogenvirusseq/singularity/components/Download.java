@@ -73,10 +73,17 @@ public class Download {
     this.concurrentRequests = concurrentRequests;
   }
 
+  /**
+   * Given a flux of AnalysisDocument, this function will transform it to a flux of
+   * BatchedDownloadPair by downloading the referenced molecular file for each input Analyses, this
+   * is done in batches, hence the return of BatchedDownloadPair
+   *
+   * @param analysisDocumentFlux - the input Flux of analyses
+   * @return a new flux of BatchedDownloadPair
+   */
   public Flux<BatchedDownloadPair> downloadBatchedPairs(
       Flux<AnalysisDocument> analysisDocumentFlux) {
     return analysisDocumentFlux
-        .take(1000)
         .buffer(batchSize)
         .flatMap(
             batchedAnalyses -> Flux.concat(downloadFromMuse(batchedAnalyses)), concurrentRequests)
@@ -108,7 +115,6 @@ public class Download {
                         .flatMap(res -> Mono.error(new MuseException(res))))
         .transform(DataBufferUtils::join) // collect dataBuffers into single dataBuffer
         .map(dataBuffer -> new BatchedDownloadPair(analysisDocuments, dataBuffer))
-        .log("Download::downloadFromMuse")
         .retryWhen(clientsRetrySpec);
   }
 

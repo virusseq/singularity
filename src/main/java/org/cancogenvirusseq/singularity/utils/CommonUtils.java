@@ -16,7 +16,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.singularity.components;
+package org.cancogenvirusseq.singularity.utils;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -26,10 +26,8 @@ import java.util.function.Function;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
-import org.springframework.stereotype.Component;
 
 @Slf4j
-@Component
 public class CommonUtils {
   public static final BiConsumer<BufferedOutputStream, byte[]> writeToFileStream =
       (stream, bytes) -> {

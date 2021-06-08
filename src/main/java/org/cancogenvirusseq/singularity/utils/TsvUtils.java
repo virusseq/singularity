@@ -16,7 +16,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.singularity.components;
+package org.cancogenvirusseq.singularity.utils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
 import lombok.Getter;
 import org.cancogenvirusseq.singularity.components.model.AnalysisDocument;
 
-public class TsvWriter {
+public class TsvUtils {
   @Getter
   private static final byte[] header =
       (String.join(
@@ -87,7 +87,7 @@ public class TsvWriter {
 
   public static byte[] analysisDocumentsToTsvRowsBytes(List<AnalysisDocument> analysisDocuments) {
     return (analysisDocuments.stream()
-                .map(TsvWriter::analysisDocumentToTsvRow)
+                .map(TsvUtils::analysisDocumentToTsvRow)
                 .collect(Collectors.joining("\n"))
             + // join rows with newline
             "\n" // append newline to final batch of rows

@@ -79,6 +79,7 @@ public class Contributors {
             contributor ->
                 Arrays.stream(filterList).noneMatch(filter -> filter.equals(contributor)))
         .concatWith(Flux.fromStream(Arrays.stream(appendList)))
-        .collect(Collectors.toSet());
+        .collect(Collectors.toSet())
+        .log("Contributors::getContributors");
   }
 }
