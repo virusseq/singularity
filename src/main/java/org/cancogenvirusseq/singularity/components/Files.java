@@ -98,12 +98,14 @@ public class Files {
         .flatMap(this::downloadAndSave)
         .doOnNext(latestFileName::set)
         .doOnNext(log::info)
+        .log("Files::createUpdateFileBundleDisposable")
         .subscribe();
   }
 
   private Flux<String> downloadAndSave(Instant instant) {
     return getAllAnalysisDocuments()
-        .transform(download.downloadAndArchiveFunctionWithInstant(instant));
+        .transform(download.downloadAndArchiveFunctionWithInstant(instant))
+        .log("Files::downloadAndSave");
   }
 
   private Flux<AnalysisDocument> getAllAnalysisDocuments() {

@@ -45,6 +45,6 @@ public class KafkaEventEmitter implements EventEmitter {
         .onErrorContinue(
             ((throwable, value) ->
                 log.debug("intervalEmit emission {}, threw: {}", throwable, value)))
-        .log("KafkaEventEmitter::emit", Level.FINE);
+        .log("KafkaEventEmitter::emit");
   }
 }

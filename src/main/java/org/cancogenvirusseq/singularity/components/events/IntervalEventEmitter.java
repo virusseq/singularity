@@ -42,6 +42,6 @@ public class IntervalEventEmitter implements EventEmitter {
         .onErrorContinue(
             ((throwable, value) ->
                 log.debug("intervalEmit emission {}, threw: {}", throwable, value)))
-        .log("FileEventEmitter::intervalEmit", Level.FINE);
+        .log("FileEventEmitter::intervalEmit");
   }
 }

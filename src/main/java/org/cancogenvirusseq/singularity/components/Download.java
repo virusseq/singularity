@@ -105,7 +105,8 @@ public class Download {
                 concurrentRequests)
             .reduce(new FilesArchive(instant), addToFileBundle)
             .map(FilesArchive.tarGzipBundleAndClose)
-            .flux();
+            .flux()
+            .log("Download::downloadAndArchiveFunctionWithInstant");
   }
 
   private Flux<BatchedDownloadPair> downloadFromMuse(List<AnalysisDocument> analysisDocuments) {
@@ -133,7 +134,7 @@ public class Download {
                         .flatMap(res -> Mono.error(new MuseException(res))))
         .transform(DataBufferUtils::join) // collect dataBuffers into single dataBuffer
         .map(dataBuffer -> new BatchedDownloadPair(analysisDocuments, dataBuffer))
-        .log("Download::downloadFromMuse", Level.FINE)
+        .log("Download::downloadFromMuse")
         .retryWhen(clientsRetrySpec);
   }
 
