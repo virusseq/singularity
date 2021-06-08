@@ -20,7 +20,6 @@ package org.cancogenvirusseq.singularity.components.events;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.logging.Level;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

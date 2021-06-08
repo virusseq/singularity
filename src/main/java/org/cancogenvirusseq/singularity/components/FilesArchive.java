@@ -49,13 +49,20 @@ public class FilesArchive {
   private final String downloadDirectory;
   private final String molecularFilename;
   private final String metadataFilename;
+  private final BufferedOutputStream archiveFileOutputStream;
   private final BufferedOutputStream molecularFileOutputStream;
   private final BufferedOutputStream metadataFileOutputStream;
 
+  private GzipCompressorOutputStream archiveGzipOutputStream;
+  private TarArchiveOutputStream archiveTarOutputStream;
+
   @SneakyThrows
   public FilesArchive(Instant instant) {
-    // record archive name
+    // record archive name and create FileOutputStream (buffered)
     this.archiveFilename = format("%s%s%s", FILE_NAME_TEMPLATE, instant, ARCHIVE_EXTENSION);
+    this.archiveFileOutputStream =
+        new BufferedOutputStream(
+            new FileOutputStream(format("%s/%s", DOWNLOAD_DIR, this.archiveFilename)));
 
     // create download directory for file downloads
     this.downloadDirectory = format("%s/%s%s", DOWNLOAD_DIR, FILE_NAME_TEMPLATE, instant);
@@ -91,13 +98,10 @@ public class FilesArchive {
 
   private static final UnaryOperator<FilesArchive> tarGzipDirectory =
       filesArchive ->
-          Optional.of(getArchiveFileOutputStream(filesArchive.getArchiveFilename()))
-              .map(BufferedOutputStream::new)
-              .map(FilesArchive::getGzipCompressorOutputStream)
-              .map(TarArchiveOutputStream::new)
-              .map(
-                  tarArchiveOutputStream ->
-                      putBundleFilesInArchive(tarArchiveOutputStream, filesArchive))
+          Optional.of(createGzipOutputStream(filesArchive))
+              .map(FilesArchive::createTarOutputStream)
+              .map(FilesArchive::putBundleFilesInArchive)
+              .map(FilesArchive::closeAllStreams)
               .orElseThrow();
 
   private static final Function<FilesArchive, String> finalize =
@@ -110,6 +114,20 @@ public class FilesArchive {
         return filesArchive.getArchiveFilename();
       };
 
+  @SneakyThrows
+  private static FilesArchive createGzipOutputStream(FilesArchive filesArchive) {
+    filesArchive.archiveGzipOutputStream =
+        new GzipCompressorOutputStream(filesArchive.getArchiveFileOutputStream());
+    return filesArchive;
+  }
+
+  @SneakyThrows
+  private static FilesArchive createTarOutputStream(FilesArchive filesArchive) {
+    filesArchive.archiveTarOutputStream =
+        new TarArchiveOutputStream(filesArchive.getArchiveGzipOutputStream());
+    return filesArchive;
+  }
+
   /**
    * Function that takes a fileBundle, closes it's files, generates the tar.gz, deletes the download
    * directory and returns the archive filename
@@ -118,36 +136,29 @@ public class FilesArchive {
       closeFiles.andThen(tarGzipDirectory).andThen(finalize);
 
   @SneakyThrows
-  private static FileOutputStream getArchiveFileOutputStream(String archiveFilename) {
-    return new FileOutputStream(format("%s/%s", DOWNLOAD_DIR, archiveFilename));
-  }
-
-  @SneakyThrows
-  private static GzipCompressorOutputStream getGzipCompressorOutputStream(
-      BufferedOutputStream bufferedOutputStream) {
-    return new GzipCompressorOutputStream(bufferedOutputStream);
-  }
-
-  @SneakyThrows
-  private static FilesArchive putBundleFilesInArchive(
-      TarArchiveOutputStream tarArchiveOutputStream, FilesArchive filesArchive) {
+  private static FilesArchive putBundleFilesInArchive(FilesArchive filesArchive) {
 
     // put both bundle files in the archive
     archiveFile(
-        tarArchiveOutputStream,
+        filesArchive.getArchiveTarOutputStream(),
         new File(
             getFileLocation(
                 filesArchive.getDownloadDirectory(), filesArchive.getMolecularFilename())));
     archiveFile(
-        tarArchiveOutputStream,
+        filesArchive.getArchiveTarOutputStream(),
         new File(
             getFileLocation(
                 filesArchive.getDownloadDirectory(), filesArchive.getMetadataFilename())));
 
-    // close the archive
-    tarArchiveOutputStream.close();
-
     // return the FileBundle
+    return filesArchive;
+  }
+
+  @SneakyThrows
+  private static FilesArchive closeAllStreams(FilesArchive filesArchive) {
+    // closing the ArchiveTarOutputStream cascades and closes the underlying gzip and buffered file
+    // input streams
+    filesArchive.getArchiveTarOutputStream().close();
     return filesArchive;
   }
 

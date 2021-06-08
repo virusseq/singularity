@@ -30,7 +30,6 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +52,9 @@ import reactor.util.retry.RetryBackoffSpec;
 @Slf4j
 @Component
 public class Download {
+
+  private static final NettyDataBufferFactory DATA_BUFFER_FACTORY =
+      new NettyDataBufferFactory(new PooledByteBufAllocator());
 
   private final String museHost;
   private final RetryBackoffSpec clientsRetrySpec;
@@ -143,7 +145,7 @@ public class Download {
   }
 
   private static final Supplier<NettyDataBuffer> newLineBufferSupplier =
-      () -> new NettyDataBufferFactory(new PooledByteBufAllocator()).allocateBuffer(4);
+      () -> DATA_BUFFER_FACTORY.allocateBuffer(4);
 
   @SneakyThrows
   private void writeToFileStream(BufferedOutputStream stream, byte[] bytes) {
