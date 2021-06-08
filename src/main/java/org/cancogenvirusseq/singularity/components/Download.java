@@ -18,27 +18,18 @@
 
 package org.cancogenvirusseq.singularity.components;
 
-import static org.cancogenvirusseq.singularity.components.FilesArchive.DOWNLOAD_DIR;
-
 import io.netty.buffer.PooledByteBufAllocator;
-import java.io.BufferedOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.singularity.components.model.AnalysisDocument;
 import org.cancogenvirusseq.singularity.components.model.BatchedDownloadPair;
 import org.cancogenvirusseq.singularity.components.model.MuseErrorResponse;
 import org.cancogenvirusseq.singularity.components.model.MuseException;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.core.io.buffer.NettyDataBuffer;
 import org.springframework.core.io.buffer.NettyDataBufferFactory;
@@ -82,33 +73,14 @@ public class Download {
     this.concurrentRequests = concurrentRequests;
   }
 
-  public static String getDownloadPathForFileBundle(String filename) {
-    return String.format("%s/%s", DOWNLOAD_DIR, filename);
-  }
-
-  private final BiFunction<FilesArchive, BatchedDownloadPair, FilesArchive> addToFileBundle =
-      (filesArchive, batchedDownloadPair) -> {
-        writeToFileStream(
-            filesArchive.getMolecularFileOutputStream(),
-            dataBufferToBytes(batchedDownloadPair.getMolecularData()));
-        writeToFileStream(
-            filesArchive.getMetadataFileOutputStream(),
-            TsvWriter.analysisDocumentsToTsvRowsBytes(batchedDownloadPair.getAnalysisDocuments()));
-        return filesArchive;
-      };
-
-  public Function<Flux<AnalysisDocument>, Flux<String>> downloadAndArchiveFunctionWithInstant(
-      Instant instant) {
-    return analysisDocs ->
-        analysisDocs
-            .buffer(batchSize)
-            .flatMap(
-                batchedAnalyses -> Flux.concat(downloadFromMuse(batchedAnalyses)),
-                concurrentRequests)
-            .reduce(new FilesArchive(instant), addToFileBundle)
-            .map(FilesArchive.tarGzipBundleAndClose)
-            .flux()
-            .log("Download::downloadAndArchiveFunctionWithInstant");
+  public Flux<BatchedDownloadPair> downloadBatchedPairs(
+      Flux<AnalysisDocument> analysisDocumentFlux) {
+    return analysisDocumentFlux
+        .take(1000)
+        .buffer(batchSize)
+        .flatMap(
+            batchedAnalyses -> Flux.concat(downloadFromMuse(batchedAnalyses)), concurrentRequests)
+        .log("Download::downloadBatchedPairs");
   }
 
   private Flux<BatchedDownloadPair> downloadFromMuse(List<AnalysisDocument> analysisDocuments) {
@@ -146,20 +118,4 @@ public class Download {
 
   private static final Supplier<NettyDataBuffer> newLineBufferSupplier =
       () -> DATA_BUFFER_FACTORY.allocateBuffer(4);
-
-  @SneakyThrows
-  private void writeToFileStream(BufferedOutputStream stream, byte[] bytes) {
-    stream.write(bytes);
-  }
-
-  private byte[] dataBufferToBytes(DataBuffer dataBuffer) {
-    return Optional.of(new byte[dataBuffer.readableByteCount()])
-        .map(
-            bytes -> {
-              dataBuffer.read(bytes);
-              DataBufferUtils.release(dataBuffer);
-              return bytes;
-            })
-        .orElseThrow();
-  }
 }
