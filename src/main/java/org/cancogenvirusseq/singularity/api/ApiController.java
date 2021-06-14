@@ -19,7 +19,7 @@
 package org.cancogenvirusseq.singularity.api;
 
 import static java.lang.String.format;
-import static org.cancogenvirusseq.singularity.components.Download.getDownloadPathForFileBundle;
+import static org.cancogenvirusseq.singularity.components.model.FilesArchive.DOWNLOAD_DIR;
 
 import java.util.Collection;
 import lombok.RequiredArgsConstructor;
@@ -54,7 +54,7 @@ public class ApiController implements ApiDefinition {
         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM_VALUE)
         .body(
             Mono.just(
-                new FileSystemResource(getDownloadPathForFileBundle(files.getFileBundleName()))));
+                new FileSystemResource(format("%s/%s", DOWNLOAD_DIR, files.getFileBundleName()))));
   }
 
   private <T> Mono<EntityListResponse<T>> listResponseTransform(

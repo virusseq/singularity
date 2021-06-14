@@ -18,6 +18,8 @@
 
 package org.cancogenvirusseq.singularity.components;
 
+import static org.cancogenvirusseq.singularity.utils.FileArchiveUtils.batchedDownloadPairsToFileArchiveWithInstant;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicReference;
@@ -26,27 +28,17 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.singularity.components.events.EventEmitter;
-import org.cancogenvirusseq.singularity.config.elasticsearch.ElasticsearchProperties;
-import org.cancogenvirusseq.singularity.config.elasticsearch.ReactiveElasticSearchClientConfig;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.sort.FieldSortBuilder;
-import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class Files {
-  private final ElasticsearchProperties elasticsearchProperties;
-  private final ReactiveElasticSearchClientConfig reactiveElasticSearchClientConfig;
   private final EventEmitter eventEmitter;
+  private final Analyses analyses;
   private final Download download;
 
   @Value("${files.triggerUpdateDelaySeconds}")
@@ -96,27 +88,15 @@ public class Files {
         .flatMap(this::downloadAndSave)
         .doOnNext(latestFileName::set)
         .doOnNext(log::info)
+        .log("Files::createUpdateFileBundleDisposable")
         .subscribe();
   }
 
   private Flux<String> downloadAndSave(Instant instant) {
-    return getAllFileObjectIds().transform(download.downloadGzipFunctionWithInstant(instant));
-  }
-
-  private Flux<String> getAllFileObjectIds() {
-    return Mono.just(
-            new SearchSourceBuilder()
-                .query(QueryBuilders.matchAllQuery())
-                .sort(new FieldSortBuilder("analysis.updated_at").order(SortOrder.DESC))
-                .fetchSource(false))
-        .flatMapMany(
-            source ->
-                reactiveElasticSearchClientConfig
-                    .reactiveElasticsearchClient()
-                    .scroll(
-                        new SearchRequest()
-                            .indices(elasticsearchProperties.getFileCentricIndex())
-                            .source(source)))
-        .map(SearchHit::getId);
+    return analyses
+        .getAllAnalysisDocuments()
+        .transform(download::downloadBatchedPairs)
+        .transform(batchedDownloadPairsToFileArchiveWithInstant(instant))
+        .log("Files::downloadAndSave");
   }
 }

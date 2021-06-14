@@ -16,34 +16,16 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.singularity.components.events;
+package org.cancogenvirusseq.singularity.components.model;
 
-import java.time.Instant;
+import java.util.List;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.cancogenvirusseq.singularity.config.kafka.KafkaConsumerConfig;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
-import reactor.core.publisher.Flux;
+import org.springframework.core.io.buffer.DataBuffer;
 
-@Slf4j
-@Component
-@Profile("kafka")
+@Getter
 @RequiredArgsConstructor
-public class KafkaEventEmitter implements EventEmitter {
-  private final KafkaConsumerConfig kafkaConsumerConfig;
-
-  public Flux<Instant> receive() {
-    return kafkaConsumerConfig
-        .getReceiver()
-        .receiveAtmostOnce()
-        .doOnNext(value -> log.debug("Message received from Kafka: {}", value.toString()))
-        // we dont' actually care about the message contents so we just emit and Instant here
-        // instead
-        .map(value -> Instant.now())
-        .onErrorContinue(
-            ((throwable, value) ->
-                log.debug("intervalEmit emission {}, threw: {}", throwable, value)))
-        .log("KafkaEventEmitter::emit");
-  }
+public class BatchedDownloadPair {
+  private final List<AnalysisDocument> analysisDocuments;
+  private final DataBuffer molecularData;
 }

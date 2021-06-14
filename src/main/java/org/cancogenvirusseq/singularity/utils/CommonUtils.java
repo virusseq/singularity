@@ -16,34 +16,36 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.singularity.components.events;
+package org.cancogenvirusseq.singularity.utils;
 
-import java.time.Instant;
-import lombok.RequiredArgsConstructor;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.util.Optional;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import lombok.extern.slf4j.Slf4j;
-import org.cancogenvirusseq.singularity.config.kafka.KafkaConsumerConfig;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
-import reactor.core.publisher.Flux;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
 
 @Slf4j
-@Component
-@Profile("kafka")
-@RequiredArgsConstructor
-public class KafkaEventEmitter implements EventEmitter {
-  private final KafkaConsumerConfig kafkaConsumerConfig;
+public class CommonUtils {
+  public static final BiConsumer<BufferedOutputStream, byte[]> writeToFileStream =
+      (stream, bytes) -> {
+        try {
+          stream.write(bytes);
+        } catch (IOException e) {
+          log.error(e.getLocalizedMessage(), e);
+        }
+      };
 
-  public Flux<Instant> receive() {
-    return kafkaConsumerConfig
-        .getReceiver()
-        .receiveAtmostOnce()
-        .doOnNext(value -> log.debug("Message received from Kafka: {}", value.toString()))
-        // we dont' actually care about the message contents so we just emit and Instant here
-        // instead
-        .map(value -> Instant.now())
-        .onErrorContinue(
-            ((throwable, value) ->
-                log.debug("intervalEmit emission {}, threw: {}", throwable, value)))
-        .log("KafkaEventEmitter::emit");
-  }
+  public static final Function<DataBuffer, byte[]> dataBufferToBytes =
+      dataBuffer ->
+          Optional.of(new byte[dataBuffer.readableByteCount()])
+              .map(
+                  bytes -> {
+                    dataBuffer.read(bytes);
+                    DataBufferUtils.release(dataBuffer);
+                    return bytes;
+                  })
+              .orElseThrow();
 }

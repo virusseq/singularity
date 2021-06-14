@@ -18,68 +18,47 @@
 
 package org.cancogenvirusseq.singularity.components;
 
-import java.util.Arrays;
-import java.util.Set;
-import java.util.stream.Collectors;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.cancogenvirusseq.singularity.components.model.AnalysisDocument;
 import org.cancogenvirusseq.singularity.config.elasticsearch.ElasticsearchProperties;
 import org.cancogenvirusseq.singularity.config.elasticsearch.ReactiveElasticSearchClientConfig;
 import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
-@ConfigurationProperties("contributors")
-public class Contributors {
+public class Analyses {
   private final ElasticsearchProperties elasticsearchProperties;
   private final ReactiveElasticSearchClientConfig reactiveElasticSearchClientConfig;
+  private final ObjectMapper objectMapper;
 
-  // Config values
-  @Setter private String[] filterList = new String[] {};
-  @Setter private String[] appendList = new String[] {};
-
-  private static final Integer MAX_AGGREGATE_BUCKETS = 1000;
-
-  public Mono<Set<String>> getContributors() {
+  public Flux<AnalysisDocument> getAllAnalysisDocuments() {
     return Mono.just(
             new SearchSourceBuilder()
-                .aggregation(
-                    AggregationBuilders.terms("collectors")
-                        .field("analysis.sample_collection.sample_collected_by")
-                        .size(MAX_AGGREGATE_BUCKETS))
-                .aggregation(
-                    AggregationBuilders.terms("submitters")
-                        .field("analysis.sample_collection.sequence_submitted_by")
-                        .size(MAX_AGGREGATE_BUCKETS))
-                .size(0)) // number of documents returned by query set to zero, buckets set above
-        .map(
+                .query(QueryBuilders.matchAllQuery())
+                .fetchSource(AnalysisDocument.getEsIncludeFields(), null))
+        .flatMapMany(
             source ->
                 reactiveElasticSearchClientConfig
                     .reactiveElasticsearchClient()
-                    .aggregate(
+                    .scroll(
                         new SearchRequest()
                             .indices(elasticsearchProperties.getFileCentricIndex())
                             .source(source)))
-        .flatMapMany(
-            aggregationFlux ->
-                aggregationFlux.map(aggregation -> ((ParsedStringTerms) aggregation).getBuckets()))
-        .flatMapIterable(
-            buckets ->
-                buckets.stream()
-                    .map(bucket -> bucket.getKey().toString())
-                    .collect(Collectors.toSet()))
-        .filter(
-            contributor ->
-                Arrays.stream(filterList).noneMatch(filter -> filter.equals(contributor)))
-        .concatWith(Flux.fromStream(Arrays.stream(appendList)))
-        .collect(Collectors.toSet())
-        .log("Contributors::getContributors");
+        .map(this::hitMapToAnalysisDocument);
+  }
+
+  @SneakyThrows
+  private AnalysisDocument hitMapToAnalysisDocument(SearchHit hit) {
+    return objectMapper.readValue(hit.getSourceAsString(), AnalysisDocument.class);
   }
 }
