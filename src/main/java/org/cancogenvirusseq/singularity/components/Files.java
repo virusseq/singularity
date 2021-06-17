@@ -88,7 +88,15 @@ public class Files {
               lastEvent.set(instant);
             })
         .delayElements(Duration.ofSeconds(triggerUpdateDelaySeconds))
-        .filter(instant -> instant.equals(lastEvent.get()))
+        .filter(
+            instant -> {
+              log.debug(
+                  "Current instant: {}, lastEvent: {}, {}",
+                  instant,
+                  lastEvent.get(),
+                  instant.equals(lastEvent.get()) ? "does match" : "does not match");
+              return instant.equals(lastEvent.get());
+            })
         .flatMap(this::downloadAndSave)
         .doOnNext(
             archiveFileName -> {
