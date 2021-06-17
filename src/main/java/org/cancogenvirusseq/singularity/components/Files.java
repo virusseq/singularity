@@ -82,12 +82,21 @@ public class Files {
   private Disposable createUpdateFileBundleDisposable() {
     return eventEmitter
         .receive()
-        .doOnNext(lastEvent::set)
+        .doOnNext(
+            instant -> {
+              log.debug("createUpdateFileBundleDisposable received instant: {}", instant);
+              lastEvent.set(instant);
+            })
         .delayElements(Duration.ofSeconds(triggerUpdateDelaySeconds))
         .filter(instant -> instant.equals(lastEvent.get()))
         .flatMap(this::downloadAndSave)
-        .doOnNext(latestFileName::set)
-        .doOnNext(log::info)
+        .doOnNext(
+            archiveFileName -> {
+              log.debug(
+                  "createUpdateFileBundleDisposable updating latestFileName to: {}",
+                  latestFileName);
+              latestFileName.set(archiveFileName);
+            })
         .log("Files::createUpdateFileBundleDisposable")
         .subscribe();
   }
