@@ -22,7 +22,9 @@ import static org.cancogenvirusseq.singularity.utils.FileArchiveUtils.batchedDow
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +48,8 @@ public class Files {
 
   private static final AtomicReference<Instant> lastEvent = new AtomicReference<>();
   private static final AtomicReference<String> latestFileName = new AtomicReference<>();
+  private static final AtomicBoolean isBuildingBundle = new AtomicBoolean(false);
+  private static final Integer isBuildingCheckSeconds = 1;
 
   @Getter private Disposable updateFileBundleDisposable;
 
@@ -56,12 +60,17 @@ public class Files {
     // set the lastEvent to now (app startup)
     lastEvent.set(Instant.now());
 
+    // set building to true
+    isBuildingBundle.set(true);
+
     // build a bundle on app start
     downloadAndSave(lastEvent.get())
         .doOnNext(latestFileName::set)
         .doFinally(
-            signalType ->
-                log.info("Startup file bundle created and saved at: {}", latestFileName.get()))
+            signalType -> {
+              isBuildingBundle.set(false);
+              log.info("Startup file bundle created and saved at: {}", latestFileName.get());
+            })
         .blockFirst();
   }
 
@@ -87,7 +96,7 @@ public class Files {
               log.debug("createUpdateFileBundleDisposable received instant: {}", instant);
               lastEvent.set(instant);
             })
-        .delayElements(Duration.ofSeconds(triggerUpdateDelaySeconds))
+        .delaySequence(Duration.ofSeconds(triggerUpdateDelaySeconds))
         .filter(
             instant -> {
               log.debug(
@@ -97,6 +106,26 @@ public class Files {
                   instant.equals(lastEvent.get()) ? "does match" : "does not match");
               return instant.equals(lastEvent.get());
             })
+        // do not proceed if the bundle is building
+        .delayUntil(delayForBuildIfBuilding)
+        // don't build every single build, only the latest one
+        .filter(
+            instant -> {
+              log.debug(
+                  "{}: {}",
+                  instant.equals(lastEvent.get())
+                      ? "Bundle build is ready to proceed for instant"
+                      : "Bundle build for instant is stale, dropping build for instant",
+                  instant);
+              return instant.equals(lastEvent.get());
+            })
+        .doOnNext(
+            instant -> {
+              log.debug(
+                  "createUpdateFileBundleDisposable setting isBuildingBundle to true for instant: {}",
+                  instant);
+              isBuildingBundle.set(true);
+            })
         .flatMap(this::downloadAndSave)
         .doOnNext(
             archiveFileName -> {
@@ -104,6 +133,7 @@ public class Files {
                   "createUpdateFileBundleDisposable updating latestFileName to: {}",
                   latestFileName);
               latestFileName.set(archiveFileName);
+              isBuildingBundle.set(false);
             })
         .log("Files::createUpdateFileBundleDisposable")
         .subscribe();
@@ -116,4 +146,25 @@ public class Files {
         .transform(batchedDownloadPairsToFileArchiveWithInstant(instant))
         .log("Files::downloadAndSave");
   }
+
+  private final Function<Instant, Flux<Instant>> delayForBuildIfBuilding =
+      instant ->
+          Flux.just(instant)
+              .doOnNext(
+                  i ->
+                      log.debug(
+                          "Delay of {} seconds being applied before attempting build for instant: {}",
+                          isBuildingCheckSeconds,
+                          i))
+              .delaySequence(Duration.ofSeconds(isBuildingCheckSeconds))
+              .repeat(
+                  () -> {
+                    log.debug(
+                        "{}: {}",
+                        isBuildingBundle.get()
+                            ? "Bundle is currently building, will retry for this instant"
+                            : "Bundle is not building, proceeding with build for instant",
+                        instant);
+                    return isBuildingBundle.get();
+                  });
 }
