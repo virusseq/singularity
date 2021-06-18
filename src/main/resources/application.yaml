@@ -35,7 +35,8 @@ download:
   concurrentRequests: 5
 
 files:
-  triggerUpdateDelaySeconds: 60
+  finalEventCheckSeconds: 60
+  bundleBuildingCheckSeconds: 60
 
 intervalEventEmitter:
   intervalTimerSeconds: 600

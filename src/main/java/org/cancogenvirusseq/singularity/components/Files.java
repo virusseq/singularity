@@ -18,14 +18,6 @@
 
 package org.cancogenvirusseq.singularity.components;
 
-import static org.cancogenvirusseq.singularity.utils.FileArchiveUtils.batchedDownloadPairsToFileArchiveWithInstant;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
-import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +27,17 @@ import org.springframework.stereotype.Component;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 
+import javax.annotation.PostConstruct;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
+
+import static org.cancogenvirusseq.singularity.utils.FileArchiveUtils.batchedDownloadPairsToFileArchiveWithInstant;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -43,13 +46,15 @@ public class Files {
   private final Analyses analyses;
   private final Download download;
 
-  @Value("${files.triggerUpdateDelaySeconds}")
-  private final Integer triggerUpdateDelaySeconds = 60; // default to 1 minute
+  @Value("${files.finalEventCheckSeconds}")
+  private final Integer finalEventCheckSeconds = 60; // default to 1 minute
+
+  @Value("${files.bundleBuildingCheckSeconds}")
+  private final Integer bundleBuildingCheckSeconds = 60; // default to 1 minute
 
   private static final AtomicReference<Instant> lastEvent = new AtomicReference<>();
   private static final AtomicReference<String> latestFileName = new AtomicReference<>();
   private static final AtomicBoolean isBuildingBundle = new AtomicBoolean(false);
-  private static final Integer isBuildingCheckSeconds = 1;
 
   @Getter private Disposable updateFileBundleDisposable;
 
@@ -64,7 +69,7 @@ public class Files {
     isBuildingBundle.set(true);
 
     // build a bundle on app start
-    downloadAndSave(lastEvent.get())
+    downloadAndBuildBundle(lastEvent.get())
         .doOnNext(latestFileName::set)
         .doFinally(
             signalType -> {
@@ -96,57 +101,68 @@ public class Files {
               log.debug("createUpdateFileBundleDisposable received instant: {}", instant);
               lastEvent.set(instant);
             })
-        .delaySequence(Duration.ofSeconds(triggerUpdateDelaySeconds))
-        .filter(
-            instant -> {
-              log.debug(
-                  "Current instant: {}, lastEvent: {}, {}",
-                  instant,
-                  lastEvent.get(),
-                  instant.equals(lastEvent.get()) ? "does match" : "does not match");
-              return instant.equals(lastEvent.get());
-            })
-        // do not proceed if the bundle is building
-        .delayUntil(delayForBuildIfBuilding)
-        // don't build every single build, only the latest one
-        .filter(
-            instant -> {
-              log.debug(
-                  "{}: {}",
-                  instant.equals(lastEvent.get())
-                      ? "Bundle build is ready to proceed for instant"
-                      : "Bundle build for instant is stale, dropping build for instant",
-                  instant);
-              return instant.equals(lastEvent.get());
-            })
+        .transform(finalEventToBuildRequest)
+        .transform(takeOnlyLatestBuildRequest)
         .doOnNext(
             instant -> {
               log.debug(
                   "createUpdateFileBundleDisposable setting isBuildingBundle to true for instant: {}",
                   instant);
-              isBuildingBundle.set(true);
             })
-        .flatMap(this::downloadAndSave)
+        // concat map to guarantee single bundle building at one time
+        .concatMap(this::downloadAndBuildBundle)
         .doOnNext(
             archiveFileName -> {
               log.debug(
                   "createUpdateFileBundleDisposable updating latestFileName to: {}",
                   latestFileName);
               latestFileName.set(archiveFileName);
-              isBuildingBundle.set(false);
             })
         .log("Files::createUpdateFileBundleDisposable")
         .subscribe();
   }
 
-  private Flux<String> downloadAndSave(Instant instant) {
+  private Flux<String> downloadAndBuildBundle(Instant instant) {
     return analyses
         .getAllAnalysisDocuments()
         .transform(download::downloadBatchedPairs)
         .transform(batchedDownloadPairsToFileArchiveWithInstant(instant))
+        // lock bundle building on start of downloadAndSave
+        .doOnSubscribe(sub -> isBuildingBundle.set(true))
+        // unlock bundle building on complete/error of downloadAndSave
+        .doOnTerminate(() -> isBuildingBundle.set(false))
         .log("Files::downloadAndSave");
   }
 
+  /**
+   * As events come in, we only want to trigger the bundle building at the tail end of a submission,
+   * meaning that we do not want to start building the bundle until every event for a particular
+   * submission has been received thereby letting us know that we can start building, we accomplish
+   * this by delaying all elements by some set time and then filtering all events that are not the
+   * most recent event. Pseudo Example:
+   *
+   * <p>emit a sequential number every 10 second ... 4 3 2 1 -> setLatest(x) -> wait 15 seconds ->
+   * current: 1, latest: 2 (filter fail) ... current: 4, latest: 4 (filter pass) -< request build
+   */
+  private final UnaryOperator<Flux<Instant>> finalEventToBuildRequest =
+      events ->
+          events
+              .delaySequence(Duration.ofSeconds(finalEventCheckSeconds))
+              .filter(
+                  instant -> {
+                    log.debug(
+                        "Current instant: {}, lastEvent: {}, {}",
+                        instant,
+                        lastEvent.get(),
+                        instant.equals(lastEvent.get()) ? "does match" : "does not match");
+                    return instant.equals(lastEvent.get());
+                  });
+
+  /**
+   * Before kicking off a build we want to ensure a build is not already happening, if it is we want
+   * to wait some time (configurable) and then check again, eventually the check passes and we can
+   * proceed with the build
+   */
   private final Function<Instant, Flux<Instant>> delayForBuildIfBuilding =
       instant ->
           Flux.just(instant)
@@ -154,9 +170,9 @@ public class Files {
                   i ->
                       log.debug(
                           "Delay of {} seconds being applied before attempting build for instant: {}",
-                          isBuildingCheckSeconds,
+                          bundleBuildingCheckSeconds,
                           i))
-              .delaySequence(Duration.ofSeconds(isBuildingCheckSeconds))
+              .delaySequence(Duration.ofSeconds(bundleBuildingCheckSeconds))
               .repeat(
                   () -> {
                     log.debug(
@@ -167,4 +183,27 @@ public class Files {
                         instant);
                     return isBuildingBundle.get();
                   });
+
+  /**
+   * Hold on to build requests if a bundle is already building, then once the bundle is built and a
+   * new bundle is required, build only the latest one. This ensures that we are not queueing up
+   * n..infinity requests while holding to build and instead just build a single bundle, essentially
+   * compressing the build requests into a single request
+   */
+  private final UnaryOperator<Flux<Instant>> takeOnlyLatestBuildRequest =
+      buildRequestInstants ->
+          buildRequestInstants
+              .delayUntil(delayForBuildIfBuilding)
+              .filter(
+                  instant -> {
+                    log.debug(
+                        "{}: {}",
+                        instant.equals(lastEvent.get())
+                            ? "Bundle build is ready to proceed for instant"
+                            : "Bundle build for instant is stale, dropping build for instant",
+                        instant);
+                    return instant.equals(lastEvent.get());
+                  });
+
+  private final Consumer<Boolean> setIsBuildingBundle = isBuildingBundle::set;
 }
