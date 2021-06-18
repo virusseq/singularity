@@ -18,6 +18,16 @@
 
 package org.cancogenvirusseq.singularity.components;
 
+import static org.cancogenvirusseq.singularity.utils.FileArchiveUtils.batchedDownloadPairsToFileArchiveWithInstant;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
+import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,17 +36,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
-
-import javax.annotation.PostConstruct;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
-
-import static org.cancogenvirusseq.singularity.utils.FileArchiveUtils.batchedDownloadPairsToFileArchiveWithInstant;
 
 @Slf4j
 @Component
@@ -60,15 +59,10 @@ public class Files {
 
   @PostConstruct
   public void init() {
-    updateFileBundleDisposable = createUpdateFileBundleDisposable();
-
     // set the lastEvent to now (app startup)
     lastEvent.set(Instant.now());
 
-    // set building to true
-    isBuildingBundle.set(true);
-
-    // build a bundle on app start
+    // build file bundle on app start
     downloadAndBuildBundle(lastEvent.get())
         .doOnNext(latestFileName::set)
         .doFinally(
@@ -76,7 +70,10 @@ public class Files {
               isBuildingBundle.set(false);
               log.info("Startup file bundle created and saved at: {}", latestFileName.get());
             })
-        .blockFirst();
+        .subscribe();
+
+    // start file bundle update disposable
+    updateFileBundleDisposable = createUpdateFileBundleDisposable();
   }
 
   public String getFileBundleName() {
@@ -101,8 +98,8 @@ public class Files {
               log.debug("createUpdateFileBundleDisposable received instant: {}", instant);
               lastEvent.set(instant);
             })
-        .transform(finalEventToBuildRequest)
-        .transform(takeOnlyLatestBuildRequest)
+        .transform(takeOnlyFinalInstant)
+        .transform(takeOnlyLatestBuildInstant)
         .doOnNext(
             instant -> {
               log.debug(
@@ -144,7 +141,7 @@ public class Files {
    * <p>emit a sequential number every 10 second ... 4 3 2 1 -> setLatest(x) -> wait 15 seconds ->
    * current: 1, latest: 2 (filter fail) ... current: 4, latest: 4 (filter pass) -< request build
    */
-  private final UnaryOperator<Flux<Instant>> finalEventToBuildRequest =
+  private final UnaryOperator<Flux<Instant>> takeOnlyFinalInstant =
       events ->
           events
               .delaySequence(Duration.ofSeconds(finalEventCheckSeconds))
@@ -190,7 +187,7 @@ public class Files {
    * n..infinity requests while holding to build and instead just build a single bundle, essentially
    * compressing the build requests into a single request
    */
-  private final UnaryOperator<Flux<Instant>> takeOnlyLatestBuildRequest =
+  private final UnaryOperator<Flux<Instant>> takeOnlyLatestBuildInstant =
       buildRequestInstants ->
           buildRequestInstants
               .delayUntil(delayForBuildIfBuilding)

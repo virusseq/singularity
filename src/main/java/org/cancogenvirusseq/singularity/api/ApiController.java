@@ -22,6 +22,7 @@ import static java.lang.String.format;
 import static org.cancogenvirusseq.singularity.components.model.FilesArchive.DOWNLOAD_DIR;
 
 import java.util.Collection;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
@@ -30,6 +31,7 @@ import org.cancogenvirusseq.singularity.components.Files;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -47,14 +49,21 @@ public class ApiController implements ApiDefinition {
   }
 
   public ResponseEntity<Mono<Resource>> getFiles() {
-    return ResponseEntity.ok()
-        .header(
-            HttpHeaders.CONTENT_DISPOSITION,
-            format("attachment; filename=%s", files.getFileBundleName()))
-        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM_VALUE)
-        .body(
-            Mono.just(
-                new FileSystemResource(format("%s/%s", DOWNLOAD_DIR, files.getFileBundleName()))));
+    return Optional.ofNullable(files.getFileBundleName())
+        .<ResponseEntity<Mono<Resource>>>map(
+            fileBundleName ->
+                ResponseEntity.ok()
+                    .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        format("attachment; filename=%s", fileBundleName))
+                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM_VALUE)
+                    .body(
+                        Mono.just(
+                            new FileSystemResource(format("%s/%s", DOWNLOAD_DIR, fileBundleName)))))
+        .orElse(
+            ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .header("X-Reason", "file-bundle-not-built")
+                .build());
   }
 
   private <T> Mono<EntityListResponse<T>> listResponseTransform(
