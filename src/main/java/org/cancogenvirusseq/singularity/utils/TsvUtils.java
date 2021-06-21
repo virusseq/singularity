@@ -18,14 +18,15 @@
 
 package org.cancogenvirusseq.singularity.utils;
 
+import lombok.Getter;
+import org.cancogenvirusseq.singularity.components.model.AnalysisDocument;
+
+import javax.annotation.Nullable;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
-import lombok.Getter;
-import org.cancogenvirusseq.singularity.components.model.AnalysisDocument;
 
 public class TsvUtils {
   @Getter
@@ -33,19 +34,18 @@ public class TsvUtils {
       (String.join(
                   "\t",
                   List.of(
+                      "study_id",
                       "specimen collector sample ID",
                       "sample collected by",
                       "sequence submitted by",
                       "sample collection date",
-                      "sample collection date precision",
+                      "sample collection date null reason",
                       "geo_loc_name (country)",
                       "geo_loc_name (state/province/territory)",
-                      "geo_loc_name (city)",
                       "organism",
                       "isolate",
                       "purpose of sampling",
                       "purpose of sampling details",
-                      "NML submitted specimen type",
                       "anatomical material",
                       "anatomical part",
                       "body product",
@@ -56,32 +56,24 @@ public class TsvUtils {
                       "host (scientific name)",
                       "host disease",
                       "host age",
+                      "host age null reason",
                       "host age unit",
                       "host age bin",
                       "host gender",
                       "purpose of sequencing",
                       "purpose of sequencing details",
-                      "sequencing date",
-                      "library ID",
                       "sequencing instrument",
-                      "sequencing protocol name",
+                      "sequencing protocol",
                       "raw sequence data processing method",
                       "dehosting method",
                       "consensus sequence software name",
                       "consensus sequence software version",
                       "breadth of coverage value",
                       "depth of coverage value",
-                      "consensus genome length",
-                      "Ns per 100 kbp",
                       "reference genome accession",
                       "bioinformatics protocol",
-                      "lineage/clade name",
-                      "lineage/clade analysis software name",
-                      "lineage/clade analysis software version",
-                      "variant designation",
-                      "variant evidence",
-                      "variant evidence details",
-                      "study_id"))
+                      "gene name 1",
+                      "diagnostic pcr Ct value 1"))
               + "\n")
           .getBytes(StandardCharsets.UTF_8);
 
@@ -97,19 +89,18 @@ public class TsvUtils {
 
   private static String analysisDocumentToTsvRow(AnalysisDocument analysisDocument) {
     return stringsToTsvRow(
+        analysisDocument.getStudyId(),
         analysisDocument.getDonors().get(0).getSubmitterDonorId(),
         analysisDocument.getAnalysis().getSampleCollection().getSampleCollectedBy(),
         analysisDocument.getAnalysis().getSampleCollection().getSequenceSubmittedBy(),
         analysisDocument.getAnalysis().getSampleCollection().getSampleCollectionDate(),
-        analysisDocument.getAnalysis().getSampleCollection().getSampleCollectionDatePrecision(),
+        analysisDocument.getAnalysis().getSampleCollection().getSampleCollectionDateNullReason(),
         analysisDocument.getAnalysis().getSampleCollection().getGeoLocCountry(),
         analysisDocument.getAnalysis().getSampleCollection().getGeoLocProvince(),
-        analysisDocument.getAnalysis().getSampleCollection().getGeoLocCity(),
         analysisDocument.getAnalysis().getSampleCollection().getOrganism(),
         analysisDocument.getAnalysis().getSampleCollection().getIsolate(),
         analysisDocument.getAnalysis().getSampleCollection().getPurposeOfSampling(),
         analysisDocument.getAnalysis().getSampleCollection().getPurposeOfSamplingDetails(),
-        analysisDocument.getAnalysis().getSampleCollection().getNmlSubmittedSpecimenType(),
         analysisDocument.getAnalysis().getSampleCollection().getAnatomicalMaterial(),
         analysisDocument.getAnalysis().getSampleCollection().getAnatomicalPart(),
         analysisDocument.getAnalysis().getSampleCollection().getBodyProduct(),
@@ -120,36 +111,24 @@ public class TsvUtils {
         analysisDocument.getAnalysis().getHost().getHostScientificName(),
         analysisDocument.getAnalysis().getHost().getHostDisease(),
         analysisDocument.getAnalysis().getHost().getHostAge(),
+        analysisDocument.getAnalysis().getHost().getHostAgeNullReason(),
         analysisDocument.getAnalysis().getHost().getHostAgeUnit(),
         analysisDocument.getAnalysis().getHost().getHostAgeBin(),
         analysisDocument.getAnalysis().getHost().getHostGender(),
         analysisDocument.getAnalysis().getExperiment().getPurposeOfSequencing(),
         analysisDocument.getAnalysis().getExperiment().getPurposeOfSequencingDetails(),
-        analysisDocument.getAnalysis().getExperiment().getSequencingDate(),
-        analysisDocument.getAnalysis().getExperiment().getLibraryId(),
         analysisDocument.getAnalysis().getExperiment().getSequencingInstrument(),
-        analysisDocument.getAnalysis().getExperiment().getSequencingProtocolName(),
+        analysisDocument.getAnalysis().getExperiment().getSequencingProtocol(),
         analysisDocument.getAnalysis().getSequenceAnalysis().getRawSequenceDataProcessingMethod(),
         analysisDocument.getAnalysis().getSequenceAnalysis().getDehostingMethod(),
         analysisDocument.getAnalysis().getSequenceAnalysis().getConsensusSequenceSoftwareName(),
         analysisDocument.getAnalysis().getSequenceAnalysis().getConsensusSequenceSoftwareVersion(),
         analysisDocument.getAnalysis().getSequenceAnalysis().getMetrics().getBreadthOfCoverage(),
         analysisDocument.getAnalysis().getSequenceAnalysis().getMetrics().getDepthOfCoverage(),
-        analysisDocument
-            .getAnalysis()
-            .getSequenceAnalysis()
-            .getMetrics()
-            .getConsensusGenomeLength(),
-        analysisDocument.getAnalysis().getSequenceAnalysis().getMetrics().getNsPer100kbp(),
         analysisDocument.getAnalysis().getSequenceAnalysis().getReferenceGenomeAccession(),
         analysisDocument.getAnalysis().getSequenceAnalysis().getBioinformaticsProtocol(),
-        analysisDocument.getAnalysis().getLineageAnalysis().getLineageName(),
-        analysisDocument.getAnalysis().getLineageAnalysis().getLineageAnalysisSoftwareName(),
-        analysisDocument.getAnalysis().getLineageAnalysis().getLineageAnalysisSoftwareVersion(),
-        analysisDocument.getAnalysis().getLineageAnalysis().getVariantDesignation(),
-        analysisDocument.getAnalysis().getLineageAnalysis().getVariantEvidence(),
-        analysisDocument.getAnalysis().getLineageAnalysis().getVariantEvidenceDetails(),
-        analysisDocument.getStudyId());
+        analysisDocument.getAnalysis().getPathogenDiagnosticTesting().getGeneName1(),
+        analysisDocument.getAnalysis().getPathogenDiagnosticTesting().getDiagnosticPcrProtocol1());
   }
 
   private static String stringsToTsvRow(String... strings) {
