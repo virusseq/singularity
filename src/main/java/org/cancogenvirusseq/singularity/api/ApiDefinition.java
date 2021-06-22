@@ -27,11 +27,13 @@ import org.cancogenvirusseq.singularity.api.model.ErrorResponse;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Mono;
 
+@CrossOrigin
 @Api(value = "Singularity - All Contributors, All Files", tags = "Singularity")
 public interface ApiDefinition {
   String UNKNOWN_MSG = "An unexpected error occurred.";
