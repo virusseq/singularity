@@ -15,6 +15,7 @@ elastic:
   username: elastic
   password: testing
   fileCentricIndex: file_centric
+  scrollTimeoutMinutes: 10
 
 kafka:
   bootstrapServer: localhost:9092

@@ -19,6 +19,7 @@
 package org.cancogenvirusseq.singularity.components;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ import org.cancogenvirusseq.singularity.components.model.AnalysisDocument;
 import org.cancogenvirusseq.singularity.config.elasticsearch.ElasticsearchProperties;
 import org.cancogenvirusseq.singularity.config.elasticsearch.ReactiveElasticSearchClientConfig;
 import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -53,7 +55,11 @@ public class Analyses {
                     .scroll(
                         new SearchRequest()
                             .indices(elasticsearchProperties.getFileCentricIndex())
-                            .source(source)))
+                            .source(source)
+                            .scroll(
+                                new TimeValue(
+                                    elasticsearchProperties.getScrollTimeoutMinutes(),
+                                    TimeUnit.MINUTES))))
         .map(this::hitMapToAnalysisDocument);
   }
 
