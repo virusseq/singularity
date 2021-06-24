@@ -18,15 +18,14 @@
 
 package org.cancogenvirusseq.singularity.utils;
 
-import lombok.Getter;
-import org.cancogenvirusseq.singularity.components.model.AnalysisDocument;
-
-import javax.annotation.Nullable;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import lombok.Getter;
+import org.cancogenvirusseq.singularity.components.model.AnalysisDocument;
 
 public class TsvUtils {
   @Getter
@@ -44,6 +43,7 @@ public class TsvUtils {
                       "geo_loc_name (state/province/territory)",
                       "organism",
                       "isolate",
+                      "fasta header name",
                       "purpose of sampling",
                       "purpose of sampling details",
                       "anatomical material",
@@ -72,8 +72,8 @@ public class TsvUtils {
                       "depth of coverage value",
                       "reference genome accession",
                       "bioinformatics protocol",
-                      "gene name 1",
-                      "diagnostic pcr Ct value 1"))
+                      "gene name",
+                      "diagnostic pcr Ct value"))
               + "\n")
           .getBytes(StandardCharsets.UTF_8);
 
@@ -99,6 +99,7 @@ public class TsvUtils {
         analysisDocument.getAnalysis().getSampleCollection().getGeoLocProvince(),
         analysisDocument.getAnalysis().getSampleCollection().getOrganism(),
         analysisDocument.getAnalysis().getSampleCollection().getIsolate(),
+        analysisDocument.getAnalysis().getSampleCollection().getFastaHeaderName(),
         analysisDocument.getAnalysis().getSampleCollection().getPurposeOfSampling(),
         analysisDocument.getAnalysis().getSampleCollection().getPurposeOfSamplingDetails(),
         analysisDocument.getAnalysis().getSampleCollection().getAnatomicalMaterial(),
@@ -127,8 +128,8 @@ public class TsvUtils {
         analysisDocument.getAnalysis().getSequenceAnalysis().getMetrics().getDepthOfCoverage(),
         analysisDocument.getAnalysis().getSequenceAnalysis().getReferenceGenomeAccession(),
         analysisDocument.getAnalysis().getSequenceAnalysis().getBioinformaticsProtocol(),
-        analysisDocument.getAnalysis().getPathogenDiagnosticTesting().getGeneName1(),
-        analysisDocument.getAnalysis().getPathogenDiagnosticTesting().getDiagnosticPcrProtocol1());
+        analysisDocument.getAnalysis().getPathogenDiagnosticTesting().getGeneName(),
+        analysisDocument.getAnalysis().getPathogenDiagnosticTesting().getDiagnosticPcrProtocol());
   }
 
   private static String stringsToTsvRow(String... strings) {

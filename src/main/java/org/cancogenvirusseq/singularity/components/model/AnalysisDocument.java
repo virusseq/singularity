@@ -79,8 +79,8 @@ public class AnalysisDocument {
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class PathogenDiagnosticTesting {
-    private String geneName1;
-    private String diagnosticPcrProtocol1;
+    private String geneName;
+    private String diagnosticPcrProtocol;
   }
 
   @Data
@@ -89,6 +89,7 @@ public class AnalysisDocument {
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class SampleCollection {
     private String isolate;
+    private String fastaHeaderName;
     private String organism;
     private String bodyProduct;
     private String anatomicalPart;
@@ -157,10 +158,11 @@ public class AnalysisDocument {
         "analysis.host.host_age_unit",
         "analysis.host.host_scientific_name",
         // pathogen diagnostic testing
-        "analysis.pathogen_diagnostic_testing.gene_name_1",
-        "analysis.pathogen_diagnostic_testing.diagnostic_pcr_protocol_1",
+        "analysis.pathogen_diagnostic_testing.gene_name",
+        "analysis.pathogen_diagnostic_testing.diagnostic_pcr_protocol",
         // sample_collection
         "analysis.sample_collection.isolate",
+        "analysis.sample_collection.fasta_header_name",
         "analysis.sample_collection.organism",
         "analysis.sample_collection.body_product",
         "analysis.sample_collection.anatomical_part",
