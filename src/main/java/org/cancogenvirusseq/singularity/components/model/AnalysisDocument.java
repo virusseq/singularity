@@ -80,7 +80,7 @@ public class AnalysisDocument {
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class PathogenDiagnosticTesting {
     private String geneName;
-    private String diagnosticPcrProtocol;
+    private String diagnosticPcrCtValue;
   }
 
   @Data
@@ -159,7 +159,7 @@ public class AnalysisDocument {
         "analysis.host.host_scientific_name",
         // pathogen diagnostic testing
         "analysis.pathogen_diagnostic_testing.gene_name",
-        "analysis.pathogen_diagnostic_testing.diagnostic_pcr_protocol",
+        "analysis.pathogen_diagnostic_testing.diagnostic_pcr_ct_value",
         // sample_collection
         "analysis.sample_collection.isolate",
         "analysis.sample_collection.fasta_header_name",

@@ -129,7 +129,7 @@ public class TsvUtils {
         analysisDocument.getAnalysis().getSequenceAnalysis().getReferenceGenomeAccession(),
         analysisDocument.getAnalysis().getSequenceAnalysis().getBioinformaticsProtocol(),
         analysisDocument.getAnalysis().getPathogenDiagnosticTesting().getGeneName(),
-        analysisDocument.getAnalysis().getPathogenDiagnosticTesting().getDiagnosticPcrProtocol());
+        analysisDocument.getAnalysis().getPathogenDiagnosticTesting().getDiagnosticPcrCtValue());
   }
 
   private static String stringsToTsvRow(String... strings) {
