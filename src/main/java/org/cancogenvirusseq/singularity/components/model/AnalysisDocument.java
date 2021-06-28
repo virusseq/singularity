@@ -42,11 +42,11 @@ public class AnalysisDocument {
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class Analysis {
-    @NonNull private Experiment experiment;
-    @NonNull private Host host;
-    @NonNull private PathogenDiagnosticTesting pathogenDiagnosticTesting;
-    @NonNull private SampleCollection sampleCollection;
-    @NonNull private SequenceAnalysis sequenceAnalysis;
+    private Experiment experiment = new Experiment();
+    private Host host = new Host();
+    private PathogenDiagnosticTesting pathogenDiagnosticTesting = new PathogenDiagnosticTesting();
+    private SampleCollection sampleCollection = new SampleCollection();
+    private SequenceAnalysis sequenceAnalysis = new SequenceAnalysis();
   }
 
   @Data
