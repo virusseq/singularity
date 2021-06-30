@@ -16,7 +16,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.all.config.swagger;
+package org.cancogenvirusseq.singularity.config.swagger;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -55,7 +55,7 @@ public class SwaggerConfig {
   public Docket api(SwaggerProperties properties) {
     return new Docket(DocumentationType.SWAGGER_2)
         .select()
-        .apis(RequestHandlerSelectors.basePackage("org.cancogenvirusseq.all.api"))
+        .apis(RequestHandlerSelectors.basePackage("org.cancogenvirusseq.singularity.api"))
         .build()
         .host(properties.host)
         .pathProvider(

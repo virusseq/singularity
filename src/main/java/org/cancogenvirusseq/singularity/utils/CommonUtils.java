@@ -16,34 +16,36 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.all.api;
+package org.cancogenvirusseq.singularity.utils;
 
-import java.util.Collection;
-import lombok.RequiredArgsConstructor;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.util.Optional;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import lombok.extern.slf4j.Slf4j;
-import org.cancogenvirusseq.all.api.model.EntityListResponse;
-import org.cancogenvirusseq.all.service.Contributors;
 import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RestController;
-import reactor.core.publisher.Mono;
+import org.springframework.core.io.buffer.DataBufferUtils;
 
 @Slf4j
-@RestController
-@RequiredArgsConstructor
-public class ApiController implements ApiDefinition {
-  private final Contributors contributors;
+public class CommonUtils {
+  public static final BiConsumer<BufferedOutputStream, byte[]> writeToFileStream =
+      (stream, bytes) -> {
+        try {
+          stream.write(bytes);
+        } catch (IOException e) {
+          log.error(e.getLocalizedMessage(), e);
+        }
+      };
 
-  public Mono<EntityListResponse<String>> getContributors() {
-    return contributors.getContributors().transform(this::listResponseTransform);
-  }
-
-  public ResponseEntity<Mono<DataBuffer>> download() {
-    return null;
-  }
-
-  private <T> Mono<EntityListResponse<T>> listResponseTransform(
-      Mono<? extends Collection<T>> entities) {
-    return entities.map(entityList -> EntityListResponse.<T>builder().data(entityList).build());
-  }
+  public static final Function<DataBuffer, byte[]> dataBufferToBytes =
+      dataBuffer ->
+          Optional.of(new byte[dataBuffer.readableByteCount()])
+              .map(
+                  bytes -> {
+                    dataBuffer.read(bytes);
+                    DataBufferUtils.release(dataBuffer);
+                    return bytes;
+                  })
+              .orElseThrow();
 }

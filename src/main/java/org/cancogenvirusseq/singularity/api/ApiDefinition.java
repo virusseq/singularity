@@ -16,23 +16,25 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.all.api;
+package org.cancogenvirusseq.singularity.api;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.cancogenvirusseq.all.api.model.EntityListResponse;
-import org.cancogenvirusseq.all.api.model.ErrorResponse;
-import org.springframework.core.io.buffer.DataBuffer;
+import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
+import org.cancogenvirusseq.singularity.api.model.ErrorResponse;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Mono;
 
-@Api(value = "All Contributors, All Files, All", tags = "All")
+@CrossOrigin
+@Api(value = "Singularity - All Contributors, All Files", tags = "Singularity")
 public interface ApiDefinition {
   String UNKNOWN_MSG = "An unexpected error occurred.";
 
@@ -40,7 +42,7 @@ public interface ApiDefinition {
       value = "Get All Contributors",
       nickname = "Get Contributors",
       response = EntityListResponse.class,
-      tags = "All")
+      tags = "Singularity")
   @ApiResponses(
       value = {
         @ApiResponse(code = 200, message = "", response = EntityListResponse.class),
@@ -56,7 +58,7 @@ public interface ApiDefinition {
       value = "Download all molecular files as a single .fasta.gz gzip compressed file",
       nickname = "Download Files",
       response = MultipartFile.class,
-      tags = "All")
+      tags = "Singularity")
   @ApiResponses(
       value = {
         @ApiResponse(code = 200, message = "", response = MultipartFile.class),
@@ -66,5 +68,5 @@ public interface ApiDefinition {
       value = "/files",
       produces = MediaType.APPLICATION_OCTET_STREAM_VALUE,
       method = RequestMethod.GET)
-  ResponseEntity<Mono<DataBuffer>> download();
+  ResponseEntity<Mono<Resource>> getFiles();
 }

@@ -16,14 +16,16 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.all;
+package org.cancogenvirusseq.singularity.components.model;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import java.util.List;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.buffer.DataBuffer;
 
-@SpringBootTest
-class AllApplicationTests {
-
-  @Test
-  void contextLoads() {}
+@Getter
+@RequiredArgsConstructor
+public class BatchedDownloadPair {
+  private final List<AnalysisDocument> analysisDocuments;
+  private final DataBuffer molecularData;
 }

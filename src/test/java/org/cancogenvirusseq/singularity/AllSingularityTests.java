@@ -16,21 +16,14 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.all.config.elasticsearch;
+package org.cancogenvirusseq.singularity;
 
-import lombok.Data;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.test.context.SpringBootTest;
 
-@Data
-@Configuration
-@ConfigurationProperties(prefix = "elastic")
-public class ElasticsearchProperties {
-  String host;
-  Integer port;
-  Boolean useHttps;
-  Boolean useAuthentication;
-  String username;
-  String password;
-  String fileCentricIndex;
+@SpringBootTest
+class AllSingularityTests {
+
+  //  @Test
+  //  void contextLoads() {}
+  // todo: either remove or update to no load Elastic in test context
 }

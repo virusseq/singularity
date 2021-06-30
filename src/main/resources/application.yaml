@@ -1,8 +1,8 @@
 spring:
   application:
-    name: "All"
+    name: "Singularity"
     version: @project.version@
-    description: "All contributors, All files"
+    description: "Singularity - All contributors, All files"
 
 server:
   port: 8080
@@ -15,7 +15,29 @@ elastic:
   username: elastic
   password: testing
   fileCentricIndex: file_centric
+  scrollTimeoutMinutes: 10
+
+kafka:
+  bootstrapServer: localhost:9092
+  clientId: singularity-instance
+  groupId: singularity-instance
+  autoOffsetReset: latest
+  topic: song_analysis
 
 contributors:
   filterList:
   appendList:
+
+download:
+  museHost: "localhost:8087/download"
+  retryMaxAttempts: 3
+  retryDelaySec: 10
+  batchSize: 100
+  concurrentRequests: 5
+
+files:
+  finalEventCheckSeconds: 60
+  bundleBuildingCheckSeconds: 60
+
+intervalEventEmitter:
+  intervalTimerSeconds: 600

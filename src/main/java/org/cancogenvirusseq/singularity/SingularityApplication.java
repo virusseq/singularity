@@ -16,19 +16,15 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.all.api.model;
+package org.cancogenvirusseq.singularity;
 
-import io.swagger.annotations.ApiModel;
-import java.util.Collection;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NonNull;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@Data
-@Builder
-@AllArgsConstructor
-@ApiModel(description = "A list response containing entities of the requested type")
-public class EntityListResponse<T> {
-  @NonNull Collection<T> data;
+@SpringBootApplication
+public class SingularityApplication {
+
+  public static void main(String[] args) {
+    SpringApplication.run(SingularityApplication.class, args);
+  }
 }

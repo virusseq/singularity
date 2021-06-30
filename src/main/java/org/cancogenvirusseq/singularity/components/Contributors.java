@@ -16,34 +16,34 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.all.service;
+package org.cancogenvirusseq.singularity.components;
 
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import org.cancogenvirusseq.all.config.elasticsearch.ElasticsearchProperties;
-import org.cancogenvirusseq.all.config.elasticsearch.ReactiveElasticSearchClientConfig;
+import org.cancogenvirusseq.singularity.config.elasticsearch.ElasticsearchProperties;
+import org.cancogenvirusseq.singularity.config.elasticsearch.ReactiveElasticSearchClientConfig;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-@Service
+@Component
 @RequiredArgsConstructor
 @ConfigurationProperties("contributors")
 public class Contributors {
   private final ElasticsearchProperties elasticsearchProperties;
   private final ReactiveElasticSearchClientConfig reactiveElasticSearchClientConfig;
 
-  @Getter @Setter private String[] filterList = new String[] {};
-  @Getter @Setter private String[] appendList = new String[] {};
+  // Config values
+  @Setter private String[] filterList = new String[] {};
+  @Setter private String[] appendList = new String[] {};
 
   private static final Integer MAX_AGGREGATE_BUCKETS = 1000;
 
@@ -79,6 +79,7 @@ public class Contributors {
             contributor ->
                 Arrays.stream(filterList).noneMatch(filter -> filter.equals(contributor)))
         .concatWith(Flux.fromStream(Arrays.stream(appendList)))
-        .collect(Collectors.toSet());
+        .collect(Collectors.toSet())
+        .log("Contributors::getContributors");
   }
 }

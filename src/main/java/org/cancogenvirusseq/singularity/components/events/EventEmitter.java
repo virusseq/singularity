@@ -16,27 +16,11 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.all.api.model;
+package org.cancogenvirusseq.singularity.components.events;
 
-import io.swagger.annotations.ApiModel;
-import java.util.Map;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import java.time.Instant;
+import reactor.core.publisher.Flux;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@ApiModel(description = "An object that can optionally include information about the error.")
-public class ErrorResponse {
-  private HttpStatus status;
-  private String message;
-  private Map<String, Object> errorInfo;
-
-  public static ResponseEntity<ErrorResponse> errorResponseEntity(
-      HttpStatus status, String message) {
-    return new ResponseEntity<>(new ErrorResponse(status, message, Map.of()), status);
-  }
+public interface EventEmitter {
+  Flux<Instant> receive();
 }

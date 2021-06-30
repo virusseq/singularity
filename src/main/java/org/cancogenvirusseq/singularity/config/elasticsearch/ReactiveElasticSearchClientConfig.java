@@ -16,7 +16,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.all.config.elasticsearch;
+package org.cancogenvirusseq.singularity.config.elasticsearch;
 
 import static java.lang.String.format;
 
