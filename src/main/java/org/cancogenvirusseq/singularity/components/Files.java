@@ -63,17 +63,17 @@ public class Files {
     lastEvent.set(Instant.now());
 
     // build file bundle on app start
-    downloadAndBuildBundle(lastEvent.get())
-        .doOnNext(latestFileName::set)
-        .doFinally(
-            signalType -> {
-              isBuildingBundle.set(false);
-              log.info("Startup file bundle created and saved at: {}", latestFileName.get());
-            })
-        .subscribe();
-
-    // start file bundle update disposable
-    updateFileBundleDisposable = createUpdateFileBundleDisposable();
+//    downloadAndBuildBundle(lastEvent.get())
+//        .doOnNext(latestFileName::set)
+//        .doFinally(
+//            signalType -> {
+//              isBuildingBundle.set(false);
+//              log.info("Startup file bundle created and saved at: {}", latestFileName.get());
+//            })
+//        .subscribe();
+//
+//    // start file bundle update disposable
+//    updateFileBundleDisposable = createUpdateFileBundleDisposable();
   }
 
   public String getFileBundleName() {
