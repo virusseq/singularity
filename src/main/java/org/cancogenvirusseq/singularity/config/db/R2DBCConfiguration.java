@@ -25,6 +25,9 @@ import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.postgresql.codec.EnumCodec;
 import io.r2dbc.spi.ConnectionFactory;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
 import lombok.val;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveStatus;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveStatusConverter;
@@ -35,10 +38,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
 import org.springframework.data.r2dbc.connectionfactory.init.ConnectionFactoryInitializer;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
-
-import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
 
 @Configuration
 @EnableR2dbcRepositories(basePackages = "org.cancogenvirusseq.singularity.repository")
@@ -76,7 +75,8 @@ public class R2DBCConfiguration extends AbstractR2dbcConfiguration {
       postgresqlConnectionConfiguration.password(postgresProperties.getPassword());
     }
 
-    val codecRegistrar = EnumCodec.builder().withEnum("archive_status", ArchiveStatus.class).build();
+    val codecRegistrar =
+        EnumCodec.builder().withEnum("archive_status", ArchiveStatus.class).build();
 
     return new PostgresqlConnectionFactory(
         postgresqlConnectionConfiguration.codecRegistrar(codecRegistrar).build());

@@ -1,12 +1,12 @@
 package org.cancogenvirusseq.singularity.config.db;
 
+import static java.lang.String.format;
+
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.flywaydb.core.Flyway;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import static java.lang.String.format;
 
 @Configuration
 @RequiredArgsConstructor

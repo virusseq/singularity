@@ -13,8 +13,15 @@ import org.springframework.data.relational.core.mapping.Table;
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 @Table("archive")
 public class Archive {
-    @Id private Long timestamp;
-    @NonNull private ArchiveStatus status;
-    @NonNull private Long numOfSamples;
-    @NonNull private String name;
+  @Id private Long timestamp;
+  @NonNull private ArchiveStatus status;
+  @NonNull private Long numOfSamples;
+  @NonNull private String name;
+
+  public enum Fields {
+    timestamp,
+    status,
+    numOfSamples,
+    name
+  }
 }

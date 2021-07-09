@@ -24,10 +24,10 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
 import org.cancogenvirusseq.singularity.api.model.ErrorResponse;
+import org.cancogenvirusseq.singularity.api.model.FetchArchivesRequest;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -74,17 +74,17 @@ public interface ApiDefinition {
   ResponseEntity<Mono<Resource>> getFiles();
 
   @ApiOperation(
-          value = "Get a list of all archives and their details.",
-          nickname = "Archive Details",
-          tags = "Singularity")
+      value = "Get a archives of a specific status and their details.",
+      nickname = "Archive Details",
+      tags = "Singularity")
   @ApiResponses(
-          value = {
-                  @ApiResponse(code = 200, message = "", response = MultipartFile.class),
-                  @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
-          })
+      value = {
+        @ApiResponse(code = 200, message = "", response = Object.class),
+        @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
+      })
   @RequestMapping(
-          value = "/archives",
-          produces = MediaType.APPLICATION_JSON_VALUE,
-          method = RequestMethod.GET)
-  ResponseEntity<Page<Archive>> getArchiveDetails();
+      value = "/archives",
+      produces = MediaType.APPLICATION_JSON_VALUE,
+      method = RequestMethod.GET)
+  Mono<Page<Archive>> getArchiveDetails(FetchArchivesRequest fetchArchivesRequest);
 }

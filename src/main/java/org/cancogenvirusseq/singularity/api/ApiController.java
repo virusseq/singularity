@@ -26,15 +26,14 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
+import org.cancogenvirusseq.singularity.api.model.FetchArchivesRequest;
 import org.cancogenvirusseq.singularity.components.Contributors;
 import org.cancogenvirusseq.singularity.components.Files;
-import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
-import org.cancogenvirusseq.singularity.repository.model.ArchiveStatus;
+import org.cancogenvirusseq.singularity.service.ArchiveService;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -48,7 +47,7 @@ import reactor.core.publisher.Mono;
 public class ApiController implements ApiDefinition {
   private final Contributors contributors;
   private final Files files;
-  private final ArchivesRepo archivesRepo;
+  private final ArchiveService archiveService;
 
   public Mono<EntityListResponse<String>> getContributors() {
     return contributors.getContributors().transform(this::listResponseTransform);
@@ -72,9 +71,8 @@ public class ApiController implements ApiDefinition {
                 .build());
   }
 
-  public ResponseEntity<Page<Archive>> getArchiveDetails() {
-    archivesRepo.findAllByStatus(ArchiveStatus.READY, Pageable.unpaged());
-    return ResponseEntity.ok(Page.empty());
+  public Mono<Page<Archive>> getArchiveDetails(FetchArchivesRequest request) {
+    return archiveService.getArchivesWithStatus(request);
   }
 
   private <T> Mono<EntityListResponse<T>> listResponseTransform(
