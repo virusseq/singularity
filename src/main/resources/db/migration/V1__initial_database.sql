@@ -35,7 +35,8 @@ CREATE TABLE if not exists archive
 CREATE TABLE if not exists archive_meta
 (
     archive_id          uuid      not null,
-    num_of_downloads    int       not null
+    num_of_downloads    int       not null,
+    PRIMARY KEY (archive_id)
 );
 
 ALTER TABLE archive_meta ADD FOREIGN KEY (archive_id)

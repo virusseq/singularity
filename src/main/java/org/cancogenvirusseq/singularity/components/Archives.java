@@ -1,4 +1,4 @@
-package org.cancogenvirusseq.singularity.service;
+package org.cancogenvirusseq.singularity.components;
 
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -14,7 +14,7 @@ import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
-public class ArchiveService {
+public class Archives {
   public final ArchivesRepo archivesRepo;
 
   public Mono<Page<Archive>> getArchivesWithStatus(FetchArchivesRequest fetchArchivesRequest) {
@@ -31,7 +31,7 @@ public class ArchiveService {
 
     val totalHitsMono = archivesRepo.countByStatusAndType(status, type);
     return archivesRepo
-        .findAllByStatusAndType(status, type, pageable)
+        .findAll()
         .collectList()
         .zipWith(
             totalHitsMono, (archives, totalHits) -> new PageImpl<>(archives, pageable, totalHits));

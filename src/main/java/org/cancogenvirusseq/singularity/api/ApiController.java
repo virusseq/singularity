@@ -30,7 +30,7 @@ import org.cancogenvirusseq.singularity.api.model.FetchArchivesRequest;
 import org.cancogenvirusseq.singularity.components.Contributors;
 import org.cancogenvirusseq.singularity.components.Files;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
-import org.cancogenvirusseq.singularity.service.ArchiveService;
+import org.cancogenvirusseq.singularity.components.Archives;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -47,7 +47,7 @@ import reactor.core.publisher.Mono;
 public class ApiController implements ApiDefinition {
   private final Contributors contributors;
   private final Files files;
-  private final ArchiveService archiveService;
+  private final Archives archiveService;
 
   public Mono<EntityListResponse<String>> getContributors() {
     return contributors.getContributors().transform(this::listResponseTransform);
