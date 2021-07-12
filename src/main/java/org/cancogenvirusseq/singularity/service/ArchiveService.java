@@ -18,6 +18,9 @@ public class ArchiveService {
   public final ArchivesRepo archivesRepo;
 
   public Mono<Page<Archive>> getArchivesWithStatus(FetchArchivesRequest fetchArchivesRequest) {
+    val type = fetchArchivesRequest.getType();
+    val status = fetchArchivesRequest.getStatus();
+
     val pageable =
         PageRequest.of(
             fetchArchivesRequest.getPage(),
@@ -25,9 +28,10 @@ public class ArchiveService {
             Sort.by(
                 fetchArchivesRequest.getSortDirection(),
                 fetchArchivesRequest.getSortField().toString()));
-    val totalHitsMono = archivesRepo.countByStatus(fetchArchivesRequest.getStatus());
+
+    val totalHitsMono = archivesRepo.countByStatusAndType(status, type);
     return archivesRepo
-        .findAllByStatus(fetchArchivesRequest.getStatus(), pageable)
+        .findAllByStatusAndType(status, type, pageable)
         .collectList()
         .zipWith(
             totalHitsMono, (archives, totalHits) -> new PageImpl<>(archives, pageable, totalHits));

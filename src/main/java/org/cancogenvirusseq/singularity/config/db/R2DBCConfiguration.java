@@ -26,11 +26,12 @@ import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.postgresql.codec.EnumCodec;
 import io.r2dbc.spi.ConnectionFactory;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.List;
 import lombok.val;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveStatus;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveStatusConverter;
+import org.cancogenvirusseq.singularity.repository.model.ArchiveType;
+import org.cancogenvirusseq.singularity.repository.model.ArchiveTypeConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -76,7 +77,10 @@ public class R2DBCConfiguration extends AbstractR2dbcConfiguration {
     }
 
     val codecRegistrar =
-        EnumCodec.builder().withEnum("archive_status", ArchiveStatus.class).build();
+        EnumCodec.builder()
+            .withEnum("archive_status", ArchiveStatus.class)
+            .withEnum("archive_type", ArchiveType.class)
+            .build();
 
     return new PostgresqlConnectionFactory(
         postgresqlConnectionConfiguration.codecRegistrar(codecRegistrar).build());
@@ -97,6 +101,6 @@ public class R2DBCConfiguration extends AbstractR2dbcConfiguration {
 
   @Override
   protected List<Object> getCustomConverters() {
-    return Collections.singletonList(new ArchiveStatusConverter());
+    return List.of(new ArchiveStatusConverter(), new ArchiveTypeConverter());
   }
 }

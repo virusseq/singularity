@@ -16,13 +16,27 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-CREATE TYPE archive_status as enum ('QUEUED', 'BUILDING', 'READY', 'ERROR');
+CREATE TYPE archive_status as enum ('BUILDING', 'COMPLETE', 'FAILED');
+
+CREATE TYPE archive_type as enum ('ALL', 'SETQUERY');
 
 CREATE TABLE if not exists archive
 (
-    timestamp           bigint              not null,
+    id                  uuid                not null,
     status              archive_status      not null,
+    type                archive_type        not null,
+    timestamp           bigint              not null,
     num_of_samples      int                 not null,
-    name                VARCHAR(128)        not null,
-    PRIMARY KEY (timestamp)
+    set_id              VARCHAR,
+    object_id           uuid,
+    PRIMARY KEY (id)
 );
+
+CREATE TABLE if not exists archive_meta
+(
+    archive_id          uuid      not null,
+    num_of_downloads    int       not null
+);
+
+ALTER TABLE archive_meta ADD FOREIGN KEY (archive_id)
+REFERENCES archive(id) ON DELETE CASCADE;
