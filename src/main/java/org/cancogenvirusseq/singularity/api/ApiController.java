@@ -23,17 +23,16 @@ import static org.cancogenvirusseq.singularity.components.model.FilesArchive.DOW
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
-import org.cancogenvirusseq.singularity.api.model.FetchArchivesRequest;
 import org.cancogenvirusseq.singularity.components.Contributors;
 import org.cancogenvirusseq.singularity.components.Files;
-import org.cancogenvirusseq.singularity.repository.ArchivesUnifiedRepo;
+import org.cancogenvirusseq.singularity.repository.ArchivesUnifiedCustomRepo;
+import org.cancogenvirusseq.singularity.repository.commands.SelectArchiveAllCommand;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveAll;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveSetQuery;
-import org.cancogenvirusseq.singularity.repository.model.ArchiveSort;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -51,7 +50,7 @@ import reactor.core.publisher.Mono;
 public class ApiController implements ApiDefinition {
   private final Contributors contributors;
   private final Files files;
-  private final ArchivesUnifiedRepo repo;
+  private final ArchivesUnifiedCustomRepo repo;
 
   public Mono<EntityListResponse<String>> getContributors() {
     return contributors.getContributors().transform(this::listResponseTransform);
@@ -75,17 +74,22 @@ public class ApiController implements ApiDefinition {
                 .build());
   }
 
-  public Mono<Page<ArchiveAll>> getArchiveDetails(FetchArchivesRequest req) {
-    val sort =
-        ArchiveSort.<ArchiveAll.Fields>builder()
-            .fieldName(req.getSortField())
-            .sortDirection(req.getSortDirection())
-            .build();
-    return repo.findAllByStatus(req.getStatus(), req.getSize(), req.getOffset(), sort);
+  public Mono<Page<ArchiveAll>> getArchiveAll(SelectArchiveAllCommand req) {
+    return repo.findArchiveAllByCommand(req);
+  }
+
+  @Override
+  public Mono<ArchiveAll> getArchiveAllById(UUID id) {
+    return null;
   }
 
   public Flux<ArchiveSetQuery> getArchiveSetQueryDetails() {
     return repo.findAll();
+  }
+
+  @Override
+  public Mono<ArchiveSetQuery> getArchiveSetQueryById(UUID id) {
+    return null;
   }
 
   private <T> Mono<EntityListResponse<T>> listResponseTransform(

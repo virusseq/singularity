@@ -20,35 +20,29 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TYPE archive_status as enum ('BUILDING', 'COMPLETE', 'FAILED');
 
+CREATE TABLE if not exists archive_meta
+(
+    archive_id          uuid      not null,
+    num_of_downloads    int       not null DEFAULT 0,
+    num_of_samples      int       not null,
+    PRIMARY KEY (archive_id)
+);
+
 CREATE TABLE if not exists archive_all
 (
-    id                  uuid                DEFAULT uuid_generate_v4(),
+    id       uuid     REFERENCES archive_meta(archive_id) ON DELETE CASCADE  DEFAULT uuid_generate_v4(),
     status              archive_status      not null,
-    timestamp           bigint              not null,
+    timestamp           bigint              unique,
     object_id           uuid,
     PRIMARY KEY (id)
 );
 
 CREATE TABLE if not exists archive_set_query
 (
-    id                  uuid                DEFAULT uuid_generate_v4(),
+    id        uuid    REFERENCES archive_meta(archive_id) ON DELETE CASCADE  DEFAULT uuid_generate_v4(),
     status              archive_status      not null,
     timestamp           bigint              not null,
-    set_query_hash      VARCHAR             not null,
+    set_query_hash      VARCHAR             unique,
     object_id           uuid,
     PRIMARY KEY (id)
 );
-
-CREATE TABLE if not exists archive_meta
-(
-    archive_id          uuid      not null,
-    num_of_downloads    int       not null,
-    num_of_samples      int       not null,
-    PRIMARY KEY (archive_id)
-);
-
---ALTER TABLE archive_meta ADD FOREIGN KEY (archive_id)
---REFERENCES archive_all(id) ON DELETE CASCADE;
-
---ALTER TABLE archive_meta ADD FOREIGN KEY (archive_id)
---REFERENCES archive_set_query(id) ON DELETE CASCADE;

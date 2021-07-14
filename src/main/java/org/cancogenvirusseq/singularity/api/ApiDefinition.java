@@ -22,9 +22,10 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import java.util.UUID;
 import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
 import org.cancogenvirusseq.singularity.api.model.ErrorResponse;
-import org.cancogenvirusseq.singularity.api.model.FetchArchivesRequest;
+import org.cancogenvirusseq.singularity.repository.commands.SelectArchiveAllCommand;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveAll;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveSetQuery;
 import org.springframework.core.io.Resource;
@@ -34,6 +35,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -88,7 +90,22 @@ public interface ApiDefinition {
       value = "/archives/all",
       produces = MediaType.APPLICATION_JSON_VALUE,
       method = RequestMethod.GET)
-  Mono<Page<ArchiveAll>> getArchiveDetails(FetchArchivesRequest fetchArchivesRequest);
+  Mono<Page<ArchiveAll>> getArchiveAll(SelectArchiveAllCommand fetchArchivesRequest);
+
+  @ApiOperation(
+      value = "Get a archives of a specific status and their details.",
+      nickname = "ArchiveAll Details",
+      tags = "Singularity")
+  @ApiResponses(
+      value = {
+        @ApiResponse(code = 200, message = "", response = ArchiveAll.class),
+        @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
+      })
+  @RequestMapping(
+      value = "/archives/all/{id}",
+      produces = MediaType.APPLICATION_JSON_VALUE,
+      method = RequestMethod.GET)
+  Mono<ArchiveAll> getArchiveAllById(@RequestParam UUID id);
 
   @ApiOperation(
       value = "Get a archives of a specific status and their details.",
@@ -104,4 +121,19 @@ public interface ApiDefinition {
       produces = MediaType.APPLICATION_JSON_VALUE,
       method = RequestMethod.GET)
   Flux<ArchiveSetQuery> getArchiveSetQueryDetails();
+
+  @ApiOperation(
+      value = "Get a archives of a specific status and their details.",
+      nickname = "ArchiveAll Details",
+      tags = "Singularity")
+  @ApiResponses(
+      value = {
+        @ApiResponse(code = 200, message = "", response = Object.class),
+        @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
+      })
+  @RequestMapping(
+      value = "/archives/set-query/{id}",
+      produces = MediaType.APPLICATION_JSON_VALUE,
+      method = RequestMethod.GET)
+  Mono<ArchiveSetQuery> getArchiveSetQueryById(@RequestParam UUID id);
 }

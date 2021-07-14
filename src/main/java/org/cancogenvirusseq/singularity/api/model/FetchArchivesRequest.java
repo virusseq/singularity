@@ -9,7 +9,7 @@ import org.springframework.data.domain.Sort;
 @Data
 @NoArgsConstructor
 public class FetchArchivesRequest {
-  ArchiveStatus status = ArchiveStatus.COMPLETE;
+  ArchiveStatus status;
   Integer offset = 0;
   Integer size = 20;
   Sort.Direction sortDirection = Sort.Direction.ASC;
