@@ -26,6 +26,7 @@ import java.util.UUID;
 import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
 import org.cancogenvirusseq.singularity.api.model.ErrorResponse;
 import org.cancogenvirusseq.singularity.repository.commands.SelectArchiveAllCommand;
+import org.cancogenvirusseq.singularity.repository.commands.SelectArchiveSetQueryCommand;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveAll;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveSetQuery;
 import org.springframework.core.io.Resource;
@@ -37,7 +38,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @CrossOrigin
@@ -120,7 +120,7 @@ public interface ApiDefinition {
       value = "/archives/set-query",
       produces = MediaType.APPLICATION_JSON_VALUE,
       method = RequestMethod.GET)
-  Flux<ArchiveSetQuery> getArchiveSetQueryDetails();
+  Mono<Page<ArchiveSetQuery>> getArchiveSetQuery(SelectArchiveSetQueryCommand command);
 
   @ApiOperation(
       value = "Get a archives of a specific status and their details.",

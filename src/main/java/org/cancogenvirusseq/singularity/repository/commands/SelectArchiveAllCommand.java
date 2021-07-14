@@ -2,7 +2,10 @@ package org.cancogenvirusseq.singularity.repository.commands;
 
 import java.util.Optional;
 import java.util.UUID;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveAll;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveStatus;
 import org.springframework.data.domain.PageRequest;
@@ -10,16 +13,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 @Data
-@Builder(toBuilder = true)
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class SelectArchiveAllCommand {
   UUID id;
   ArchiveStatus status;
-  @NonNull Integer offset = 0;
-  @NonNull Integer size = 20;
-  @NonNull Sort.Direction sortDirection = Sort.Direction.ASC;
-  @NonNull ArchiveAll.Fields sortField = ArchiveAll.Fields.timestamp;
+  @Builder.Default Integer offset = 0;
+  @Builder.Default Integer size = 20;
+  @Builder.Default Sort.Direction sortDirection = Sort.Direction.ASC;
+  @Builder.Default ArchiveAll.Fields sortField = ArchiveAll.Fields.timestamp;
 
   public Optional<UUID> getId() {
     return Optional.ofNullable(id);

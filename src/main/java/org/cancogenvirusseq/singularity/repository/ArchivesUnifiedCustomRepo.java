@@ -2,7 +2,6 @@ package org.cancogenvirusseq.singularity.repository;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toUnmodifiableList;
-import static org.cancogenvirusseq.singularity.repository.model.ArchiveSort.DEFAULT_ARCHIVE_SET_QUERY_SORT;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
@@ -13,11 +12,14 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.cancogenvirusseq.singularity.repository.commands.SelectArchiveAllCommand;
-import org.cancogenvirusseq.singularity.repository.model.*;
-import org.springframework.data.domain.*;
+import org.cancogenvirusseq.singularity.repository.commands.SelectArchiveSetQueryCommand;
+import org.cancogenvirusseq.singularity.repository.model.ArchiveAll;
+import org.cancogenvirusseq.singularity.repository.model.ArchiveMeta;
+import org.cancogenvirusseq.singularity.repository.model.ArchiveSetQuery;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
@@ -31,8 +33,6 @@ import reactor.util.function.Tuples;
 @RequiredArgsConstructor
 public class ArchivesUnifiedCustomRepo {
   private final ObjectMapper mapper = new ObjectMapper();
-  private final ArchiveAllRepo archiveAllRepo;
-  private final ArchiveSetQueryRepo archiveSetQueryRepo;
   private final DatabaseClient databaseClient;
 
   private final Function<Map<String, Object>, ArchiveAll> ARCHIVE_ALL_MAPPER =
@@ -72,21 +72,23 @@ public class ArchivesUnifiedCustomRepo {
     return insertArchiveSetQuery(archive);
   }
 
-  public Mono<ArchiveAll> findArchiveAllById(@NonNull UUID var1) {
-    val command = SelectArchiveAllCommand.builder().id(var1).build();
-    return selectArchiveAll(command).map(page -> page.getContent().get(0));
-  }
-
   public Mono<ArchiveSetQuery> findArchiveSetQueryById(UUID id) {
-    return selectArchiveSetQuery(null, id, 1, 0, DEFAULT_ARCHIVE_SET_QUERY_SORT).next();
+    val command = SelectArchiveSetQueryCommand.builder().id(id).size(1).offset(0).build();
+    return selectArchiveSetQuery(command).map(page -> page.getContent().get(0));
   }
 
-  public Flux<ArchiveSetQuery> findAll() {
-    return archiveSetQueryRepo.findAll();
+  public Mono<Page<ArchiveSetQuery>> findArchiveSetQueryByCommand(
+      SelectArchiveSetQueryCommand command) {
+    return selectArchiveSetQuery(command);
   }
 
   public Mono<Page<ArchiveAll>> findArchiveAllByCommand(SelectArchiveAllCommand command) {
     return selectArchiveAll(command);
+  }
+
+  public Mono<ArchiveAll> findArchiveAllById(@NonNull UUID id) {
+    val command = SelectArchiveAllCommand.builder().id(id).size(1).offset(0).build();
+    return selectArchiveAll(command).map(page -> page.getContent().get(0));
   }
 
   private Mono<Page<ArchiveAll>> selectArchiveAll(SelectArchiveAllCommand command) {
@@ -114,7 +116,6 @@ public class ArchivesUnifiedCustomRepo {
 
     return spec.fetch()
         .all()
-        .log()
         .collectList()
         .map(rl -> Tuples.of((Long) rl.get(0).getOrDefault("count", command.getSize()), rl))
         .map(
@@ -126,35 +127,40 @@ public class ArchivesUnifiedCustomRepo {
             });
   }
 
-  private Flux<ArchiveSetQuery> selectArchiveSetQuery(
-      ArchiveStatus status,
-      UUID id,
-      @NonNull Integer size,
-      @NonNull Integer offset,
-      @NonNull ArchiveSort<ArchiveSetQuery.Fields> sort) {
+  private Mono<Page<ArchiveSetQuery>> selectArchiveSetQuery(SelectArchiveSetQueryCommand command) {
+    val status = command.getStatus();
+    val id = command.getId();
+
     val sql_statement =
         " SELECT archive_set_query.*, archive_meta.num_of_samples as meta_num_of_samples, archive_meta.num_of_downloads as meta_num_of_downloads "
             + " FROM archive_set_query, archive_meta "
             + " where id = archive_id "
-            + (status != null ? " AND status=:status " : "")
-            + (id != null ? " AND id=:id " : "")
-            + " ORDER BY "
-            + sort.getFieldName()
-            + " "
-            + sort.getSortDirection()
-            + " LIMIT "
-            + size
-            + " "
-            + " OFFSET "
-            + offset
-            + " ";
+            + (status.isPresent() ? " AND status=:status " : "")
+            + (id.isPresent() ? " AND id=:id " : "")
+            + format(" ORDER BY %s %s ", command.getSortField(), command.getSortDirection())
+            + " LIMIT :size "
+            + " OFFSET :offset ";
 
-    DatabaseClient.GenericExecuteSpec spec = databaseClient.sql(sql_statement);
+    DatabaseClient.GenericExecuteSpec spec =
+        databaseClient
+            .sql(sql_statement)
+            .bind("size", command.getSize())
+            .bind("offset", command.getOffset());
 
-    spec = status != null ? spec.bind("status", status) : spec;
-    spec = id != null ? spec.bind("id", id) : spec;
+    spec = status.isPresent() ? spec.bind("status", status) : spec;
+    spec = id.isPresent() ? spec.bind("id", id) : spec;
 
-    return spec.fetch().all().map(ARCHIVE_SET_QUERY_MAPPER);
+    return spec.fetch()
+        .all()
+        .collectList()
+        .map(rl -> Tuples.of((Long) rl.get(0).getOrDefault("count", command.getSize()), rl))
+        .map(
+            t2 -> {
+              val totalCount = t2.getT1();
+              val archives =
+                  t2.getT2().stream().map(ARCHIVE_SET_QUERY_MAPPER).collect(toUnmodifiableList());
+              return new PageImpl<>(archives, command.cretePageable(), totalCount);
+            });
   }
 
   private Mono<ArchiveAll> insertArchiveAll(ArchiveAll archiveAll) {

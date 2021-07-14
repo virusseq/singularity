@@ -31,6 +31,7 @@ import org.cancogenvirusseq.singularity.components.Contributors;
 import org.cancogenvirusseq.singularity.components.Files;
 import org.cancogenvirusseq.singularity.repository.ArchivesUnifiedCustomRepo;
 import org.cancogenvirusseq.singularity.repository.commands.SelectArchiveAllCommand;
+import org.cancogenvirusseq.singularity.repository.commands.SelectArchiveSetQueryCommand;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveAll;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveSetQuery;
 import org.springframework.core.io.FileSystemResource;
@@ -41,7 +42,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Slf4j
@@ -74,22 +74,20 @@ public class ApiController implements ApiDefinition {
                 .build());
   }
 
+  public Mono<ArchiveAll> getArchiveAllById(UUID id) {
+    return repo.findArchiveAllById(id);
+  }
+
   public Mono<Page<ArchiveAll>> getArchiveAll(SelectArchiveAllCommand req) {
     return repo.findArchiveAllByCommand(req);
   }
 
-  @Override
-  public Mono<ArchiveAll> getArchiveAllById(UUID id) {
-    return null;
-  }
-
-  public Flux<ArchiveSetQuery> getArchiveSetQueryDetails() {
-    return repo.findAll();
-  }
-
-  @Override
   public Mono<ArchiveSetQuery> getArchiveSetQueryById(UUID id) {
-    return null;
+    return repo.findArchiveSetQueryById(id);
+  }
+
+  public Mono<Page<ArchiveSetQuery>> getArchiveSetQuery(SelectArchiveSetQueryCommand command) {
+    return repo.findArchiveSetQueryByCommand(command);
   }
 
   private <T> Mono<EntityListResponse<T>> listResponseTransform(

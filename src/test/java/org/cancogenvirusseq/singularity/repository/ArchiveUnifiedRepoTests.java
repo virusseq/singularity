@@ -13,7 +13,6 @@ import org.cancogenvirusseq.singularity.repository.model.ArchiveSetQuery;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -33,9 +32,6 @@ public class ArchiveUnifiedRepoTests {
 
   @BeforeEach
   public void setUp() {
-    val mockArchiveAllRepo = Mockito.mock(ArchiveAllRepo.class);
-    val nockArchiveSetQueryRepo = Mockito.mock(ArchiveSetQueryRepo.class);
-
     val postgresProps = getPostgresProperties();
 
     // run migrations on test container db
@@ -48,8 +44,7 @@ public class ArchiveUnifiedRepoTests {
             .connectionFactory(createPsqlConnectionFactory(postgresProps))
             .build();
 
-    repo =
-        new ArchivesUnifiedCustomRepo(mockArchiveAllRepo, nockArchiveSetQueryRepo, databaseClient);
+    repo = new ArchivesUnifiedCustomRepo(databaseClient);
   }
 
   @Test
