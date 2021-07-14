@@ -128,7 +128,7 @@ public interface ApiDefinition {
       tags = "Singularity")
   @ApiResponses(
       value = {
-        @ApiResponse(code = 200, message = "", response = Object.class),
+        @ApiResponse(code = 200, message = "", response = ArchiveSetQuery.class),
         @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
       })
   @RequestMapping(

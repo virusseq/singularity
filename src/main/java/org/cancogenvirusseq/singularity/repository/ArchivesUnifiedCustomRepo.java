@@ -117,7 +117,7 @@ public class ArchivesUnifiedCustomRepo {
     return spec.fetch()
         .all()
         .collectList()
-        .map(rl -> Tuples.of((Long) rl.get(0).getOrDefault("count", command.getSize()), rl))
+        .map(rl -> Tuples.of((Long) rl.get(0).get("count"), rl))
         .map(
             t2 -> {
               val totalCount = t2.getT1();
@@ -132,7 +132,7 @@ public class ArchivesUnifiedCustomRepo {
     val id = command.getId();
 
     val sql_statement =
-        " SELECT archive_set_query.*, archive_meta.num_of_samples as meta_num_of_samples, archive_meta.num_of_downloads as meta_num_of_downloads "
+        " SELECT archive_set_query.*, archive_meta.num_of_samples as meta_num_of_samples, archive_meta.num_of_downloads as meta_num_of_downloads, count(*) OVER() AS count "
             + " FROM archive_set_query, archive_meta "
             + " where id = archive_id "
             + (status.isPresent() ? " AND status=:status " : "")
@@ -147,13 +147,13 @@ public class ArchivesUnifiedCustomRepo {
             .bind("size", command.getSize())
             .bind("offset", command.getOffset());
 
-    spec = status.isPresent() ? spec.bind("status", status) : spec;
-    spec = id.isPresent() ? spec.bind("id", id) : spec;
+    spec = status.isPresent() ? spec.bind("status", status.get()) : spec;
+    spec = id.isPresent() ? spec.bind("id", id.get()) : spec;
 
     return spec.fetch()
         .all()
         .collectList()
-        .map(rl -> Tuples.of((Long) rl.get(0).getOrDefault("count", command.getSize()), rl))
+        .map(rl -> Tuples.of((Long) rl.get(0).get("count"), rl))
         .map(
             t2 -> {
               val totalCount = t2.getT1();
