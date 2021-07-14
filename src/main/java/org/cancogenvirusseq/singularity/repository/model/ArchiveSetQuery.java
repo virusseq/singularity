@@ -19,17 +19,15 @@ public class ArchiveSetQuery {
   @Id private UUID id;
   @NonNull private ArchiveStatus status;
   @NonNull private Long timestamp;
+  @NonNull private String setQueryHash;
   private UUID objectId;
   private ArchiveMeta meta;
-  @NonNull private String setQueryHash;
 
   @RequiredArgsConstructor
   public enum Fields {
-    meta("meta"),
     setQueryHash("set_query_hash"),
     timestamp("timestamp"),
     status("status"),
-    type("type"),
     objectId("object_id"),
     id("id");
 

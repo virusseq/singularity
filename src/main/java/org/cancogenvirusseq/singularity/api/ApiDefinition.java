@@ -78,9 +78,9 @@ public interface ApiDefinition {
   ResponseEntity<Mono<Resource>> getFiles();
 
   @ApiOperation(
-      value = "Get a archives of a specific status and their details.",
-      nickname = "ArchiveAll Details",
-      tags = "Singularity")
+      value = "Get details of any archives that bundles all sample data.",
+      nickname = "ArchiveAll",
+      tags = "Archives")
   @ApiResponses(
       value = {
         @ApiResponse(code = 200, message = "", response = Object.class),
@@ -90,12 +90,12 @@ public interface ApiDefinition {
       value = "/archives/all",
       produces = MediaType.APPLICATION_JSON_VALUE,
       method = RequestMethod.GET)
-  Mono<Page<ArchiveAll>> getArchiveAll(SelectArchiveAllCommand fetchArchivesRequest);
+  Mono<Page<ArchiveAll>> getArchiveAllByCommand(SelectArchiveAllCommand command);
 
   @ApiOperation(
-      value = "Get a archives of a specific status and their details.",
-      nickname = "ArchiveAll Details",
-      tags = "Singularity")
+      value = "Get details of a specific archive that bundle all sample data.",
+      nickname = "ArchiveAll",
+      tags = "Archives")
   @ApiResponses(
       value = {
         @ApiResponse(code = 200, message = "", response = ArchiveAll.class),
@@ -108,9 +108,9 @@ public interface ApiDefinition {
   Mono<ArchiveAll> getArchiveAllById(@RequestParam UUID id);
 
   @ApiOperation(
-      value = "Get a archives of a specific status and their details.",
-      nickname = "ArchiveAll Details",
-      tags = "Singularity")
+      value = "Get details of available archives that bundles on demand queried samples.",
+      nickname = "ArchiveQuerySet",
+      tags = "Archives")
   @ApiResponses(
       value = {
         @ApiResponse(code = 200, message = "", response = Object.class),
@@ -120,12 +120,12 @@ public interface ApiDefinition {
       value = "/archives/set-query",
       produces = MediaType.APPLICATION_JSON_VALUE,
       method = RequestMethod.GET)
-  Mono<Page<ArchiveSetQuery>> getArchiveSetQuery(SelectArchiveSetQueryCommand command);
+  Mono<Page<ArchiveSetQuery>> getArchiveSetQueryByCommand(SelectArchiveSetQueryCommand command);
 
   @ApiOperation(
-      value = "Get a archives of a specific status and their details.",
-      nickname = "ArchiveAll Details",
-      tags = "Singularity")
+      value = "Get details of a specific bundle on demand queried samples.",
+      nickname = "ArchiveQuerySet",
+      tags = "Archives")
   @ApiResponses(
       value = {
         @ApiResponse(code = 200, message = "", response = ArchiveSetQuery.class),

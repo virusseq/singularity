@@ -20,7 +20,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import reactor.test.StepVerifier;
 
 @Testcontainers
-public class ArchiveUnifiedRepoTests {
+public class ArchiveCustomRepoTests {
   @Container
   public PostgreSQLContainer postgreSQLContainer =
       new PostgreSQLContainer("postgres:10-alpine")
@@ -28,7 +28,7 @@ public class ArchiveUnifiedRepoTests {
           .withUsername("test")
           .withPassword("test");
 
-  private ArchivesUnifiedCustomRepo repo;
+  private ArchivesCustomRepo repo;
 
   @BeforeEach
   public void setUp() {
@@ -44,7 +44,7 @@ public class ArchiveUnifiedRepoTests {
             .connectionFactory(createPsqlConnectionFactory(postgresProps))
             .build();
 
-    repo = new ArchivesUnifiedCustomRepo(databaseClient);
+    repo = new ArchivesCustomRepo(databaseClient);
   }
 
   @Test

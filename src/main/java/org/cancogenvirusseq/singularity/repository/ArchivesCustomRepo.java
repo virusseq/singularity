@@ -31,7 +31,7 @@ import reactor.util.function.Tuples;
  */
 @Repository
 @RequiredArgsConstructor
-public class ArchivesUnifiedCustomRepo {
+public class ArchivesCustomRepo {
   private final ObjectMapper mapper = new ObjectMapper();
   private final DatabaseClient databaseClient;
 
@@ -130,6 +130,7 @@ public class ArchivesUnifiedCustomRepo {
   private Mono<Page<ArchiveSetQuery>> selectArchiveSetQuery(SelectArchiveSetQueryCommand command) {
     val status = command.getStatus();
     val id = command.getId();
+    val setQueryHash = command.getSetQueryHash();
 
     val sql_statement =
         " SELECT archive_set_query.*, archive_meta.num_of_samples as meta_num_of_samples, archive_meta.num_of_downloads as meta_num_of_downloads, count(*) OVER() AS count "
@@ -137,6 +138,7 @@ public class ArchivesUnifiedCustomRepo {
             + " where id = archive_id "
             + (status.isPresent() ? " AND status=:status " : "")
             + (id.isPresent() ? " AND id=:id " : "")
+            + (setQueryHash.isPresent() ? " AND set_query_hash=:set_query_hash " : "")
             + format(" ORDER BY %s %s ", command.getSortField(), command.getSortDirection())
             + " LIMIT :size "
             + " OFFSET :offset ";
@@ -149,6 +151,7 @@ public class ArchivesUnifiedCustomRepo {
 
     spec = status.isPresent() ? spec.bind("status", status.get()) : spec;
     spec = id.isPresent() ? spec.bind("id", id.get()) : spec;
+    spec = setQueryHash.isPresent() ? spec.bind("set_query_hash", setQueryHash.get()) : spec;
 
     return spec.fetch()
         .all()
