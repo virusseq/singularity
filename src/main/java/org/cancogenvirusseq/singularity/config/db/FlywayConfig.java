@@ -15,6 +15,10 @@ public class FlywayConfig {
 
   @Bean(initMethod = "migrate")
   public Flyway flyway() {
+    return createFlyway(postgresProperties);
+  }
+
+  public static Flyway createFlyway(PostgresProperties postgresProperties) {
     val url =
         format(
             "jdbc:postgresql://%s:%s/%s",

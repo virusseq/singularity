@@ -25,7 +25,8 @@ import io.swagger.annotations.ApiResponses;
 import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
 import org.cancogenvirusseq.singularity.api.model.ErrorResponse;
 import org.cancogenvirusseq.singularity.api.model.FetchArchivesRequest;
-import org.cancogenvirusseq.singularity.repository.model.Archive;
+import org.cancogenvirusseq.singularity.repository.model.ArchiveAll;
+import org.cancogenvirusseq.singularity.repository.model.ArchiveSetQuery;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
@@ -34,6 +35,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @CrossOrigin
@@ -75,7 +77,7 @@ public interface ApiDefinition {
 
   @ApiOperation(
       value = "Get a archives of a specific status and their details.",
-      nickname = "Archive Details",
+      nickname = "ArchiveAll Details",
       tags = "Singularity")
   @ApiResponses(
       value = {
@@ -83,8 +85,23 @@ public interface ApiDefinition {
         @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
       })
   @RequestMapping(
-      value = "/archives",
+      value = "/archives/all",
       produces = MediaType.APPLICATION_JSON_VALUE,
       method = RequestMethod.GET)
-  Mono<Page<Archive>> getArchiveDetails(FetchArchivesRequest fetchArchivesRequest);
+  Mono<Page<ArchiveAll>> getArchiveDetails(FetchArchivesRequest fetchArchivesRequest);
+
+  @ApiOperation(
+      value = "Get a archives of a specific status and their details.",
+      nickname = "ArchiveAll Details",
+      tags = "Singularity")
+  @ApiResponses(
+      value = {
+        @ApiResponse(code = 200, message = "", response = Object.class),
+        @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
+      })
+  @RequestMapping(
+      value = "/archives/set-query",
+      produces = MediaType.APPLICATION_JSON_VALUE,
+      method = RequestMethod.GET)
+  Flux<ArchiveSetQuery> getArchiveSetQueryDetails();
 }

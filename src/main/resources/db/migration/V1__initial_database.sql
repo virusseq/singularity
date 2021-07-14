@@ -16,18 +16,25 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TYPE archive_status as enum ('BUILDING', 'COMPLETE', 'FAILED');
 
-CREATE TYPE archive_type as enum ('ALL', 'SETQUERY');
-
-CREATE TABLE if not exists archive
+CREATE TABLE if not exists archive_all
 (
-    id                  uuid                not null,
+    id                  uuid                DEFAULT uuid_generate_v4(),
     status              archive_status      not null,
-    type                archive_type        not null,
     timestamp           bigint              not null,
-    num_of_samples      int                 not null,
-    set_id              VARCHAR,
+    object_id           uuid,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE if not exists archive_set_query
+(
+    id                  uuid                DEFAULT uuid_generate_v4(),
+    status              archive_status      not null,
+    timestamp           bigint              not null,
+    set_query_hash      VARCHAR             not null,
     object_id           uuid,
     PRIMARY KEY (id)
 );
@@ -36,8 +43,12 @@ CREATE TABLE if not exists archive_meta
 (
     archive_id          uuid      not null,
     num_of_downloads    int       not null,
+    num_of_samples      int       not null,
     PRIMARY KEY (archive_id)
 );
 
-ALTER TABLE archive_meta ADD FOREIGN KEY (archive_id)
-REFERENCES archive(id) ON DELETE CASCADE;
+--ALTER TABLE archive_meta ADD FOREIGN KEY (archive_id)
+--REFERENCES archive_all(id) ON DELETE CASCADE;
+
+--ALTER TABLE archive_meta ADD FOREIGN KEY (archive_id)
+--REFERENCES archive_set_query(id) ON DELETE CASCADE;

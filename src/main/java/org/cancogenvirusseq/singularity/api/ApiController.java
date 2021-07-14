@@ -25,12 +25,15 @@ import java.util.Collection;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
 import org.cancogenvirusseq.singularity.api.model.FetchArchivesRequest;
 import org.cancogenvirusseq.singularity.components.Contributors;
 import org.cancogenvirusseq.singularity.components.Files;
-import org.cancogenvirusseq.singularity.repository.model.Archive;
-import org.cancogenvirusseq.singularity.components.Archives;
+import org.cancogenvirusseq.singularity.repository.ArchivesUnifiedRepo;
+import org.cancogenvirusseq.singularity.repository.model.ArchiveAll;
+import org.cancogenvirusseq.singularity.repository.model.ArchiveSetQuery;
+import org.cancogenvirusseq.singularity.repository.model.ArchiveSort;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -39,6 +42,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Slf4j
@@ -47,7 +51,7 @@ import reactor.core.publisher.Mono;
 public class ApiController implements ApiDefinition {
   private final Contributors contributors;
   private final Files files;
-  private final Archives archiveService;
+  private final ArchivesUnifiedRepo repo;
 
   public Mono<EntityListResponse<String>> getContributors() {
     return contributors.getContributors().transform(this::listResponseTransform);
@@ -71,8 +75,17 @@ public class ApiController implements ApiDefinition {
                 .build());
   }
 
-  public Mono<Page<Archive>> getArchiveDetails(FetchArchivesRequest request) {
-    return archiveService.getArchivesWithStatus(request);
+  public Mono<Page<ArchiveAll>> getArchiveDetails(FetchArchivesRequest req) {
+    val sort =
+        ArchiveSort.<ArchiveAll.Fields>builder()
+            .fieldName(req.getSortField())
+            .sortDirection(req.getSortDirection())
+            .build();
+    return repo.findAllByStatus(req.getStatus(), req.getSize(), req.getOffset(), sort);
+  }
+
+  public Flux<ArchiveSetQuery> getArchiveSetQueryDetails() {
+    return repo.findAll();
   }
 
   private <T> Mono<EntityListResponse<T>> listResponseTransform(

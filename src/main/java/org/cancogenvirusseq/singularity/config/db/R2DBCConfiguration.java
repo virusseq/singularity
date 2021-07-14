@@ -58,29 +58,7 @@ public class R2DBCConfiguration extends AbstractR2dbcConfiguration {
 
   @Bean
   public PostgresqlConnectionFactory psqlConnectionFactory() {
-    val postgresqlConnectionConfiguration = PostgresqlConnectionConfiguration.builder();
-
-    postgresqlConnectionConfiguration
-        .host(postgresProperties.getHost())
-        .port(postgresProperties.getPort())
-        .database(postgresProperties.getDatabase());
-
-    if (!Strings.isNullOrEmpty(postgresProperties.getUsername())) {
-      postgresqlConnectionConfiguration.username(postgresProperties.getUsername());
-    }
-
-    if (!Strings.isNullOrEmpty(postgresProperties.getPassword())) {
-      postgresqlConnectionConfiguration.password(postgresProperties.getPassword());
-    }
-
-    val codecRegistrar =
-        EnumCodec.builder()
-            .withEnum("archive_status", ArchiveStatus.class)
-            .withEnum("archive_type", ArchiveType.class)
-            .build();
-
-    return new PostgresqlConnectionFactory(
-        postgresqlConnectionConfiguration.codecRegistrar(codecRegistrar).build());
+    return createPsqlConnectionFactory(postgresProperties);
   }
 
   @Override
@@ -98,8 +76,30 @@ public class R2DBCConfiguration extends AbstractR2dbcConfiguration {
 
   @Override
   protected List<Object> getCustomConverters() {
-    return List.of(
-            new ArchiveStatusConverter(),
-            new ArchiveTypeConverter());
+    return List.of(new ArchiveStatusConverter());
+  }
+
+  public static PostgresqlConnectionFactory createPsqlConnectionFactory(
+      PostgresProperties postgresProperties) {
+    val postgresqlConnectionConfiguration = PostgresqlConnectionConfiguration.builder();
+
+    postgresqlConnectionConfiguration
+        .host(postgresProperties.getHost())
+        .port(postgresProperties.getPort())
+        .database(postgresProperties.getDatabase());
+
+    if (!Strings.isNullOrEmpty(postgresProperties.getUsername())) {
+      postgresqlConnectionConfiguration.username(postgresProperties.getUsername());
+    }
+
+    if (!Strings.isNullOrEmpty(postgresProperties.getPassword())) {
+      postgresqlConnectionConfiguration.password(postgresProperties.getPassword());
+    }
+
+    val codecRegistrar =
+        EnumCodec.builder().withEnum("archive_status", ArchiveStatus.class).build();
+
+    return new PostgresqlConnectionFactory(
+        postgresqlConnectionConfiguration.codecRegistrar(codecRegistrar).build());
   }
 }
