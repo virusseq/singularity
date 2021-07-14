@@ -24,10 +24,8 @@ public class ArchiveAll {
 
   @RequiredArgsConstructor
   public enum Fields {
-    meta("meta"),
     timestamp("timestamp"),
     status("status"),
-    type("type"),
     objectId("object_id"),
     id("id");
 

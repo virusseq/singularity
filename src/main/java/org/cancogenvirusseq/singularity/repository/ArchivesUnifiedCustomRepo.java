@@ -1,5 +1,6 @@
 package org.cancogenvirusseq.singularity.repository;
 
+import static java.lang.String.format;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.cancogenvirusseq.singularity.repository.model.ArchiveSort.DEFAULT_ARCHIVE_SET_QUERY_SORT;
 
@@ -91,14 +92,14 @@ public class ArchivesUnifiedCustomRepo {
   private Mono<Page<ArchiveAll>> selectArchiveAll(SelectArchiveAllCommand command) {
     val status = command.getStatus();
     val id = command.getId();
-   //, count(*) OVER() AS count
+
     val sql_statement =
         " SELECT archive_all.*, archive_meta.num_of_samples as meta_num_of_samples, archive_meta.num_of_downloads as meta_num_of_downloads, count(*) OVER() AS count "
             + " FROM archive_all, archive_meta "
             + " where id = archive_id "
             + (status.isPresent() ? " AND status=:status " : "")
             + (id.isPresent() ? " AND id=:id " : "")
-//            + " ORDER BY :fieldName :sortDirection "
+            + format(" ORDER BY %s %s ", command.getSortField(), command.getSortDirection())
             + " LIMIT :size "
             + " OFFSET :offset ";
 
@@ -107,14 +108,13 @@ public class ArchivesUnifiedCustomRepo {
             .sql(sql_statement)
             .bind("size", command.getSize())
             .bind("offset", command.getOffset());
-//            .bind("fieldName", command.getSortField().toString())
-//            .bind("sortDirection", command.getSortDirection().toString());
 
     spec = status.isPresent() ? spec.bind("status", status.get()) : spec;
     spec = id.isPresent() ? spec.bind("id", id.get()) : spec;
 
     return spec.fetch()
         .all()
+        .log()
         .collectList()
         .map(rl -> Tuples.of((Long) rl.get(0).getOrDefault("count", command.getSize()), rl))
         .map(
