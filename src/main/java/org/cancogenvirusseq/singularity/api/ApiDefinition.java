@@ -25,10 +25,8 @@ import io.swagger.annotations.ApiResponses;
 import java.util.UUID;
 import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
 import org.cancogenvirusseq.singularity.api.model.ErrorResponse;
-import org.cancogenvirusseq.singularity.repository.commands.SelectArchiveAllCommand;
-import org.cancogenvirusseq.singularity.repository.commands.SelectArchiveSetQueryCommand;
-import org.cancogenvirusseq.singularity.repository.model.ArchiveAll;
-import org.cancogenvirusseq.singularity.repository.model.ArchiveSetQuery;
+import org.cancogenvirusseq.singularity.api.model.FetchArchivesRequest;
+import org.cancogenvirusseq.singularity.repository.model.Archive;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
@@ -36,7 +34,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Mono;
 
@@ -79,7 +76,7 @@ public interface ApiDefinition {
 
   @ApiOperation(
       value = "Get details of any archives that bundles all sample data.",
-      nickname = "ArchiveAll",
+      nickname = "Archive",
       tags = "Archives")
   @ApiResponses(
       value = {
@@ -90,50 +87,21 @@ public interface ApiDefinition {
       value = "/archives/all",
       produces = MediaType.APPLICATION_JSON_VALUE,
       method = RequestMethod.GET)
-  Mono<Page<ArchiveAll>> getArchiveAllByCommand(SelectArchiveAllCommand command);
+  Mono<Page<Archive>> getArchivesByRequest(FetchArchivesRequest req);
 
-  @ApiOperation(
-      value = "Get details of a specific archive that bundle all sample data.",
-      nickname = "ArchiveAll",
-      tags = "Archives")
-  @ApiResponses(
-      value = {
-        @ApiResponse(code = 200, message = "", response = ArchiveAll.class),
-        @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
-      })
-  @RequestMapping(
-      value = "/archives/all/{id}",
-      produces = MediaType.APPLICATION_JSON_VALUE,
-      method = RequestMethod.GET)
-  Mono<ArchiveAll> getArchiveAllById(@RequestParam UUID id);
-
-  @ApiOperation(
-      value = "Get details of available archives that bundles on demand queried samples.",
-      nickname = "ArchiveQuerySet",
-      tags = "Archives")
-  @ApiResponses(
-      value = {
-        @ApiResponse(code = 200, message = "", response = Object.class),
-        @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
-      })
-  @RequestMapping(
-      value = "/archives/set-query",
-      produces = MediaType.APPLICATION_JSON_VALUE,
-      method = RequestMethod.GET)
-  Mono<Page<ArchiveSetQuery>> getArchiveSetQueryByCommand(SelectArchiveSetQueryCommand command);
-
-  @ApiOperation(
-      value = "Get details of a specific bundle on demand queried samples.",
-      nickname = "ArchiveQuerySet",
-      tags = "Archives")
-  @ApiResponses(
-      value = {
-        @ApiResponse(code = 200, message = "", response = ArchiveSetQuery.class),
-        @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
-      })
-  @RequestMapping(
-      value = "/archives/set-query/{id}",
-      produces = MediaType.APPLICATION_JSON_VALUE,
-      method = RequestMethod.GET)
-  Mono<ArchiveSetQuery> getArchiveSetQueryById(@RequestParam UUID id);
+//  @ApiOperation(
+//      value = "Get details of a specific archive that bundle all sample data.",
+//      nickname = "Archive",
+//      tags = "Archives")
+//  @ApiResponses(
+//      value = {
+//        @ApiResponse(code = 200, message = "", response = Archive.class),
+//        @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
+//      })
+//  @RequestMapping(
+//      value = "/archives/all/{id}",
+//      produces = MediaType.APPLICATION_JSON_VALUE,
+//      method = RequestMethod.GET)
+//  Mono<Archive> getArchiveAllById(@RequestParam UUID id);
+//
 }

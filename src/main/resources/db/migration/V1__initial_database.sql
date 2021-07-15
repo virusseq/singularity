@@ -20,29 +20,34 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TYPE archive_status as enum ('BUILDING', 'COMPLETE', 'FAILED');
 
-CREATE TABLE if not exists archive_meta
-(
-    archive_id          uuid      not null,
-    num_of_downloads    int       not null DEFAULT 0,
-    num_of_samples      int       not null,
-    PRIMARY KEY (archive_id)
-);
+CREATE TYPE archive_type as enum ('ALL', 'SET_QUERY');
 
-CREATE TABLE if not exists archive_all
+CREATE TABLE if not exists archive
 (
-    id       uuid     REFERENCES archive_meta(archive_id) ON DELETE CASCADE  DEFAULT uuid_generate_v4(),
-    status              archive_status      not null,
-    timestamp           bigint              unique,
+    id              uuid             NOT NULL DEFAULT uuid_generate_v4(),
+    status          archive_status   NOT NULL,
+    created_at      bigint      NOT NULL DEFAULT extract(epoch from now()),
+    hash_info       VARCHAR          NOT NULL CHECK (hash_info <> ''),
+    hash            VARCHAR          NOT NULL UNIQUE CHECK (hash <> ''),
+    type            archive_type     NOT NULL,
+    num_of_samples      int          NOT NULL,
+    num_of_downloads    int          NOT NULL DEFAULT 0,
     object_id           uuid,
     PRIMARY KEY (id)
 );
 
-CREATE TABLE if not exists archive_set_query
-(
-    id        uuid    REFERENCES archive_meta(archive_id) ON DELETE CASCADE  DEFAULT uuid_generate_v4(),
-    status              archive_status      not null,
-    timestamp           bigint              not null,
-    set_query_hash      VARCHAR             unique,
-    object_id           uuid,
-    PRIMARY KEY (id)
-);
+CREATE FUNCTION add_hash() RETURNS trigger AS $add_hash$
+    BEGIN
+        -- Check that empname and salary are given
+        IF NEW.hash_info IS NULL THEN
+            RAISE EXCEPTION 'hash_info cannot be null';
+        END IF;
+
+        -- Update the hash
+        NEW.hash := MD5(NEW.hash_info);
+        RETURN NEW;
+    END;
+$add_hash$ LANGUAGE plpgsql;
+
+CREATE TRIGGER add_hash BEFORE INSERT OR UPDATE ON archive
+    FOR EACH ROW EXECUTE PROCEDURE add_hash();
