@@ -27,10 +27,10 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
-import org.cancogenvirusseq.singularity.api.model.FetchArchivesRequest;
-import org.cancogenvirusseq.singularity.components.Archives;
+import org.cancogenvirusseq.singularity.repository.command.FindArchivesCommand;
 import org.cancogenvirusseq.singularity.components.Contributors;
 import org.cancogenvirusseq.singularity.components.Files;
+import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -48,7 +48,7 @@ import reactor.core.publisher.Mono;
 public class ApiController implements ApiDefinition {
   private final Contributors contributors;
   private final Files files;
-  private final Archives archives;
+  private final ArchivesRepo archivesRepo;
 
   public Mono<EntityListResponse<String>> getContributors() {
     return contributors.getContributors().transform(this::listResponseTransform);
@@ -72,13 +72,12 @@ public class ApiController implements ApiDefinition {
                 .build());
   }
 
-  public Mono<Page<Archive>> getArchivesByRequest(FetchArchivesRequest fetchArchivesRequest) {
-    return archives.getArchivesWithStatus(fetchArchivesRequest);
+  public Mono<Page<Archive>> getArchives(FindArchivesCommand findArchivesCommand) {
+    return archivesRepo.findByCommand(findArchivesCommand);
   }
 
-  @Override
-  public Mono<Archive> getArchiveById(UUID id) {
-    return archives.getArchiveById(id);
+  public Mono<Archive> getArchive(UUID id) {
+    return archivesRepo.findById(id);
   }
 
   private <T> Mono<EntityListResponse<T>> listResponseTransform(
