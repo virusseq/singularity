@@ -3,12 +3,8 @@ package org.cancogenvirusseq.singularity.repository.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-
-import java.time.Instant;
-import java.util.Date;
 import java.util.UUID;
 import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 

@@ -100,7 +100,10 @@ public class R2DBCConfiguration extends AbstractR2dbcConfiguration {
     }
 
     val codecRegistrar =
-        EnumCodec.builder().withEnum("archive_type", ArchiveType.class).withEnum("archive_status", ArchiveStatus.class).build();
+        EnumCodec.builder()
+            .withEnum("archive_type", ArchiveType.class)
+            .withEnum("archive_status", ArchiveStatus.class)
+            .build();
 
     return new PostgresqlConnectionFactory(
         postgresqlConnectionConfiguration.codecRegistrar(codecRegistrar).build());

@@ -72,8 +72,13 @@ public class ApiController implements ApiDefinition {
                 .build());
   }
 
-  public Mono<Page<Archive>> getArchivesByRequest(FetchArchivesRequest fetchArchivesRequest ) {
+  public Mono<Page<Archive>> getArchivesByRequest(FetchArchivesRequest fetchArchivesRequest) {
     return archives.getArchivesWithStatus(fetchArchivesRequest);
+  }
+
+  @Override
+  public Mono<Archive> getArchiveById(UUID id) {
+    return archives.getArchiveById(id);
   }
 
   private <T> Mono<EntityListResponse<T>> listResponseTransform(

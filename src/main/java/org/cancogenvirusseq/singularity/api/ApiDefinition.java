@@ -32,6 +32,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.multipart.MultipartFile;
@@ -89,19 +90,18 @@ public interface ApiDefinition {
       method = RequestMethod.GET)
   Mono<Page<Archive>> getArchivesByRequest(FetchArchivesRequest req);
 
-//  @ApiOperation(
-//      value = "Get details of a specific archive that bundle all sample data.",
-//      nickname = "Archive",
-//      tags = "Archives")
-//  @ApiResponses(
-//      value = {
-//        @ApiResponse(code = 200, message = "", response = Archive.class),
-//        @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
-//      })
-//  @RequestMapping(
-//      value = "/archives/all/{id}",
-//      produces = MediaType.APPLICATION_JSON_VALUE,
-//      method = RequestMethod.GET)
-//  Mono<Archive> getArchiveAllById(@RequestParam UUID id);
-//
+  @ApiOperation(
+      value = "Get details of a specific archive that bundle all sample data.",
+      nickname = "Archive",
+      tags = "Archives")
+  @ApiResponses(
+      value = {
+        @ApiResponse(code = 200, message = "", response = Archive.class),
+        @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
+      })
+  @RequestMapping(
+      value = "/archives/{id}",
+      produces = MediaType.APPLICATION_JSON_VALUE,
+      method = RequestMethod.GET)
+  Mono<Archive> getArchiveById(@PathVariable("id") UUID id);
 }
