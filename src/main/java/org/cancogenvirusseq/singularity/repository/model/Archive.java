@@ -1,8 +1,6 @@
 package org.cancogenvirusseq.singularity.repository.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import java.util.UUID;
 import lombok.*;
 import org.springframework.data.annotation.Id;
@@ -12,7 +10,6 @@ import org.springframework.data.relational.core.mapping.Table;
 @Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Table("archive")
 public class Archive {
@@ -22,21 +19,20 @@ public class Archive {
   @NonNull private String hashInfo;
   private String hash;
   private UUID objectId;
-
-  private Long created_at;
+  private Long createdAt;
 
   @NonNull private Integer numOfSamples;
   @NonNull private Integer numOfDownloads;
 
   @RequiredArgsConstructor
   public enum Fields {
-    createdAt("created_at"),
+    createdAt("createdAt"),
     status("status"),
     type("type"),
-    objectId("object_id"),
+    objectId("objectId"),
     id("id"),
-    numOfSamples("num_of_samples"),
-    numOfDownloads("num_of_downloads"),
+    numOfSamples("numOfSamples"),
+    numOfDownloads("numOfDownloads"),
     hash("hash");
 
     private final String text;

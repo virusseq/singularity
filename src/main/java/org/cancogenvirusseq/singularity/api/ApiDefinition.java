@@ -85,7 +85,7 @@ public interface ApiDefinition {
         @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
       })
   @RequestMapping(
-      value = "/archives/all",
+      value = "/archives",
       produces = MediaType.APPLICATION_JSON_VALUE,
       method = RequestMethod.GET)
   Mono<Page<Archive>> getArchivesByRequest(FetchArchivesRequest req);

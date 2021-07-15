@@ -24,14 +24,14 @@ CREATE TYPE archive_type as enum ('ALL', 'SET_QUERY');
 
 CREATE TABLE if not exists archive
 (
-    id              uuid             NOT NULL DEFAULT uuid_generate_v4(),
-    status          archive_status   NOT NULL,
-    created_at      bigint      NOT NULL DEFAULT extract(epoch from now()),
-    hash_info       VARCHAR          NOT NULL CHECK (hash_info <> ''),
-    hash            VARCHAR          NOT NULL UNIQUE CHECK (hash <> ''),
-    type            archive_type     NOT NULL,
-    num_of_samples      int          NOT NULL,
-    num_of_downloads    int          NOT NULL DEFAULT 0,
+    id                  uuid             NOT NULL DEFAULT uuid_generate_v4(),
+    status              archive_status   NOT NULL,
+    created_at          bigint           NOT NULL DEFAULT extract(epoch from now()),
+    hash_info           VARCHAR          NOT NULL CHECK (hash_info <> ''),
+    hash                VARCHAR          NOT NULL UNIQUE CHECK (hash <> ''),
+    type                archive_type     NOT NULL,
+    num_of_samples      int              NOT NULL,
+    num_of_downloads    int              NOT NULL DEFAULT 0,
     object_id           uuid,
     PRIMARY KEY (id)
 );
