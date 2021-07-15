@@ -1,5 +1,6 @@
 package org.cancogenvirusseq.singularity.repository.command;
 
+import java.time.Instant;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,8 +9,6 @@ import org.cancogenvirusseq.singularity.repository.model.Archive;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveStatus;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveType;
 import org.springframework.data.domain.Sort;
-
-import java.time.Instant;
 
 @Data
 @NoArgsConstructor
