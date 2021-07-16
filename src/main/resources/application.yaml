@@ -16,6 +16,14 @@ postgres:
   maxPoolIdleTimeMs: 1000
   maxPoolSize: 20
 
+s3:
+  region:
+  endpoint: https://object.cancercollaboratory.org:9080
+  accessKeyId: SOME_KEY
+  secretAccessKey: SOME_SECRET
+  bucket: cancogen
+  multipartMinPartSize:
+
 elastic:
   host: localhost
   port: 9200
