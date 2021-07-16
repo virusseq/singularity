@@ -19,8 +19,7 @@
 package org.cancogenvirusseq.singularity.utils;
 
 import static java.lang.String.format;
-import static org.cancogenvirusseq.singularity.utils.CommonUtils.dataBufferToBytes;
-import static org.cancogenvirusseq.singularity.utils.CommonUtils.writeToFileStream;
+import static org.cancogenvirusseq.singularity.utils.CommonUtils.*;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -37,6 +36,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
+import org.cancogenvirusseq.singularity.components.model.AnalysisDocumentMolecularDataPair;
 import org.cancogenvirusseq.singularity.components.model.BatchedDownloadPair;
 import org.cancogenvirusseq.singularity.components.model.FilesArchive;
 import org.springframework.util.FileSystemUtils;
@@ -44,6 +44,16 @@ import reactor.core.publisher.Flux;
 
 @Slf4j
 public class FileArchiveUtils {
+
+  public static Function<Flux<AnalysisDocumentMolecularDataPair>, Flux<String>>
+      downloadPairsToFileArchiveWithInstant(Instant instant) {
+    return downloadPairs ->
+        downloadPairs
+            .reduce(new FilesArchive(instant), addDownloadPairToFileArchive)
+            .map(tarGzipBundleAndClose)
+            .flux()
+            .log("Download::downloadAndArchiveFunctionWithInstant");
+  }
 
   public static Function<Flux<BatchedDownloadPair>, Flux<String>>
       batchedDownloadPairsToFileArchiveWithInstant(Instant instant) {
@@ -65,6 +75,17 @@ public class FileArchiveUtils {
                 filesArchive.getMetadataFileOutputStream(),
                 TsvUtils.analysisDocumentsToTsvRowsBytes(
                     batchedDownloadPair.getAnalysisDocuments()));
+            return filesArchive;
+          };
+
+  private static final BiFunction<FilesArchive, AnalysisDocumentMolecularDataPair, FilesArchive>
+      addDownloadPairToFileArchive =
+          (filesArchive, downloadPair) -> {
+            writeByteBufferToFileStream.accept(
+                filesArchive.getMolecularFileOutputStream(), downloadPair.getMolecularData());
+            writeToFileStream.accept(
+                filesArchive.getMetadataFileOutputStream(),
+                TsvUtils.analysisDocumentToTsvRowBytes(downloadPair.getAnalysisDocument()));
             return filesArchive;
           };
 

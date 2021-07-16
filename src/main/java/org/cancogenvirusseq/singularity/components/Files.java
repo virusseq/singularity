@@ -19,6 +19,7 @@
 package org.cancogenvirusseq.singularity.components;
 
 import static org.cancogenvirusseq.singularity.utils.FileArchiveUtils.batchedDownloadPairsToFileArchiveWithInstant;
+import static org.cancogenvirusseq.singularity.utils.FileArchiveUtils.downloadPairsToFileArchiveWithInstant;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -44,6 +45,7 @@ public class Files {
   private final EventEmitter eventEmitter;
   private final Analyses analyses;
   private final Download download;
+  private final S3Download s3Download;
 
   @Value("${files.finalEventCheckSeconds}")
   private final Integer finalEventCheckSeconds = 60; // default to 1 minute
@@ -122,8 +124,8 @@ public class Files {
   private Flux<String> downloadAndBuildBundle(Instant instant) {
     return analyses
         .getAllAnalysisDocuments()
-        .transform(download::downloadBatchedPairs)
-        .transform(batchedDownloadPairsToFileArchiveWithInstant(instant))
+        .transform(s3Download)
+        .transform(downloadPairsToFileArchiveWithInstant(instant))
         // lock bundle building on start of downloadAndSave
         .doOnSubscribe(sub -> isBuildingBundle.set(true))
         // unlock bundle building on complete/error of downloadAndSave

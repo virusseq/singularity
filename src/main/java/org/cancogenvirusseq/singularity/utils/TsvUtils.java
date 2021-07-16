@@ -89,6 +89,13 @@ public class TsvUtils {
         .getBytes(StandardCharsets.UTF_8);
   }
 
+  public static byte[] analysisDocumentToTsvRowBytes(AnalysisDocument analysisDocument) {
+    return (analysisDocumentToTsvRow(analysisDocument)
+            + "\n" // append newline to final batch of rows
+        )
+        .getBytes(StandardCharsets.UTF_8);
+  }
+
   private static String analysisDocumentToTsvRow(AnalysisDocument analysisDocument) {
     return stringsToTsvRow(
         analysisDocument.getStudyId(),

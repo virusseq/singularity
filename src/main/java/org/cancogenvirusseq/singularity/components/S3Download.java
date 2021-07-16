@@ -17,16 +17,31 @@ import java.util.function.Function;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class S3Download implements Function<Flux<AnalysisDocument>, Flux<AnalysisDocumentMolecularDataPair>> {
+public class S3Download
+    implements Function<Flux<AnalysisDocument>, Flux<AnalysisDocumentMolecularDataPair>> {
 
-    private final S3AsyncClient s3AsyncClient;
-    private final S3ClientProperties s3ClientProperties;
+  private final S3AsyncClient s3AsyncClient;
+  private final S3ClientProperties s3ClientProperties;
 
-    @Override
-    public Flux<AnalysisDocumentMolecularDataPair> apply(Flux<AnalysisDocument> analysisDocumentFlux) {
-        // todo: init object before?
-        return analysisDocumentFlux.map(analysisDocument -> GetObjectRequest.builder().key(analysisDocument.getObjectId()).bucket(s3ClientProperties.getBucket()).build())
-                .flatMap(getObjectRequest -> Mono.fromFuture(s3AsyncClient.getObject(getObjectRequest, AsyncResponseTransformer.toBytes())))
-                .map(getObjectResponseResponseBytes -> new AnalysisDocumentMolecularDataPair(a) getObjectResponseResponseBytes.asByteBuffer().)
-    }
+  @Override
+  public Flux<AnalysisDocumentMolecularDataPair> apply(
+      Flux<AnalysisDocument> analysisDocumentFlux) {
+    return analysisDocumentFlux.flatMap(
+        analysisDocument ->
+            Mono.fromFuture(
+                    s3AsyncClient.getObject(
+                            getObjectRequestForAnalysisDocument(analysisDocument),
+                        AsyncResponseTransformer.toBytes()))
+                .map(
+                    getObjectResponseResponseBytes ->
+                        new AnalysisDocumentMolecularDataPair(
+                            analysisDocument, getObjectResponseResponseBytes.asByteBuffer())));
+  }
+
+  private GetObjectRequest getObjectRequestForAnalysisDocument(AnalysisDocument analysisDocument) {
+    return GetObjectRequest.builder()
+        .key(analysisDocument.getObjectId())
+        .bucket(s3ClientProperties.getBucket())
+        .build();
+  }
 }
