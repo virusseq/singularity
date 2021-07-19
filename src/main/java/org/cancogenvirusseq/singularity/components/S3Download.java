@@ -1,5 +1,8 @@
 package org.cancogenvirusseq.singularity.components;
 
+import static java.lang.String.format;
+
+import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.singularity.components.model.AnalysisDocument;
@@ -11,8 +14,6 @@ import reactor.core.publisher.Mono;
 import software.amazon.awssdk.core.async.AsyncResponseTransformer;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-
-import java.util.function.Function;
 
 @Slf4j
 @Component
@@ -30,7 +31,7 @@ public class S3Download
         analysisDocument ->
             Mono.fromFuture(
                     s3AsyncClient.getObject(
-                            getObjectRequestForAnalysisDocument(analysisDocument),
+                        getObjectRequestForAnalysisDocument(analysisDocument),
                         AsyncResponseTransformer.toBytes()))
                 .map(
                     getObjectResponseResponseBytes ->
@@ -40,7 +41,7 @@ public class S3Download
 
   private GetObjectRequest getObjectRequestForAnalysisDocument(AnalysisDocument analysisDocument) {
     return GetObjectRequest.builder()
-        .key(analysisDocument.getObjectId())
+        .key(format("%s/%s", s3ClientProperties.getDataDir(), analysisDocument.getObjectId()))
         .bucket(s3ClientProperties.getBucket())
         .build();
   }

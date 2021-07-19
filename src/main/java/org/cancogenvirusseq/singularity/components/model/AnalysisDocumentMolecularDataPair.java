@@ -18,12 +18,9 @@
 
 package org.cancogenvirusseq.singularity.components.model;
 
+import java.nio.ByteBuffer;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.buffer.DataBuffer;
-
-import java.nio.ByteBuffer;
-import java.util.List;
 
 @Getter
 @RequiredArgsConstructor

@@ -18,11 +18,10 @@
 
 package org.cancogenvirusseq.singularity.config.s3Client;
 
+import java.net.URI;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import software.amazon.awssdk.regions.Region;
-
-import java.net.URI;
 
 @Data
 @ConfigurationProperties(prefix = "s3")
@@ -35,6 +34,7 @@ public class S3ClientProperties {
 
   // Bucket name we'll be using as our backend storage
   private String bucket;
+  private String dataDir;
 
   // AWS S3 requires that file parts must have at least 5MB, except
   // for the last part. This may change for other S3-compatible services, so let't
