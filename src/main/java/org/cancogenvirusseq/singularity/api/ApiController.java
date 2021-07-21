@@ -30,8 +30,8 @@ import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
 import org.cancogenvirusseq.singularity.components.Contributors;
 import org.cancogenvirusseq.singularity.components.Files;
 import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
-import org.cancogenvirusseq.singularity.repository.command.FindArchivesCommand;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
+import org.cancogenvirusseq.singularity.repository.query.FindArchivesQuery;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -72,8 +72,8 @@ public class ApiController implements ApiDefinition {
                 .build());
   }
 
-  public Mono<Page<Archive>> getArchives(FindArchivesCommand findArchivesCommand) {
-    return archivesRepo.findByCommand(findArchivesCommand);
+  public Mono<Page<Archive>> getArchives(FindArchivesQuery findArchivesQuery) {
+    return archivesRepo.findByCommand(findArchivesQuery);
   }
 
   public Mono<Archive> getArchive(UUID id) {

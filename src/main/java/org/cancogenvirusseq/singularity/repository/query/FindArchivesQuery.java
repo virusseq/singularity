@@ -1,4 +1,4 @@
-package org.cancogenvirusseq.singularity.repository.command;
+package org.cancogenvirusseq.singularity.repository.query;
 
 import java.time.Instant;
 import lombok.AllArgsConstructor;
@@ -13,13 +13,13 @@ import org.springframework.data.domain.Sort;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class FindArchivesCommand {
+public class FindArchivesQuery {
   @NonNull Integer page = 0;
   @NonNull Integer size = 20;
   @NonNull Sort.Direction sortDirection = Sort.Direction.ASC;
   @NonNull Archive.Fields sortField = Archive.Fields.createdAt;
   @NonNull ArchiveStatus status = ArchiveStatus.COMPLETE;
   @NonNull ArchiveType type = ArchiveType.ALL;
-  @NonNull Long fromCreateTimeEpoch = 0L;
-  @NonNull Long toCreateTimeEpoch = Instant.now().toEpochMilli();
+  @NonNull Long createdAfterEpochSec = 0L;
+  @NonNull Long createdBeforeEpochSec = Instant.now().toEpochMilli();
 }

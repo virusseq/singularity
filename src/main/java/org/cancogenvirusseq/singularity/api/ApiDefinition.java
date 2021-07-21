@@ -25,8 +25,8 @@ import io.swagger.annotations.ApiResponses;
 import java.util.UUID;
 import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
 import org.cancogenvirusseq.singularity.api.model.ErrorResponse;
-import org.cancogenvirusseq.singularity.repository.command.FindArchivesCommand;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
+import org.cancogenvirusseq.singularity.repository.query.FindArchivesQuery;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
@@ -88,10 +88,10 @@ public interface ApiDefinition {
       value = "/archives",
       produces = MediaType.APPLICATION_JSON_VALUE,
       method = RequestMethod.GET)
-  Mono<Page<Archive>> getArchives(FindArchivesCommand req);
+  Mono<Page<Archive>> getArchives(FindArchivesQuery req);
 
   @ApiOperation(
-      value = "Get details of a specific archive that bundle all sample data.",
+      value = "Get details of a specific archive that bundle sample data.",
       nickname = "Archive",
       tags = "Archives")
   @ApiResponses(
