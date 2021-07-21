@@ -19,7 +19,8 @@
 package org.cancogenvirusseq.singularity.utils;
 
 import static java.lang.String.format;
-import static org.cancogenvirusseq.singularity.utils.CommonUtils.*;
+import static org.cancogenvirusseq.singularity.utils.CommonUtils.dataBufferToBytes;
+import static org.cancogenvirusseq.singularity.utils.CommonUtils.writeToFileStream;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -81,7 +82,7 @@ public class FileArchiveUtils {
   private static final BiFunction<FilesArchive, AnalysisDocumentMolecularDataPair, FilesArchive>
       addDownloadPairToFileArchive =
           (filesArchive, downloadPair) -> {
-            writeByteBufferToFileStream.accept(
+            writeToFileStream.accept(
                 filesArchive.getMolecularFileOutputStream(), downloadPair.getMolecularData());
             writeToFileStream.accept(
                 filesArchive.getMetadataFileOutputStream(),

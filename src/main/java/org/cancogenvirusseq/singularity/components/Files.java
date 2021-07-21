@@ -43,7 +43,6 @@ import reactor.core.publisher.Flux;
 public class Files {
   private final EventEmitter eventEmitter;
   private final Analyses analyses;
-  private final Download download;
   private final S3Download s3Download;
 
   @Value("${files.finalEventCheckSeconds}")

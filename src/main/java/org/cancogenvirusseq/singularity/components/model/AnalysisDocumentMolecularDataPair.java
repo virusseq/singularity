@@ -18,7 +18,6 @@
 
 package org.cancogenvirusseq.singularity.components.model;
 
-import java.nio.ByteBuffer;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -26,5 +25,5 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AnalysisDocumentMolecularDataPair {
   private final AnalysisDocument analysisDocument;
-  private final ByteBuffer molecularData;
+  private final byte[] molecularData;
 }

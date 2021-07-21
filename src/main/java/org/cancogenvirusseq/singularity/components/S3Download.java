@@ -2,6 +2,8 @@ package org.cancogenvirusseq.singularity.components;
 
 import static java.lang.String.format;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +38,7 @@ public class S3Download
                 .map(
                     getObjectResponseResponseBytes ->
                         new AnalysisDocumentMolecularDataPair(
-                            analysisDocument, getObjectResponseResponseBytes.asByteBuffer())));
+                            analysisDocument, getObjectResponseResponseBytes.asByteArray())));
   }
 
   private GetObjectRequest getObjectRequestForAnalysisDocument(AnalysisDocument analysisDocument) {
@@ -44,5 +46,12 @@ public class S3Download
         .key(format("%s/%s", s3ClientProperties.getDataDir(), analysisDocument.getObjectId()))
         .bucket(s3ClientProperties.getBucket())
         .build();
+  }
+
+  private byte[] molecularDataBufferWithNewline(byte[] bytes) {
+    return ByteBuffer.allocate(bytes.length + 4)
+        .put(bytes)
+        .put("\n".getBytes(StandardCharsets.UTF_8))
+        .array();
   }
 }

@@ -20,8 +20,6 @@ package org.cancogenvirusseq.singularity.utils;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -31,15 +29,6 @@ import org.springframework.core.io.buffer.DataBufferUtils;
 
 @Slf4j
 public class CommonUtils {
-  public static final BiConsumer<BufferedOutputStream, ByteBuffer> writeByteBufferToFileStream =
-      (stream, byteBuffer) -> {
-        try {
-          Channels.newChannel(stream).write(byteBuffer);
-        } catch (IOException e) {
-          log.error(e.getLocalizedMessage(), e);
-        }
-      };
-
   public static final BiConsumer<BufferedOutputStream, byte[]> writeToFileStream =
       (stream, bytes) -> {
         try {

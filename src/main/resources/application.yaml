@@ -46,13 +46,6 @@ contributors:
   filterList:
   appendList:
 
-download:
-  museHost: localhost:8087
-  retryMaxAttempts: 3
-  retryDelaySec: 10
-  batchSize: 100
-  concurrentRequests: 5
-
 files:
   finalEventCheckSeconds: 60
   bundleBuildingCheckSeconds: 60
