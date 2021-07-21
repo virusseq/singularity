@@ -23,13 +23,18 @@ import static org.cancogenvirusseq.singularity.components.model.FilesArchive.DOW
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
 import org.cancogenvirusseq.singularity.components.Contributors;
 import org.cancogenvirusseq.singularity.components.Files;
+import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
+import org.cancogenvirusseq.singularity.repository.model.Archive;
+import org.cancogenvirusseq.singularity.repository.query.FindArchivesQuery;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -43,6 +48,7 @@ import reactor.core.publisher.Mono;
 public class ApiController implements ApiDefinition {
   private final Contributors contributors;
   private final Files files;
+  private final ArchivesRepo archivesRepo;
 
   public Mono<EntityListResponse<String>> getContributors() {
     return contributors.getContributors().transform(this::listResponseTransform);
@@ -64,6 +70,14 @@ public class ApiController implements ApiDefinition {
             ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .header("X-Reason", "file-bundle-not-built")
                 .build());
+  }
+
+  public Mono<Page<Archive>> getArchives(FindArchivesQuery findArchivesQuery) {
+    return archivesRepo.findByCommand(findArchivesQuery);
+  }
+
+  public Mono<Archive> getArchive(UUID id) {
+    return archivesRepo.findById(id);
   }
 
   private <T> Mono<EntityListResponse<T>> listResponseTransform(

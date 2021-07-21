@@ -22,12 +22,17 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import java.util.UUID;
 import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
 import org.cancogenvirusseq.singularity.api.model.ErrorResponse;
+import org.cancogenvirusseq.singularity.repository.model.Archive;
+import org.cancogenvirusseq.singularity.repository.query.FindArchivesQuery;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.multipart.MultipartFile;
@@ -69,4 +74,34 @@ public interface ApiDefinition {
       produces = MediaType.APPLICATION_OCTET_STREAM_VALUE,
       method = RequestMethod.GET)
   ResponseEntity<Mono<Resource>> getFiles();
+
+  @ApiOperation(
+      value = "Get details of any archives that bundles all sample data.",
+      nickname = "Archive",
+      tags = "Archives")
+  @ApiResponses(
+      value = {
+        @ApiResponse(code = 200, message = "", response = Object.class),
+        @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
+      })
+  @RequestMapping(
+      value = "/archives",
+      produces = MediaType.APPLICATION_JSON_VALUE,
+      method = RequestMethod.GET)
+  Mono<Page<Archive>> getArchives(FindArchivesQuery req);
+
+  @ApiOperation(
+      value = "Get details of a specific archive that bundle sample data.",
+      nickname = "Archive",
+      tags = "Archives")
+  @ApiResponses(
+      value = {
+        @ApiResponse(code = 200, message = "", response = Archive.class),
+        @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
+      })
+  @RequestMapping(
+      value = "/archives/{id}",
+      produces = MediaType.APPLICATION_JSON_VALUE,
+      method = RequestMethod.GET)
+  Mono<Archive> getArchive(@PathVariable("id") UUID id);
 }

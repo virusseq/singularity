@@ -7,6 +7,15 @@ spring:
 server:
   port: 8080
 
+postgres:
+  host: localhost
+  port: 5432
+  database: singularity
+  username: postgres
+  password: password
+  maxPoolIdleTimeMs: 1000
+  maxPoolSize: 20
+
 elastic:
   host: localhost
   port: 9200
