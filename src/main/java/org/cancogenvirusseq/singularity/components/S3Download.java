@@ -23,6 +23,8 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 public class S3Download
     implements Function<Flux<AnalysisDocument>, Flux<AnalysisDocumentMolecularDataPair>> {
 
+  private static final byte[] newlineBytes = "\n".getBytes(StandardCharsets.UTF_8);
+
   private final S3AsyncClient s3AsyncClient;
   private final S3ClientProperties s3ClientProperties;
 
@@ -38,7 +40,9 @@ public class S3Download
                 .map(
                     getObjectResponseResponseBytes ->
                         new AnalysisDocumentMolecularDataPair(
-                            analysisDocument, getObjectResponseResponseBytes.asByteArray())));
+                            analysisDocument,
+                            molecularDataBufferWithNewline(
+                                getObjectResponseResponseBytes.asByteArray()))));
   }
 
   private GetObjectRequest getObjectRequestForAnalysisDocument(AnalysisDocument analysisDocument) {
@@ -48,10 +52,10 @@ public class S3Download
         .build();
   }
 
-  private byte[] molecularDataBufferWithNewline(byte[] bytes) {
-    return ByteBuffer.allocate(bytes.length + 4)
-        .put(bytes)
-        .put("\n".getBytes(StandardCharsets.UTF_8))
+  private byte[] molecularDataBufferWithNewline(byte[] molecularBytes) {
+    return ByteBuffer.allocate(molecularBytes.length + newlineBytes.length)
+        .put(molecularBytes)
+        .put(newlineBytes)
         .array();
   }
 }
