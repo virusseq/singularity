@@ -45,12 +45,6 @@ public class KafkaEventEmitter implements EventEmitter {
 
   private static final AtomicReference<Instant> lastEvent = new AtomicReference<>();
 
-  @PostConstruct
-  public void init() {
-    // set the lastEvent to now (app startup)
-    lastEvent.set(Instant.now());
-  }
-
   public Flux<Instant> receive() {
     return kafkaConsumerConfig
         .getReceiver()
@@ -60,6 +54,7 @@ public class KafkaEventEmitter implements EventEmitter {
         // we dont' actually care about the message contents so we just emit and Instant here
         // instead
         .map(value -> Instant.now())
+        .doOnNext(lastEvent::set)
         .transform(takeOnlyFinalInstant)
         .onErrorContinue(
             ((throwable, value) ->

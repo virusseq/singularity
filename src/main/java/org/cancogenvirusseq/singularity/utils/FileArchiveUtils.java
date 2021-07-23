@@ -19,6 +19,7 @@
 package org.cancogenvirusseq.singularity.utils;
 
 import static java.lang.String.format;
+import static org.cancogenvirusseq.singularity.components.model.FilesArchive.DOWNLOAD_DIR;
 import static org.cancogenvirusseq.singularity.utils.CommonUtils.dataBufferToBytes;
 import static org.cancogenvirusseq.singularity.utils.CommonUtils.writeToFileStream;
 
@@ -28,10 +29,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
+import java.util.function.*;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -51,7 +50,7 @@ public class FileArchiveUtils {
     return downloadPairs ->
         downloadPairs
             .reduce(new FilesArchive(instant), addDownloadPairToFileArchive)
-            .map(tarGzipBundleAndClose)
+            .map(tarGzipArchiveAndClose)
             .flux()
             .log("Download::downloadAndArchiveFunctionWithInstant");
   }
@@ -61,7 +60,7 @@ public class FileArchiveUtils {
     return batchedDownloadPairs ->
         batchedDownloadPairs
             .reduce(new FilesArchive(instant), addBatchedPairToFileArchive)
-            .map(tarGzipBundleAndClose)
+            .map(tarGzipArchiveAndClose)
             .flux()
             .log("Download::downloadAndArchiveFunctionWithInstant");
   }
@@ -174,11 +173,22 @@ public class FileArchiveUtils {
         return filesArchive.getArchiveFilename();
       };
 
+  public static final Consumer<String> deleteArchive =
+      archiveFileName -> {
+        try {
+          FileSystemUtils.deleteRecursively(
+              Paths.get(format("%s/%s", DOWNLOAD_DIR, archiveFileName)));
+          log.debug("File archive '{}' deleted from disk", archiveFileName);
+        } catch (IOException e) {
+          log.error(e.getLocalizedMessage(), e);
+        }
+      };
+
   /**
    * Function that takes a fileBundle, closes it's files, generates the tar.gz, deletes the download
    * directory and returns the archive filename
    */
-  public static final Function<FilesArchive, String> tarGzipBundleAndClose =
+  public static final Function<FilesArchive, String> tarGzipArchiveAndClose =
       closeMolecularAndMetadataFileStreams
           .andThen(createGzipOutputStream)
           .andThen(createTarOutputStream)

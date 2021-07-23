@@ -36,7 +36,7 @@ public class UpdateFileBundleHealthCheck implements HealthIndicator {
 
   @Override
   public Health health() {
-    return Optional.of(isDisposableRunning.test(files.getUpdateFileBundleDisposable()))
+    return Optional.of(isDisposableRunning.test(files.getBuildAllArchiveDisposable()))
         .filter(Boolean::booleanValue)
         .map(
             isRunning ->

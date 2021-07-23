@@ -55,7 +55,7 @@ public class ApiController implements ApiDefinition {
   }
 
   public ResponseEntity<Mono<Resource>> getFiles() {
-    return Optional.ofNullable(files.getFileBundleName())
+    return Optional.ofNullable("disabledForNow")
         .<ResponseEntity<Mono<Resource>>>map(
             fileBundleName ->
                 ResponseEntity.ok()

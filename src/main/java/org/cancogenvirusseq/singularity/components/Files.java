@@ -30,9 +30,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
+import java.time.Duration;
 import java.time.Instant;
-import java.util.concurrent.atomic.AtomicReference;
 
+import static org.cancogenvirusseq.singularity.utils.FileArchiveUtils.deleteArchive;
 import static org.cancogenvirusseq.singularity.utils.FileArchiveUtils.downloadPairsToFileArchiveWithInstant;
 
 @Slf4j
@@ -43,27 +44,35 @@ public class Files {
   private final ElasticQueryToAnalysisDocuments elasticQueryToAnalysisDocuments;
   private final S3Download s3Download;
 
-  private static final AtomicReference<String> latestFileName = new AtomicReference<>();
-
-  @Getter private Disposable updateFileBundleDisposable;
+  @Getter private Disposable allArchiveDisposable;
+  @Getter private Disposable buildAllArchiveDisposable;
 
   @PostConstruct
   public void init() {
-    // build file bundle on app start
-    downloadAndBuildBundle(Instant.now())
-        .doOnNext(latestFileName::set)
-        .doFinally(
-            signalType -> {
-              log.info("Startup file bundle created and saved at: {}", latestFileName.get());
-            })
-        .subscribe();
+    // build file archive on app start
+    buildAllArchiveDisposable = createBuildAllArchiveDisposable(Instant.now());
 
     // start file bundle update disposable
-    updateFileBundleDisposable = createUpdateFileBundleDisposable();
+    allArchiveDisposable = createAllArchiveDisposable();
   }
 
-  public String getFileBundleName() {
-    return latestFileName.get();
+  private Disposable createAllArchiveDisposable() {
+    return eventEmitter
+        .receive()
+        .doOnNext(
+            instant -> {
+              log.debug("createAllArchiveDisposable received instant: {}", instant);
+
+              if (!buildAllArchiveDisposable.isDisposed()) {
+                log.debug("Existing archive build detected!");
+                this.buildAllArchiveDisposable.dispose();
+              }
+
+              log.debug("Spawning new archive build...");
+              this.buildAllArchiveDisposable = createBuildAllArchiveDisposable(instant);
+            })
+        .log("Files::createAllArchiveDisposable")
+        .subscribe();
   }
 
   /**
@@ -76,37 +85,19 @@ public class Files {
    *
    * @return disposable of flux that is operating the update mechanism
    */
-  private Disposable createUpdateFileBundleDisposable() {
-    return eventEmitter
-        .receive()
-        .doOnNext(
-            instant -> {
-              log.debug("createUpdateFileBundleDisposable received instant: {}", instant);
-            })
-        .doOnNext(
-            instant -> {
-              log.debug(
-                  "createUpdateFileBundleDisposable setting isBuildingBundle to true for instant: {}",
-                  instant);
-            })
-        // concat map to guarantee single bundle building at one time
-        .concatMap(this::downloadAndBuildBundle)
-        .doOnNext(
-            archiveFileName -> {
-              log.debug(
-                  "createUpdateFileBundleDisposable updating latestFileName to: {}",
-                  latestFileName);
-              latestFileName.set(archiveFileName);
-            })
-        .log("Files::createUpdateFileBundleDisposable")
-        .subscribe();
-  }
-
-  private Flux<String> downloadAndBuildBundle(Instant instant) {
+  private Disposable createBuildAllArchiveDisposable(Instant instant) {
     return Mono.just(QueryBuilders.rangeQuery(AnalysisDocument.LAST_UPDATED_AT_FIELD).to(instant))
+        // concat map to guarantee single bundle building at one time
         .flatMapMany(elasticQueryToAnalysisDocuments)
+        .delaySequence(
+            Duration.ofSeconds(
+                5)) // temp ... TODO: will want a flux context with the right stuff to execute a
+                    // delete on cancel or complete + do the DB operations
         .transform(s3Download)
         .transform(downloadPairsToFileArchiveWithInstant(instant))
-        .log("Files::downloadAndSave");
+        .doOnNext(deleteArchive)
+        .doOnComplete(() -> log.debug("createBuildAllArchiveDisposable is done!"))
+        .log("Files::createBuildAllArchiveDisposable")
+        .subscribe();
   }
 }
