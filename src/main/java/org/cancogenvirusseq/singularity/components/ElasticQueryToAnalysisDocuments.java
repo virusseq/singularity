@@ -19,7 +19,6 @@
 package org.cancogenvirusseq.singularity.components;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -28,25 +27,29 @@ import org.cancogenvirusseq.singularity.config.elasticsearch.ElasticsearchProper
 import org.cancogenvirusseq.singularity.config.elasticsearch.ReactiveElasticSearchClientConfig;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class Analyses {
+public class ElasticQueryToAnalysisDocuments
+    implements Function<QueryBuilder, Flux<AnalysisDocument>> {
   private final ElasticsearchProperties elasticsearchProperties;
   private final ReactiveElasticSearchClientConfig reactiveElasticSearchClientConfig;
   private final ObjectMapper objectMapper;
 
-  public Flux<AnalysisDocument> getAllAnalysisDocuments() {
+  public Flux<AnalysisDocument> apply(QueryBuilder queryBuilder) {
     return Mono.just(
             new SearchSourceBuilder()
-                .query(QueryBuilders.matchAllQuery())
+                .query(queryBuilder)
                 .fetchSource(AnalysisDocument.getEsIncludeFields(), null))
         .flatMapMany(
             source ->
