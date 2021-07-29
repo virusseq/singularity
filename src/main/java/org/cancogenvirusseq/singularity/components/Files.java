@@ -18,30 +18,26 @@
 
 package org.cancogenvirusseq.singularity.components;
 
+import static org.cancogenvirusseq.singularity.utils.FileArchiveUtils.deleteArchive;
+import static org.cancogenvirusseq.singularity.utils.FileArchiveUtils.downloadPairsToFileArchiveWithInstant;
+
+import java.time.Duration;
+import java.time.Instant;
+import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.singularity.components.events.EventEmitter;
-import org.cancogenvirusseq.singularity.components.model.AnalysisDocument;
-import org.elasticsearch.index.query.QueryBuilders;
 import org.springframework.stereotype.Component;
 import reactor.core.Disposable;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-
-import javax.annotation.PostConstruct;
-import java.time.Duration;
-import java.time.Instant;
-
-import static org.cancogenvirusseq.singularity.utils.FileArchiveUtils.deleteArchive;
-import static org.cancogenvirusseq.singularity.utils.FileArchiveUtils.downloadPairsToFileArchiveWithInstant;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class Files {
   private final EventEmitter eventEmitter;
-  private final ElasticQueryToAnalysisDocuments elasticQueryToAnalysisDocuments;
+  private final InstantToArchiveBuildRequest instantToArchiveBuildRequest;
+  private final ArchiveBuildRequestToAnalysisDocuments archiveBuildRequestToAnalysisDocuments;
   private final S3Download s3Download;
 
   @Getter private Disposable allArchiveDisposable;
@@ -75,24 +71,15 @@ public class Files {
         .subscribe();
   }
 
-  /**
-   * This disposable subscribes to the eventEmitter flux, be that an interval timer based one or a
-   * kafka based one, it records every event received to the static AtomicLong property. After the
-   * configured delay it checks to see if the instant recorded is still the same one, meaning there
-   * have been no further events, because this is done within a filter, all the intermediary event
-   * (ie. those between the first new event inclusive and the last event) are removed, the final
-   * event that does make it through will trigger a bundle rebuild.
-   *
-   * @return disposable of flux that is operating the update mechanism
-   */
   private Disposable createBuildAllArchiveDisposable(Instant instant) {
-    return Mono.just(QueryBuilders.rangeQuery(AnalysisDocument.LAST_UPDATED_AT_FIELD).to(instant))
+    return instantToArchiveBuildRequest
+        .apply(instant)
         // concat map to guarantee single bundle building at one time
-        .flatMapMany(elasticQueryToAnalysisDocuments)
+        .flatMapMany(archiveBuildRequestToAnalysisDocuments)
         .delaySequence(
             Duration.ofSeconds(
                 5)) // temp ... TODO: will want a flux context with the right stuff to execute a
-                    // delete on cancel or complete + do the DB operations
+        // delete on cancel or complete + do the DB operations
         .transform(s3Download)
         .transform(downloadPairsToFileArchiveWithInstant(instant))
         .doOnNext(deleteArchive)

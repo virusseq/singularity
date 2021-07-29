@@ -22,7 +22,7 @@ public class Archive {
   private Long createdAt;
 
   @NonNull private Integer numOfSamples;
-  @NonNull private Integer numOfDownloads;
+  private Integer numOfDownloads = 0;
 
   @RequiredArgsConstructor
   public enum Fields {

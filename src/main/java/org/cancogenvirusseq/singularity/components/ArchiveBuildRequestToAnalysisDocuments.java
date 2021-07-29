@@ -19,37 +19,37 @@
 package org.cancogenvirusseq.singularity.components;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.singularity.components.model.AnalysisDocument;
+import org.cancogenvirusseq.singularity.components.model.ArchiveBuildRequest;
 import org.cancogenvirusseq.singularity.config.elasticsearch.ElasticsearchProperties;
 import org.cancogenvirusseq.singularity.config.elasticsearch.ReactiveElasticSearchClientConfig;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ElasticQueryToAnalysisDocuments
-    implements Function<QueryBuilder, Flux<AnalysisDocument>> {
+public class ArchiveBuildRequestToAnalysisDocuments
+    implements Function<ArchiveBuildRequest, Flux<AnalysisDocument>> {
   private final ElasticsearchProperties elasticsearchProperties;
   private final ReactiveElasticSearchClientConfig reactiveElasticSearchClientConfig;
   private final ObjectMapper objectMapper;
 
-  public Flux<AnalysisDocument> apply(QueryBuilder queryBuilder) {
+  @Override
+  public Flux<AnalysisDocument> apply(ArchiveBuildRequest archiveBuildRequest) {
     return Mono.just(
             new SearchSourceBuilder()
-                .query(queryBuilder)
+                .query(archiveBuildRequest.getQueryBuilder())
                 .fetchSource(AnalysisDocument.getEsIncludeFields(), null))
         .flatMapMany(
             source ->
@@ -63,7 +63,8 @@ public class ElasticQueryToAnalysisDocuments
                                 new TimeValue(
                                     elasticsearchProperties.getScrollTimeoutMinutes(),
                                     TimeUnit.MINUTES))))
-        .map(this::hitMapToAnalysisDocument);
+        .map(this::hitMapToAnalysisDocument)
+        .log("ArchiveBuildRequestToAnalysisDocuments");
   }
 
   @SneakyThrows

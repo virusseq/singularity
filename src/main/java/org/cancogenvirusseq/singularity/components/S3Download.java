@@ -31,18 +31,20 @@ public class S3Download
   @Override
   public Flux<AnalysisDocumentMolecularDataPair> apply(
       Flux<AnalysisDocument> analysisDocumentFlux) {
-    return analysisDocumentFlux.flatMap(
-        analysisDocument ->
-            Mono.fromFuture(
-                    s3AsyncClient.getObject(
-                        getObjectRequestForAnalysisDocument(analysisDocument),
-                        AsyncResponseTransformer.toBytes()))
-                .map(
-                    getObjectResponseResponseBytes ->
-                        new AnalysisDocumentMolecularDataPair(
-                            analysisDocument,
-                            molecularDataBufferWithNewline(
-                                getObjectResponseResponseBytes.asByteArray()))));
+    return analysisDocumentFlux
+        .flatMap(
+            analysisDocument ->
+                Mono.fromFuture(
+                        s3AsyncClient.getObject(
+                            getObjectRequestForAnalysisDocument(analysisDocument),
+                            AsyncResponseTransformer.toBytes()))
+                    .map(
+                        getObjectResponseResponseBytes ->
+                            new AnalysisDocumentMolecularDataPair(
+                                analysisDocument,
+                                molecularDataBufferWithNewline(
+                                    getObjectResponseResponseBytes.asByteArray()))))
+        .log("S3Download");
   }
 
   private GetObjectRequest getObjectRequestForAnalysisDocument(AnalysisDocument analysisDocument) {
