@@ -18,18 +18,22 @@
 
 package org.cancogenvirusseq.singularity.components;
 
-import static org.cancogenvirusseq.singularity.utils.FileArchiveUtils.deleteArchive;
+import static org.cancogenvirusseq.singularity.utils.FileArchiveUtils.deleteArchiveForInstant;
 import static org.cancogenvirusseq.singularity.utils.FileArchiveUtils.downloadPairsToFileArchiveWithInstant;
 
-import java.time.Duration;
 import java.time.Instant;
+import java.util.function.Function;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.singularity.components.events.EventEmitter;
+import org.cancogenvirusseq.singularity.components.model.ArchiveBuildRequest;
+import org.cancogenvirusseq.singularity.repository.model.ArchiveStatus;
 import org.springframework.stereotype.Component;
 import reactor.core.Disposable;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Slf4j
 @Component
@@ -74,17 +78,44 @@ public class Files {
   private Disposable createBuildAllArchiveDisposable(Instant instant) {
     return instantToArchiveBuildRequest
         .apply(instant)
-        // concat map to guarantee single bundle building at one time
-        .flatMapMany(archiveBuildRequestToAnalysisDocuments)
-        .delaySequence(
-            Duration.ofSeconds(
-                5)) // temp ... TODO: will want a flux context with the right stuff to execute a
-        // delete on cancel or complete + do the DB operations
-        .transform(s3Download)
-        .transform(downloadPairsToFileArchiveWithInstant(instant))
-        .doOnNext(deleteArchive)
-        .doOnComplete(() -> log.debug("createBuildAllArchiveDisposable is done!"))
-        .log("Files::createBuildAllArchiveDisposable")
+        .map(this::processArchiveBuildRequest)
         .subscribe();
+  }
+
+  private Flux<String> processArchiveBuildRequest(ArchiveBuildRequest archiveBuildRequest) {
+    return archiveBuildRequestToAnalysisDocuments
+        .apply(archiveBuildRequest)
+        .transform(s3Download)
+        .transform(downloadPairsToFileArchiveWithInstant(archiveBuildRequest.getInstant()))
+        .doOnComplete(
+            () ->
+                withArchiveBuildRequestContext(
+                    archiveBuildRequestCtx -> {
+                      archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.COMPLETE);
+                      log.debug("processArchiveBuildRequest is done!");
+                      return Mono.empty();
+                    }))
+        .doOnError(
+            throwable ->
+                withArchiveBuildRequestContext(
+                    archiveBuildRequestCtx -> {
+                      archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.FAILED);
+                      log.debug(
+                          "processArchiveBuildRequest threw: {}", throwable.getLocalizedMessage());
+                      return Mono.empty();
+                    }))
+        .doFinally(
+            signalType ->
+                withArchiveBuildRequestContext(
+                    archiveBuildRequestCtx -> {
+                      deleteArchiveForInstant.accept(archiveBuildRequestCtx.getInstant());
+                      return Mono.empty();
+                    }))
+        .contextWrite(ctx -> ctx.put("archiveBuildRequest", archiveBuildRequest))
+        .log("Files::processArchiveBuildRequest");
+  }
+
+  private <R> Mono<R> withArchiveBuildRequestContext(Function<ArchiveBuildRequest, Mono<R>> func) {
+    return Mono.deferContextual(ctx -> func.apply(ctx.get("archiveBuildRequest")));
   }
 }

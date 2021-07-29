@@ -1,6 +1,7 @@
 package org.cancogenvirusseq.singularity.components;
 
 import java.time.Instant;
+import java.util.UUID;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,19 +60,22 @@ public class InstantToArchiveBuildRequest implements Function<Instant, Mono<Arch
                                 ((ParsedMax) aggMap.get("lastUpdatedDate")),
                                 ((ParsedValueCount) aggMap.get("totalHits")))))
         .flatMap(
-            aggsTuple ->
+            aggTuple ->
                 archivesRepo.save(
                     Archive.builder()
                         .status(ArchiveStatus.BUILDING)
                         .type(ArchiveType.ALL)
-                        .hashInfo(aggsTuple.getT1().getValueAsString())
-                        .numOfSamples((int) aggsTuple.getT2().getValue())
+                        .hashInfo(
+                            aggTuple.getT1().getValueAsString()
+                                + UUID.randomUUID()) // todo: temp UUID hash to build every bundle
+                        .numOfSamples((int) aggTuple.getT2().getValue())
                         .build()))
         .map(
             archive ->
                 new ArchiveBuildRequest(
                     archive,
-                    QueryBuilders.rangeQuery(AnalysisDocument.LAST_UPDATED_AT_FIELD).to(instant)))
+                    QueryBuilders.rangeQuery(AnalysisDocument.LAST_UPDATED_AT_FIELD).to(instant),
+                    instant))
         .onErrorStop()
         .log("InstantToArchiveBuildRequest");
   }

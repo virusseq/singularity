@@ -20,6 +20,7 @@ package org.cancogenvirusseq.singularity.utils;
 
 import static java.lang.String.format;
 import static org.cancogenvirusseq.singularity.components.model.FilesArchive.DOWNLOAD_DIR;
+import static org.cancogenvirusseq.singularity.components.model.FilesArchive.archiveFilenameFromInstant;
 import static org.cancogenvirusseq.singularity.utils.CommonUtils.dataBufferToBytes;
 import static org.cancogenvirusseq.singularity.utils.CommonUtils.writeToFileStream;
 
@@ -172,12 +173,12 @@ public class FileArchiveUtils {
         return filesArchive.getArchiveFilename();
       };
 
-  public static final Consumer<String> deleteArchive =
-      archiveFileName -> {
+  public static final Consumer<Instant> deleteArchiveForInstant =
+      instant -> {
         try {
           FileSystemUtils.deleteRecursively(
-              Paths.get(format("%s/%s", DOWNLOAD_DIR, archiveFileName)));
-          log.debug("File archive '{}' deleted from disk", archiveFileName);
+              Paths.get(format("%s/%s", DOWNLOAD_DIR, archiveFilenameFromInstant(instant))));
+          log.debug("File archive '{}' deleted from disk", archiveFilenameFromInstant(instant));
         } catch (IOException e) {
           log.error(e.getLocalizedMessage(), e);
         }

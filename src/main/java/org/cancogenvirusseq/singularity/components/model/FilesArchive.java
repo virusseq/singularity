@@ -56,7 +56,7 @@ public class FilesArchive {
   @SneakyThrows
   public FilesArchive(Instant instant) {
     // record archive name and create FileOutputStream (buffered)
-    this.archiveFilename = format("%s%s%s", FILE_NAME_TEMPLATE, instant, ARCHIVE_EXTENSION);
+    this.archiveFilename = archiveFilenameFromInstant(instant);
     this.archiveFileOutputStream =
         new BufferedOutputStream(
             new FileOutputStream(format("%s/%s", DOWNLOAD_DIR, this.archiveFilename)));
@@ -80,5 +80,9 @@ public class FilesArchive {
 
     // write the tsv header
     this.metadataFileOutputStream.write(TsvUtils.getHeader());
+  }
+
+  public static String archiveFilenameFromInstant(Instant instant) {
+    return format("%s%s%s", FILE_NAME_TEMPLATE, instant, ARCHIVE_EXTENSION);
   }
 }
