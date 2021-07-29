@@ -58,7 +58,7 @@ public class Contributors {
                     AggregationBuilders.terms("submitters")
                         .field("analysis.sample_collection.sequence_submitted_by")
                         .size(MAX_AGGREGATE_BUCKETS))
-                .size(0)) // number of documents returned by query set to zero, buckets set above
+                .fetchSource(false))
         .map(
             source ->
                 reactiveElasticSearchClientConfig
