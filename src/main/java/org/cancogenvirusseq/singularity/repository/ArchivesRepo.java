@@ -19,6 +19,10 @@ public interface ArchivesRepo extends ReactiveCrudRepository<Archive, UUID> {
   Mono<Integer> countByStatusAndTypeAndCreatedAtGreaterThanEqualAndCreatedAtLessThanEqual(
       ArchiveStatus status, ArchiveType type, Long fromTime, Long toTime);
 
+  default Mono<Archive> findByArchiveObject(Archive archive) {
+    return findById(archive.getId());
+  }
+
   default Mono<Page<Archive>> findByCommand(FindArchivesQuery findArchivesQuery) {
     val status = findArchivesQuery.getStatus();
     val type = findArchivesQuery.getType();

@@ -29,6 +29,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.singularity.components.events.EventEmitter;
 import org.cancogenvirusseq.singularity.components.model.ArchiveBuildRequest;
+import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
+import org.cancogenvirusseq.singularity.repository.model.Archive;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveStatus;
 import org.springframework.stereotype.Component;
 import reactor.core.Disposable;
@@ -43,6 +45,7 @@ public class Files {
   private final InstantToArchiveBuildRequest instantToArchiveBuildRequest;
   private final ArchiveBuildRequestToAnalysisDocuments archiveBuildRequestToAnalysisDocuments;
   private final S3Download s3Download;
+  private final ArchivesRepo archivesRepo;
 
   @Getter private Disposable allArchiveDisposable;
   @Getter private Disposable buildAllArchiveDisposable;
@@ -78,39 +81,39 @@ public class Files {
   private Disposable createBuildAllArchiveDisposable(Instant instant) {
     return instantToArchiveBuildRequest
         .apply(instant)
-        .map(this::processArchiveBuildRequest)
+        .flatMapMany(this::processArchiveBuildRequest)
         .subscribe();
   }
 
-  private Flux<String> processArchiveBuildRequest(ArchiveBuildRequest archiveBuildRequest) {
+  private Flux<Archive> processArchiveBuildRequest(ArchiveBuildRequest archiveBuildRequest) {
     return archiveBuildRequestToAnalysisDocuments
         .apply(archiveBuildRequest)
         .transform(s3Download)
         .transform(downloadPairsToFileArchiveWithInstant(archiveBuildRequest.getInstant()))
-        .doOnComplete(
-            () ->
+        .flatMap(
+            archiveName ->
                 withArchiveBuildRequestContext(
                     archiveBuildRequestCtx -> {
                       archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.COMPLETE);
                       log.debug("processArchiveBuildRequest is done!");
-                      return Mono.empty();
-                    }))
-        .doOnError(
-            throwable ->
-                withArchiveBuildRequestContext(
-                    archiveBuildRequestCtx -> {
-                      archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.FAILED);
-                      log.debug(
-                          "processArchiveBuildRequest threw: {}", throwable.getLocalizedMessage());
-                      return Mono.empty();
-                    }))
-        .doFinally(
-            signalType ->
-                withArchiveBuildRequestContext(
-                    archiveBuildRequestCtx -> {
                       deleteArchiveForInstant.accept(archiveBuildRequestCtx.getInstant());
-                      return Mono.empty();
+                      return archivesRepo.save(archiveBuildRequestCtx.getArchive());
                     }))
+        //        .onErrorMap(
+        //            throwable ->
+        //                withArchiveBuildRequestContext(
+        //                    archiveBuildRequestCtx -> {
+        //                      archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.FAILED);
+        //                      return archivesRepo
+        //                          .save(archiveBuildRequestCtx.getArchive())
+        //                          .flatMap(
+        //                              archive -> {
+        //                                log.debug(
+        //                                    "processArchiveBuildRequest threw: {}",
+        //                                    throwable.getLocalizedMessage());
+        //                                return archive;
+        //                              });
+        //                    }))
         .contextWrite(ctx -> ctx.put("archiveBuildRequest", archiveBuildRequest))
         .log("Files::processArchiveBuildRequest");
   }

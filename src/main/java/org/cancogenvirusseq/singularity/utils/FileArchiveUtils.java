@@ -178,7 +178,10 @@ public class FileArchiveUtils {
         try {
           FileSystemUtils.deleteRecursively(
               Paths.get(format("%s/%s", DOWNLOAD_DIR, archiveFilenameFromInstant(instant))));
-          log.debug("File archive '{}' deleted from disk", archiveFilenameFromInstant(instant));
+          log.debug(
+              "File archive '{}/{}' deleted from disk",
+              DOWNLOAD_DIR,
+              archiveFilenameFromInstant(instant));
         } catch (IOException e) {
           log.error(e.getLocalizedMessage(), e);
         }

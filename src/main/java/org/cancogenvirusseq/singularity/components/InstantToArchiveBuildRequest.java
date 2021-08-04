@@ -70,6 +70,9 @@ public class InstantToArchiveBuildRequest implements Function<Instant, Mono<Arch
                                 + UUID.randomUUID()) // todo: temp UUID hash to build every bundle
                         .numOfSamples((int) aggTuple.getT2().getValue())
                         .build()))
+        // why this? because R2DBC does not hydrate fields
+        // (https://github.com/spring-projects/spring-data-r2dbc/issues/455)
+        .flatMap(archivesRepo::findByArchiveObject)
         .map(
             archive ->
                 new ArchiveBuildRequest(

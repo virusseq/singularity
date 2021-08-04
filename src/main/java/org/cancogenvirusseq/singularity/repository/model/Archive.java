@@ -1,16 +1,13 @@
 package org.cancogenvirusseq.singularity.repository.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.UUID;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
 @Data
-@Builder(toBuilder = true)
-@NoArgsConstructor
+@Builder
 @AllArgsConstructor
-@JsonIgnoreProperties(ignoreUnknown = true)
 @Table("archive")
 public class Archive {
   @Id private UUID id;
@@ -22,7 +19,7 @@ public class Archive {
   private Long createdAt;
 
   @NonNull private Integer numOfSamples;
-  private Integer numOfDownloads = 0;
+  private Integer numOfDownloads;
 
   @RequiredArgsConstructor
   public enum Fields {
