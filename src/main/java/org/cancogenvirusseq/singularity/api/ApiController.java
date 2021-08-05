@@ -27,8 +27,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
-import org.cancogenvirusseq.singularity.components.Contributors;
-import org.cancogenvirusseq.singularity.components.Files;
+import org.cancogenvirusseq.singularity.pipelines.Contributors;
 import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
 import org.cancogenvirusseq.singularity.repository.query.FindArchivesQuery;
@@ -47,7 +46,6 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class ApiController implements ApiDefinition {
   private final Contributors contributors;
-  private final Files files;
   private final ArchivesRepo archivesRepo;
 
   public Mono<EntityListResponse<String>> getContributors() {

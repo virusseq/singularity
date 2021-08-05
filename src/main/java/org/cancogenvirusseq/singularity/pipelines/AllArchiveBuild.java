@@ -16,10 +16,9 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.singularity.components;
+package org.cancogenvirusseq.singularity.pipelines;
 
 import static org.cancogenvirusseq.singularity.utils.FileArchiveUtils.deleteArchiveForInstant;
-import static org.cancogenvirusseq.singularity.utils.FileArchiveUtils.downloadPairsToFileArchiveWithInstant;
 
 import java.time.Instant;
 import java.util.function.Function;
@@ -27,25 +26,21 @@ import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.cancogenvirusseq.singularity.components.ArchiveBuildRequestToArchive;
+import org.cancogenvirusseq.singularity.components.InstantToArchiveBuildRequest;
 import org.cancogenvirusseq.singularity.components.events.EventEmitter;
 import org.cancogenvirusseq.singularity.components.model.ArchiveBuildRequest;
-import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
-import org.cancogenvirusseq.singularity.repository.model.Archive;
-import org.cancogenvirusseq.singularity.repository.model.ArchiveStatus;
 import org.springframework.stereotype.Component;
 import reactor.core.Disposable;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class Files {
+public class AllArchiveBuild {
   private final EventEmitter eventEmitter;
   private final InstantToArchiveBuildRequest instantToArchiveBuildRequest;
-  private final ArchiveBuildRequestToAnalysisDocuments archiveBuildRequestToAnalysisDocuments;
-  private final S3Download s3Download;
-  private final ArchivesRepo archivesRepo;
+  private final ArchiveBuildRequestToArchive archiveBuildRequestToArchive;
 
   @Getter private Disposable allArchiveDisposable;
   @Getter private Disposable buildAllArchiveDisposable;
@@ -81,41 +76,9 @@ public class Files {
   private Disposable createBuildAllArchiveDisposable(Instant instant) {
     return instantToArchiveBuildRequest
         .apply(instant)
-        .flatMapMany(this::processArchiveBuildRequest)
+        .flatMapMany(archiveBuildRequestToArchive)
+        .doFinally(signalType -> deleteArchiveForInstant.accept(instant))
         .subscribe();
-  }
-
-  private Flux<Archive> processArchiveBuildRequest(ArchiveBuildRequest archiveBuildRequest) {
-    return archiveBuildRequestToAnalysisDocuments
-        .apply(archiveBuildRequest)
-        .transform(s3Download)
-        .transform(downloadPairsToFileArchiveWithInstant(archiveBuildRequest.getInstant()))
-        .flatMap(
-            archiveName ->
-                withArchiveBuildRequestContext(
-                    archiveBuildRequestCtx -> {
-                      archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.COMPLETE);
-                      log.debug("processArchiveBuildRequest is done!");
-                      deleteArchiveForInstant.accept(archiveBuildRequestCtx.getInstant());
-                      return archivesRepo.save(archiveBuildRequestCtx.getArchive());
-                    }))
-        //        .onErrorMap(
-        //            throwable ->
-        //                withArchiveBuildRequestContext(
-        //                    archiveBuildRequestCtx -> {
-        //                      archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.FAILED);
-        //                      return archivesRepo
-        //                          .save(archiveBuildRequestCtx.getArchive())
-        //                          .flatMap(
-        //                              archive -> {
-        //                                log.debug(
-        //                                    "processArchiveBuildRequest threw: {}",
-        //                                    throwable.getLocalizedMessage());
-        //                                return archive;
-        //                              });
-        //                    }))
-        .contextWrite(ctx -> ctx.put("archiveBuildRequest", archiveBuildRequest))
-        .log("Files::processArchiveBuildRequest");
   }
 
   private <R> Mono<R> withArchiveBuildRequestContext(Function<ArchiveBuildRequest, Mono<R>> func) {

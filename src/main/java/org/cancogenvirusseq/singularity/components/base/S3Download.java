@@ -1,4 +1,4 @@
-package org.cancogenvirusseq.singularity.components;
+package org.cancogenvirusseq.singularity.components.base;
 
 import static java.lang.String.format;
 

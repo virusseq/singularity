@@ -21,7 +21,7 @@ package org.cancogenvirusseq.singularity.health;
 import java.util.Optional;
 import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
-import org.cancogenvirusseq.singularity.components.Files;
+import org.cancogenvirusseq.singularity.pipelines.AllArchiveBuild;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.stereotype.Component;
@@ -32,11 +32,11 @@ import reactor.core.Disposable;
 public class UpdateFileBundleHealthCheck implements HealthIndicator {
 
   private static final String MESSAGE_KEY = "updateFileBundleDisposable";
-  private final Files files;
+  private final AllArchiveBuild allArchiveBuild;
 
   @Override
   public Health health() {
-    return Optional.of(isDisposableRunning.test(files.getBuildAllArchiveDisposable()))
+    return Optional.of(isDisposableRunning.test(allArchiveBuild.getBuildAllArchiveDisposable()))
         .filter(Boolean::booleanValue)
         .map(
             isRunning ->
