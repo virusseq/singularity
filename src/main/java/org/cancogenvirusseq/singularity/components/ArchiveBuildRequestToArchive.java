@@ -18,13 +18,14 @@
 
 package org.cancogenvirusseq.singularity.components;
 
-import static org.cancogenvirusseq.singularity.utils.FileArchiveUtils.downloadPairsToFileArchiveWithInstant;
+import static org.cancogenvirusseq.singularity.utils.FileArchiveUtils.createArchiveFromPairsWithInstant;
 
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.cancogenvirusseq.singularity.components.base.ArchiveUpload;
 import org.cancogenvirusseq.singularity.components.base.ElasticSearchScroll;
-import org.cancogenvirusseq.singularity.components.base.S3Download;
+import org.cancogenvirusseq.singularity.components.base.DownloadMolecularDataToPair;
 import org.cancogenvirusseq.singularity.components.model.ArchiveBuildRequest;
 import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
@@ -39,17 +40,19 @@ import reactor.core.publisher.Mono;
 public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildRequest, Flux<Archive>> {
 
   private final ElasticSearchScroll elasticSearchScroll;
-  private final S3Download s3Download;
+  private final DownloadMolecularDataToPair downloadMolecularDataToPair;
+  private final ArchiveUpload archiveUpload;
   private final ArchivesRepo archivesRepo;
 
   @Override
   public Flux<Archive> apply(ArchiveBuildRequest archiveBuildRequest) {
     return elasticSearchScroll
         .apply(archiveBuildRequest.getQueryBuilder())
-        .transform(s3Download)
-        .transform(downloadPairsToFileArchiveWithInstant(archiveBuildRequest.getInstant()))
+        .transform(downloadMolecularDataToPair)
+        .transform(createArchiveFromPairsWithInstant(archiveBuildRequest.getInstant()))
+        .flatMap(archiveUpload)
         .flatMap(
-            archiveName ->
+            archiveObjectId ->
                 withArchiveBuildRequestContext(
                     archiveBuildRequestCtx -> {
                       archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.COMPLETE);

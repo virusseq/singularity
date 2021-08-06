@@ -20,7 +20,7 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class S3Download
+public class DownloadMolecularDataToPair
     implements Function<Flux<AnalysisDocument>, Flux<AnalysisDocumentMolecularDataPair>> {
 
   private static final byte[] newlineBytes = "\n".getBytes(StandardCharsets.UTF_8);
@@ -31,20 +31,18 @@ public class S3Download
   @Override
   public Flux<AnalysisDocumentMolecularDataPair> apply(
       Flux<AnalysisDocument> analysisDocumentFlux) {
-    return analysisDocumentFlux
-        .flatMap(
-            analysisDocument ->
-                Mono.fromFuture(
-                        s3AsyncClient.getObject(
-                            getObjectRequestForAnalysisDocument(analysisDocument),
-                            AsyncResponseTransformer.toBytes()))
-                    .map(
-                        getObjectResponseResponseBytes ->
-                            new AnalysisDocumentMolecularDataPair(
-                                analysisDocument,
-                                molecularDataBufferWithNewline(
-                                    getObjectResponseResponseBytes.asByteArray()))))
-        .log("S3Download");
+    return analysisDocumentFlux.flatMap(
+        analysisDocument ->
+            Mono.fromFuture(
+                    s3AsyncClient.getObject(
+                        getObjectRequestForAnalysisDocument(analysisDocument),
+                        AsyncResponseTransformer.toBytes()))
+                .map(
+                    getObjectResponseResponseBytes ->
+                        new AnalysisDocumentMolecularDataPair(
+                            analysisDocument,
+                            molecularDataBufferWithNewline(
+                                getObjectResponseResponseBytes.asByteArray()))));
   }
 
   private GetObjectRequest getObjectRequestForAnalysisDocument(AnalysisDocument analysisDocument) {

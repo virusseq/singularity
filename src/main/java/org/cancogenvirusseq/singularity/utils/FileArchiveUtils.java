@@ -46,9 +46,9 @@ import reactor.core.publisher.Flux;
 public class FileArchiveUtils {
 
   public static Function<Flux<AnalysisDocumentMolecularDataPair>, Flux<String>>
-      downloadPairsToFileArchiveWithInstant(Instant instant) {
-    return downloadPairs ->
-        downloadPairs
+  createArchiveFromPairsWithInstant(Instant instant) {
+    return dataPairFlux ->
+        dataPairFlux
             .reduce(new FilesArchive(instant), addDownloadPairToFileArchive)
             .map(tarGzipArchiveAndClose)
             .flux()
