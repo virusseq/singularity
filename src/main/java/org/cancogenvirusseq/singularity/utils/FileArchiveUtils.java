@@ -21,13 +21,13 @@ package org.cancogenvirusseq.singularity.utils;
 import static java.lang.String.format;
 import static org.cancogenvirusseq.singularity.components.model.FilesArchive.DOWNLOAD_DIR;
 import static org.cancogenvirusseq.singularity.components.model.FilesArchive.archiveFilenameFromInstant;
-import static org.cancogenvirusseq.singularity.utils.CommonUtils.dataBufferToBytes;
 import static org.cancogenvirusseq.singularity.utils.CommonUtils.writeToFileStream;
 
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.function.*;
@@ -37,7 +37,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.cancogenvirusseq.singularity.components.model.AnalysisDocumentMolecularDataPair;
-import org.cancogenvirusseq.singularity.components.model.BatchedDownloadPair;
 import org.cancogenvirusseq.singularity.components.model.FilesArchive;
 import org.springframework.util.FileSystemUtils;
 import reactor.core.publisher.Flux;
@@ -45,8 +44,8 @@ import reactor.core.publisher.Flux;
 @Slf4j
 public class FileArchiveUtils {
 
-  public static Function<Flux<AnalysisDocumentMolecularDataPair>, Flux<String>>
-  createArchiveFromPairsWithInstant(Instant instant) {
+  public static Function<Flux<AnalysisDocumentMolecularDataPair>, Flux<Path>>
+      createArchiveFromPairsWithInstant(Instant instant) {
     return dataPairFlux ->
         dataPairFlux
             .reduce(new FilesArchive(instant), addDownloadPairToFileArchive)
@@ -54,29 +53,6 @@ public class FileArchiveUtils {
             .flux()
             .log("Download::downloadAndArchiveFunctionWithInstant");
   }
-
-  public static Function<Flux<BatchedDownloadPair>, Flux<String>>
-      batchedDownloadPairsToFileArchiveWithInstant(Instant instant) {
-    return batchedDownloadPairs ->
-        batchedDownloadPairs
-            .reduce(new FilesArchive(instant), addBatchedPairToFileArchive)
-            .map(tarGzipArchiveAndClose)
-            .flux()
-            .log("Download::downloadAndArchiveFunctionWithInstant");
-  }
-
-  private static final BiFunction<FilesArchive, BatchedDownloadPair, FilesArchive>
-      addBatchedPairToFileArchive =
-          (filesArchive, batchedDownloadPair) -> {
-            writeToFileStream.accept(
-                filesArchive.getMolecularFileOutputStream(),
-                dataBufferToBytes.apply(batchedDownloadPair.getMolecularData()));
-            writeToFileStream.accept(
-                filesArchive.getMetadataFileOutputStream(),
-                TsvUtils.analysisDocumentsToTsvRowsBytes(
-                    batchedDownloadPair.getAnalysisDocuments()));
-            return filesArchive;
-          };
 
   private static final BiFunction<FilesArchive, AnalysisDocumentMolecularDataPair, FilesArchive>
       addDownloadPairToFileArchive =
@@ -163,14 +139,14 @@ public class FileArchiveUtils {
         return filesArchive;
       };
 
-  private static final Function<FilesArchive, String> finalize =
+  private static final Function<FilesArchive, Path> finalize =
       filesArchive -> {
         try {
           FileSystemUtils.deleteRecursively(Paths.get(filesArchive.getDownloadDirectory()));
         } catch (IOException e) {
           log.error(e.getLocalizedMessage(), e);
         }
-        return filesArchive.getArchiveFilename();
+        return Paths.get(format("%s/%s", DOWNLOAD_DIR, filesArchive.getArchiveFilename()));
       };
 
   public static final Consumer<Instant> deleteArchiveForInstant =
@@ -189,9 +165,9 @@ public class FileArchiveUtils {
 
   /**
    * Function that takes a fileBundle, closes it's files, generates the tar.gz, deletes the download
-   * directory and returns the archive filename
+   * directory and returns the full path to the archive
    */
-  public static final Function<FilesArchive, String> tarGzipArchiveAndClose =
+  public static final Function<FilesArchive, Path> tarGzipArchiveAndClose =
       closeMolecularAndMetadataFileStreams
           .andThen(createGzipOutputStream)
           .andThen(createTarOutputStream)

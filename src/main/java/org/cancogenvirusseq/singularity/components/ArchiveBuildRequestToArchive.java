@@ -24,8 +24,8 @@ import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.singularity.components.base.ArchiveUpload;
-import org.cancogenvirusseq.singularity.components.base.ElasticSearchScroll;
 import org.cancogenvirusseq.singularity.components.base.DownloadMolecularDataToPair;
+import org.cancogenvirusseq.singularity.components.base.ElasticSearchScroll;
 import org.cancogenvirusseq.singularity.components.model.ArchiveBuildRequest;
 import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
@@ -57,8 +57,6 @@ public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildReques
                     archiveBuildRequestCtx -> {
                       archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.COMPLETE);
                       log.debug("processArchiveBuildRequest is done!");
-                      //
-                      // deleteArchiveForInstant.accept(archiveBuildRequestCtx.getInstant());
                       return archivesRepo.save(archiveBuildRequestCtx.getArchive());
                     }))
         .onErrorResume(
@@ -68,8 +66,6 @@ public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildReques
                       archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.FAILED);
                       log.error(
                           "processArchiveBuildRequest error: {}", throwable.getLocalizedMessage());
-                      //
-                      // deleteArchiveForInstant.accept(archiveBuildRequestCtx.getInstant());
                       return archivesRepo.save(archiveBuildRequestCtx.getArchive());
                     }))
         .contextWrite(ctx -> ctx.put("archiveBuildRequest", archiveBuildRequest))
