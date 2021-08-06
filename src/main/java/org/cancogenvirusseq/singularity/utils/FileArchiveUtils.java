@@ -34,7 +34,6 @@ import java.util.function.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.cancogenvirusseq.singularity.components.model.AnalysisDocumentMolecularDataPair;
 import org.cancogenvirusseq.singularity.components.model.FilesArchive;
@@ -49,7 +48,7 @@ public class FileArchiveUtils {
     return dataPairFlux ->
         dataPairFlux
             .reduce(new FilesArchive(instant), addDownloadPairToFileArchive)
-            .map(tarGzipArchiveAndClose)
+            .map(tarArchiveAndClose)
             .flux()
             .log("Download::downloadAndArchiveFunctionWithInstant");
   }
@@ -76,21 +75,10 @@ public class FileArchiveUtils {
         return filesArchive;
       };
 
-  private static final UnaryOperator<FilesArchive> createGzipOutputStream =
-      filesArchive -> {
-        try {
-          filesArchive.setArchiveGzipOutputStream(
-              new GzipCompressorOutputStream(filesArchive.getArchiveFileOutputStream()));
-        } catch (IOException e) {
-          log.error(e.getLocalizedMessage(), e);
-        }
-        return filesArchive;
-      };
-
   private static final UnaryOperator<FilesArchive> createTarOutputStream =
       filesArchive -> {
         filesArchive.setArchiveTarOutputStream(
-            new TarArchiveOutputStream(filesArchive.getArchiveGzipOutputStream()));
+            new TarArchiveOutputStream(filesArchive.getArchiveFileOutputStream()));
         return filesArchive;
       };
 
@@ -128,9 +116,6 @@ public class FileArchiveUtils {
 
   private static final UnaryOperator<FilesArchive> closeAllStreams =
       filesArchive -> {
-        // closing the ArchiveTarOutputStream cascades and closes the underlying gzip and buffered
-        // file
-        // input streams
         try {
           filesArchive.getArchiveTarOutputStream().close();
         } catch (IOException e) {
@@ -167,9 +152,8 @@ public class FileArchiveUtils {
    * Function that takes a fileBundle, closes it's files, generates the tar.gz, deletes the download
    * directory and returns the full path to the archive
    */
-  public static final Function<FilesArchive, Path> tarGzipArchiveAndClose =
+  public static final Function<FilesArchive, Path> tarArchiveAndClose =
       closeMolecularAndMetadataFileStreams
-          .andThen(createGzipOutputStream)
           .andThen(createTarOutputStream)
           .andThen(putBundleFilesInArchive)
           .andThen(closeAllStreams)
