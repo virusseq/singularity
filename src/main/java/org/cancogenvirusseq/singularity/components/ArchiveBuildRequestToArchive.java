@@ -20,6 +20,7 @@ package org.cancogenvirusseq.singularity.components;
 
 import static org.cancogenvirusseq.singularity.utils.FileArchiveUtils.createArchiveFromPairsWithInstant;
 
+import java.util.UUID;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,6 +56,9 @@ public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildReques
             archiveObjectId ->
                 withArchiveBuildRequestContext(
                     archiveBuildRequestCtx -> {
+                      archiveBuildRequestCtx
+                          .getArchive()
+                          .setObjectId(UUID.fromString(archiveObjectId));
                       archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.COMPLETE);
                       log.debug("processArchiveBuildRequest is done!");
                       return archivesRepo.save(archiveBuildRequestCtx.getArchive());

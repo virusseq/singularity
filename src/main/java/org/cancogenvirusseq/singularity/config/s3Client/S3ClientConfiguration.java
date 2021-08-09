@@ -35,23 +35,25 @@ import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3AsyncClientBuilder;
 import software.amazon.awssdk.services.s3.S3Configuration;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 @Configuration
 @EnableConfigurationProperties(S3ClientProperties.class)
 public class S3ClientConfiguration {
+
+  private static final S3Configuration serviceConfiguration =
+      S3Configuration.builder()
+          .checksumValidationEnabled(false)
+          .chunkedEncodingEnabled(true)
+          .pathStyleAccessEnabled(true)
+          .build();
+
   @Bean
   public S3AsyncClient s3client(
       S3ClientProperties s3props, AwsCredentialsProvider credentialsProvider) {
 
     SdkAsyncHttpClient httpClient =
         NettyNioAsyncHttpClient.builder().writeTimeout(Duration.ZERO).maxConcurrency(64).build();
-
-    S3Configuration serviceConfiguration =
-        S3Configuration.builder()
-            .checksumValidationEnabled(false)
-            .chunkedEncodingEnabled(true)
-            .pathStyleAccessEnabled(true)
-            .build();
 
     S3AsyncClientBuilder s3AsyncClientBuilder =
         S3AsyncClient.builder()
@@ -68,6 +70,17 @@ public class S3ClientConfiguration {
       s3AsyncClientBuilder = s3AsyncClientBuilder.endpointOverride(s3props.getEndpoint());
     }
     return s3AsyncClientBuilder.build();
+  }
+
+  @Bean
+  public S3Presigner s3Presigner(
+      S3ClientProperties s3props, AwsCredentialsProvider credentialsProvider) {
+    return S3Presigner.builder()
+        .region(s3props.getRegion())
+        .endpointOverride(s3props.getEndpoint())
+        .credentialsProvider(credentialsProvider)
+        .serviceConfiguration(serviceConfiguration)
+        .build();
   }
 
   @Bean
