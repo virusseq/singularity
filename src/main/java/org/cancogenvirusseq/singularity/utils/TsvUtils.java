@@ -73,7 +73,9 @@ public class TsvUtils {
                       "reference genome accession",
                       "bioinformatics protocol",
                       "gene name",
-                      "diagnostic pcr Ct value"))
+                      "diagnostic pcr Ct value",
+                      "diagnostic pcr Ct value null reason",
+                      "GISAID accession"))
               + "\n")
           .getBytes(StandardCharsets.UTF_8);
 
@@ -129,7 +131,9 @@ public class TsvUtils {
         analysisDocument.getAnalysis().getSequenceAnalysis().getReferenceGenomeAccession(),
         analysisDocument.getAnalysis().getSequenceAnalysis().getBioinformaticsProtocol(),
         analysisDocument.getAnalysis().getPathogenDiagnosticTesting().getGeneName(),
-        analysisDocument.getAnalysis().getPathogenDiagnosticTesting().getDiagnosticPcrCtValue());
+        analysisDocument.getAnalysis().getPathogenDiagnosticTesting().getDiagnosticPcrCtValue(),
+        analysisDocument.getAnalysis().getPathogenDiagnosticTesting().getDiagnosticPcrCtValueNullReason(),
+        analysisDocument.getAnalysis().getDatabaseIdentifiers().getGisaidAccession());
   }
 
   private static String stringsToTsvRow(String... strings) {
