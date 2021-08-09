@@ -1,17 +1,24 @@
 package org.cancogenvirusseq.singularity.components;
 
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Duration;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
+import reactor.netty.ByteBufFlux;
+import reactor.netty.http.client.HttpClient;
+import reactor.test.StepVerifier;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.auth.signer.AwsS3V4Signer;
-import software.amazon.awssdk.core.async.AsyncRequestBody;
-import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
-import software.amazon.awssdk.core.client.config.SdkAdvancedClientOption;
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient;
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
 import software.amazon.awssdk.regions.Region;
@@ -21,29 +28,28 @@ import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.utils.Md5Utils;
-
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.Duration;
-import java.util.UUID;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 @Disabled
 @Slf4j
 public class S3DownloadTest {
 
   /** Constants - Edit these for running manual tests */
-  private static final String ENDPOINT_URL = "http://localhost:9000";
+  private static final URI ENDPOINT_URL = URI.create("http://localhost:9000");
+
+  private static final Region REGION = Region.CA_CENTRAL_1;
 
   private static final String ACCESS_KEY = "minioadmin";
   private static final String SECRET_KEY = "minioadmin";
   private static final String BUCKET = "foo";
-  private static final String OBJECT_KEY = "test";
-  private static final String OBJECT_PATH = "/tmp/test.tar";
+  private static final String DOWNLOAD_OBJECT_KEY = "test";
+  private static final String UPLOAD_OBJECT_KEY = "test";
+  private static final String UPLOAD_FILEPATH = "/tmp/test-flower.jpg";
+  private static final MediaType UPLOAD_CONTENT_TYPE = MediaType.IMAGE_JPEG;
 
   private static S3AsyncClient client;
+  private static S3Presigner presigner;
 
   @BeforeAll
   public static void setupAwsClient() {
@@ -61,21 +67,25 @@ public class S3DownloadTest {
     S3AsyncClientBuilder s3AsyncClientBuilder =
         S3AsyncClient.builder()
             .httpClient(httpClient)
-            .region(Region.CA_CENTRAL_1)
+            .region(REGION)
+            .credentialsProvider(creds)
+            .serviceConfiguration(serviceConfiguration);
+
+    client = s3AsyncClientBuilder.endpointOverride(ENDPOINT_URL).build();
+
+    presigner =
+        S3Presigner.builder()
+            .region(REGION)
+            .endpointOverride(ENDPOINT_URL)
             .credentialsProvider(creds)
             .serviceConfiguration(serviceConfiguration)
-            .overrideConfiguration(
-                ClientOverrideConfiguration.builder()
-                    .putAdvancedOption(SdkAdvancedClientOption.SIGNER, AwsS3V4Signer.create())
-                    .build());
-
-    client = s3AsyncClientBuilder.endpointOverride(URI.create(ENDPOINT_URL)).build();
+            .build();
   }
 
   @Test
   @SneakyThrows
   public void testGetObject() {
-    val request = GetObjectRequest.builder().bucket(BUCKET).key(OBJECT_KEY).build();
+    val request = GetObjectRequest.builder().bucket(BUCKET).key(DOWNLOAD_OBJECT_KEY).build();
     log.info(client.getObject(request, Path.of("/tmp/foo")).get().toString());
   }
 
@@ -89,14 +99,38 @@ public class S3DownloadTest {
   @Test
   @SneakyThrows
   public void testUploadObject() {
-    val uploadObjectPath = Paths.get(OBJECT_PATH);
-    val request =
+    val uploadObjectPath = Paths.get(UPLOAD_FILEPATH);
+    val fileSize = Files.size(uploadObjectPath);
+
+    val objectRequest =
         PutObjectRequest.builder()
             .bucket(BUCKET)
-            .key(UUID.randomUUID().toString())
-            .contentMD5(Md5Utils.md5AsBase64(Files.readAllBytes(uploadObjectPath)))
+            .key(UPLOAD_OBJECT_KEY)
+            .contentLength(fileSize)
+            .contentType(UPLOAD_CONTENT_TYPE.toString())
             .build();
-    log.info(
-        client.putObject(request, AsyncRequestBody.fromFile(uploadObjectPath)).get().toString());
+
+    val presignRequest =
+        PutObjectPresignRequest.builder()
+            .signatureDuration(Duration.ofMinutes(10))
+            .putObjectRequest(objectRequest)
+            .build();
+
+    val presignRequestPut = presigner.presignPutObject(presignRequest);
+
+    StepVerifier.create(
+            HttpClient.create()
+                .headers(
+                    h -> {
+                      h.set(HttpHeaderNames.CONTENT_LENGTH, fileSize);
+                      h.set(HttpHeaderNames.CONTENT_TYPE, UPLOAD_CONTENT_TYPE);
+                    })
+                .put()
+                .uri(presignRequestPut.url().toURI())
+                .send(ByteBufFlux.fromPath(uploadObjectPath))
+                .response()
+                .map(res -> res.status()))
+        .expectNext(HttpResponseStatus.OK)
+        .verifyComplete();
   }
 }
