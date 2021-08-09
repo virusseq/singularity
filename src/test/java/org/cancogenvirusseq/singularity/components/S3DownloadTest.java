@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import reactor.netty.ByteBufFlux;
 import reactor.netty.http.client.HttpClient;
+import reactor.netty.http.client.HttpClientResponse;
 import reactor.test.StepVerifier;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
@@ -99,37 +100,37 @@ public class S3DownloadTest {
   @Test
   @SneakyThrows
   public void testUploadObject() {
-    val uploadObjectPath = Paths.get(UPLOAD_FILEPATH);
-    val fileSize = Files.size(uploadObjectPath);
+    val uploadFilePath = Paths.get(UPLOAD_FILEPATH);
+    val uploadFileSize = Files.size(uploadFilePath);
 
-    val objectRequest =
+    val putObjectRequest =
         PutObjectRequest.builder()
             .bucket(BUCKET)
             .key(UPLOAD_OBJECT_KEY)
-            .contentLength(fileSize)
+            .contentLength(uploadFileSize)
             .contentType(UPLOAD_CONTENT_TYPE.toString())
             .build();
 
-    val presignRequest =
+    val putObjectPresignRequest =
         PutObjectPresignRequest.builder()
             .signatureDuration(Duration.ofMinutes(10))
-            .putObjectRequest(objectRequest)
+            .putObjectRequest(putObjectRequest)
             .build();
 
-    val presignRequestPut = presigner.presignPutObject(presignRequest);
+    val presignedPutObjectRequest = presigner.presignPutObject(putObjectPresignRequest);
 
     StepVerifier.create(
             HttpClient.create()
                 .headers(
                     h -> {
-                      h.set(HttpHeaderNames.CONTENT_LENGTH, fileSize);
+                      h.set(HttpHeaderNames.CONTENT_LENGTH, uploadFileSize);
                       h.set(HttpHeaderNames.CONTENT_TYPE, UPLOAD_CONTENT_TYPE);
                     })
                 .put()
-                .uri(presignRequestPut.url().toURI())
-                .send(ByteBufFlux.fromPath(uploadObjectPath))
+                .uri(presignedPutObjectRequest.url().toURI())
+                .send(ByteBufFlux.fromPath(uploadFilePath))
                 .response()
-                .map(res -> res.status()))
+                .map(HttpClientResponse::status))
         .expectNext(HttpResponseStatus.OK)
         .verifyComplete();
   }
