@@ -1,11 +1,10 @@
 package org.cancogenvirusseq.singularity.components.exceptions;
 
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import software.amazon.awssdk.core.SdkResponse;
 import software.amazon.awssdk.http.SdkHttpResponse;
-
-import java.util.Optional;
 
 @AllArgsConstructor
 public class DownloadFailedException extends RuntimeException {

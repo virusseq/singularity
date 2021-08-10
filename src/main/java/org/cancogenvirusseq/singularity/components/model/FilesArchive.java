@@ -37,7 +37,7 @@ import org.cancogenvirusseq.singularity.utils.TsvUtils;
 @Getter
 public class FilesArchive {
   public static final String DOWNLOAD_DIR = "/tmp";
-  public static final String FILE_NAME_TEMPLATE = "virusseq-consensus-export-all-";
+  public static final String FILE_NAME_TEMPLATE = "files-archive-";
   public static final String MOLECULAR_FILE_EXTENSION = ".fasta";
   public static final String METADATA_FILE_EXTENSION = ".tsv";
   public static final String ARCHIVE_EXTENSION = ".tar.gz";

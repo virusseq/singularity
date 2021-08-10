@@ -19,22 +19,19 @@
 package org.cancogenvirusseq.singularity.api;
 
 import static java.lang.String.format;
-import static org.cancogenvirusseq.singularity.components.model.FilesArchive.DOWNLOAD_DIR;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
-import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
-import org.cancogenvirusseq.singularity.components.DownloadArchiveById;
+import org.cancogenvirusseq.singularity.components.base.DownloadObjectById;
 import org.cancogenvirusseq.singularity.pipelines.Contributors;
 import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
+import org.cancogenvirusseq.singularity.repository.model.ArchiveType;
 import org.cancogenvirusseq.singularity.repository.query.FindArchivesQuery;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -50,7 +47,7 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class ApiController implements ApiDefinition {
   private final Contributors contributors;
-  private final DownloadArchiveById downloadArchiveById;
+  private final DownloadObjectById downloadObjectById;
   private final ArchivesRepo archivesRepo;
 
   public Mono<EntityListResponse<String>> getContributors() {
@@ -58,47 +55,11 @@ public class ApiController implements ApiDefinition {
   }
 
   public Mono<ResponseEntity<Flux<ByteBuffer>>> downloadLatestAllArchive() {
-    return archivesRepo
-        .findTopByOrderByCreatedAtDesc()
-        .flatMap(
-            archive ->
-                downloadArchiveById
-                    .apply(archive.getObjectId())
-                    .map(
-                        archiveDownload ->
-                            ResponseEntity.ok()
-                                .header(
-                                    HttpHeaders.CONTENT_DISPOSITION,
-                                    format(
-                                        "attachment; filename=%s",
-                                        "archive.tar.gz")) // todo: make filename here
-                                .header(
-                                    HttpHeaders.CONTENT_TYPE,
-                                    MediaType.APPLICATION_OCTET_STREAM_VALUE)
-                                .body(archiveDownload.getFlux())))
-        .onErrorContinue(
-            (throwable, obj) ->
-                ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .header("X-Reason", "file-bundle-not-built")
-                    .build());
+    return archivesRepo.findLatestAllArchive().flatMap(this::fetchAllArchiveAndRespond);
   }
 
-  public ResponseEntity<Mono<Resource>> downloadArchiveById(@PathVariable("id") UUID id) {
-    return Optional.ofNullable("disabledForNow")
-        .<ResponseEntity<Mono<Resource>>>map(
-            fileBundleName ->
-                ResponseEntity.ok()
-                    .header(
-                        HttpHeaders.CONTENT_DISPOSITION,
-                        format("attachment; filename=%s", fileBundleName))
-                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM_VALUE)
-                    .body(
-                        Mono.just(
-                            new FileSystemResource(format("%s/%s", DOWNLOAD_DIR, fileBundleName)))))
-        .orElse(
-            ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .header("X-Reason", "file-bundle-not-built")
-                .build());
+  public Mono<ResponseEntity<Flux<ByteBuffer>>> downloadArchiveById(@PathVariable("id") UUID id) {
+    return archivesRepo.findById(id).flatMap(this::fetchAllArchiveAndRespond);
   }
 
   public Mono<Page<Archive>> getArchives(FindArchivesQuery findArchivesQuery) {
@@ -112,5 +73,40 @@ public class ApiController implements ApiDefinition {
   private <T> Mono<EntityListResponse<T>> listResponseTransform(
       Mono<? extends Collection<T>> entities) {
     return entities.map(entityList -> EntityListResponse.<T>builder().data(entityList).build());
+  }
+
+  private Mono<ResponseEntity<Flux<ByteBuffer>>> fetchAllArchiveAndRespond(Archive archive) {
+    return archivesRepo
+        .save(incrementDownloads(archive))
+        .flatMap(downloadObjectById::apply)
+        .map(
+            archiveDownload ->
+                ResponseEntity.ok()
+                    .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        format("attachment; filename=%s", parseFilenameFromArchive(archive)))
+                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM_VALUE)
+                    .body(archiveDownload.getFlux()))
+        .onErrorContinue(
+            (throwable, obj) ->
+                // todo: rework this for correct error handling
+                ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .header("X-Reason", "file-bundle-not-built")
+                    .build());
+  }
+
+  private static String parseFilenameFromArchive(Archive archive) {
+    if (archive.getType().equals(ArchiveType.ALL)) {
+      // for a download all entry the hash info is the instant string
+      return format("virusseq-consensus-export-all-%s.tar.gz", archive.getHashInfo());
+    } else {
+      // otherwise just note the archiveId with the download + todo: confirm this with someone!!!
+      return format("virusseq-consensus-export-%s.tar.gz", archive.getId());
+    }
+  }
+
+  private static Archive incrementDownloads(Archive archive) {
+    archive.setNumOfDownloads(archive.getNumOfDownloads() + 1);
+    return archive;
   }
 }

@@ -1,12 +1,11 @@
 package org.cancogenvirusseq.singularity.components.model;
 
+import java.nio.ByteBuffer;
+import java.util.concurrent.CompletableFuture;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import reactor.core.publisher.Flux;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
-
-import java.nio.ByteBuffer;
-import java.util.concurrent.CompletableFuture;
 
 @Data
 @NoArgsConstructor

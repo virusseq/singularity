@@ -20,12 +20,8 @@ package org.cancogenvirusseq.singularity.utils;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.util.Optional;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.core.io.buffer.DataBufferUtils;
 
 @Slf4j
 public class CommonUtils {
@@ -37,15 +33,4 @@ public class CommonUtils {
           log.error(e.getLocalizedMessage(), e);
         }
       };
-
-  public static final Function<DataBuffer, byte[]> dataBufferToBytes =
-      dataBuffer ->
-          Optional.of(new byte[dataBuffer.readableByteCount()])
-              .map(
-                  bytes -> {
-                    dataBuffer.read(bytes);
-                    DataBufferUtils.release(dataBuffer);
-                    return bytes;
-                  })
-              .orElseThrow();
 }

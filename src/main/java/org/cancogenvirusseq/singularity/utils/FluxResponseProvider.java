@@ -1,15 +1,15 @@
 package org.cancogenvirusseq.singularity.utils;
 
+import java.nio.ByteBuffer;
+import java.util.concurrent.CompletableFuture;
 import org.cancogenvirusseq.singularity.components.model.AwsSdkFluxResponse;
 import reactor.core.publisher.Flux;
 import software.amazon.awssdk.core.async.AsyncResponseTransformer;
 import software.amazon.awssdk.core.async.SdkPublisher;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
-import java.nio.ByteBuffer;
-import java.util.concurrent.CompletableFuture;
-
-public class FluxResponseProvider implements AsyncResponseTransformer<GetObjectResponse, AwsSdkFluxResponse> {
+public class FluxResponseProvider
+    implements AsyncResponseTransformer<GetObjectResponse, AwsSdkFluxResponse> {
   private AwsSdkFluxResponse response;
 
   @Override
