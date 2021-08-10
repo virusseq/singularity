@@ -34,7 +34,7 @@ import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignReques
 
 @Disabled
 @Slf4j
-public class S3DownloadTest {
+public class S3OperationsTest {
 
   /** Constants - Edit these for running manual tests */
   private static final URI ENDPOINT_URL = URI.create("http://localhost:9000");

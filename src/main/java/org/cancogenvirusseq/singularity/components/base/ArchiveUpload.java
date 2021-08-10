@@ -1,8 +1,17 @@
 package org.cancogenvirusseq.singularity.components.base;
 
+import static java.lang.String.format;
+
 import com.google.common.net.MediaType;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.UUID;
+import java.util.function.Function;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -17,24 +26,12 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
-import javax.annotation.PostConstruct;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.Duration;
-import java.util.UUID;
-import java.util.function.Function;
-
-import static java.lang.String.format;
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class ArchiveUpload implements Function<Path, Mono<String>> {
-  private final S3Presigner s3Presigner;
-  private final S3ClientProperties s3ClientProperties;
-
-  private Function<Path, URL> getPresignedURLForFileArchive;
+  @Getter private final S3Presigner s3Presigner;
+  @Getter private final S3ClientProperties s3ClientProperties;
 
   @Override
   public Mono<String> apply(Path filesArchivePath) {
@@ -65,31 +62,28 @@ public class ArchiveUpload implements Function<Path, Mono<String>> {
         .log("ArchiveUpload");
   }
 
-  @PostConstruct
-  public void init() {
-    Function<Path, PutObjectRequest> createPutObjectRequest =
-        filesArchivePath ->
-            PutObjectRequest.builder()
-                .key(format("%s/%s", s3ClientProperties.getDataDir(), UUID.randomUUID()))
-                .bucket(s3ClientProperties.getBucket())
-                .build();
+  private final Function<Path, PutObjectRequest> createPutObjectRequest =
+      filesArchivePath ->
+          PutObjectRequest.builder()
+              .key(format("%s/%s", getS3ClientProperties().getDataDir(), UUID.randomUUID()))
+              .bucket(getS3ClientProperties().getBucket())
+              .build();
 
-    Function<PutObjectRequest, PutObjectPresignRequest> createPutObjectPresignRequest =
-        putObjectRequest ->
-            PutObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofMinutes(10))
-                .putObjectRequest(putObjectRequest)
-                .build();
+  private final Function<PutObjectRequest, PutObjectPresignRequest> createPutObjectPresignRequest =
+      putObjectRequest ->
+          PutObjectPresignRequest.builder()
+              .signatureDuration(Duration.ofMinutes(10))
+              .putObjectRequest(putObjectRequest)
+              .build();
 
-    Function<PutObjectPresignRequest, PresignedPutObjectRequest> createPresignedPutObjectRequest =
-        s3Presigner::presignPutObject;
+  private final Function<PutObjectPresignRequest, PresignedPutObjectRequest>
+      createPresignedPutObjectRequest = getS3Presigner()::presignPutObject;
 
-    this.getPresignedURLForFileArchive =
-        createPutObjectRequest
-            .andThen(createPutObjectPresignRequest)
-            .andThen(createPresignedPutObjectRequest)
-            .andThen(PresignedRequest::url);
-  }
+  private final Function<Path, URL> getPresignedURLForFileArchive =
+      createPutObjectRequest
+          .andThen(createPutObjectPresignRequest)
+          .andThen(createPresignedPutObjectRequest)
+          .andThen(PresignedRequest::url);
 
   @SneakyThrows
   private Long getFileSize(Path path) {
