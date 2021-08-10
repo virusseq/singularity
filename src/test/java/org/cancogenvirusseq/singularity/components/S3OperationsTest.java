@@ -13,7 +13,6 @@ import lombok.val;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.MediaType;
 import reactor.netty.ByteBufFlux;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.http.client.HttpClientResponse;
@@ -46,8 +45,6 @@ public class S3OperationsTest {
   private static final String BUCKET = "foo";
   private static final String DOWNLOAD_OBJECT_KEY = "test";
   private static final String UPLOAD_OBJECT_KEY = "test";
-  private static final String UPLOAD_FILEPATH = "/tmp/test-flower.jpg";
-  private static final MediaType UPLOAD_CONTENT_TYPE = MediaType.IMAGE_JPEG;
 
   private static S3AsyncClient client;
   private static S3Presigner presigner;
@@ -100,7 +97,9 @@ public class S3OperationsTest {
   @Test
   @SneakyThrows
   public void testUploadObject() {
-    val uploadFilePath = Paths.get(UPLOAD_FILEPATH);
+    val testFile = this.getClass().getResource("test.tar.gz");
+    val testFileContentType = "application/x-gtar";
+    val uploadFilePath = Paths.get(testFile.toURI());
     val uploadFileSize = Files.size(uploadFilePath);
 
     val putObjectRequest =
@@ -108,7 +107,7 @@ public class S3OperationsTest {
             .bucket(BUCKET)
             .key(UPLOAD_OBJECT_KEY)
             .contentLength(uploadFileSize)
-            .contentType(UPLOAD_CONTENT_TYPE.toString())
+            .contentType(testFileContentType)
             .build();
 
     val putObjectPresignRequest =
@@ -124,7 +123,7 @@ public class S3OperationsTest {
                 .headers(
                     h -> {
                       h.set(HttpHeaderNames.CONTENT_LENGTH, uploadFileSize);
-                      h.set(HttpHeaderNames.CONTENT_TYPE, UPLOAD_CONTENT_TYPE);
+                      h.set(HttpHeaderNames.CONTENT_TYPE, testFileContentType);
                     })
                 .put()
                 .uri(presignedPutObjectRequest.url().toURI())
