@@ -30,6 +30,7 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.cancogenvirusseq.singularity.utils.TsvUtils;
 
 @Slf4j
@@ -39,7 +40,7 @@ public class FilesArchive {
   public static final String FILE_NAME_TEMPLATE = "virusseq-consensus-export-all-";
   public static final String MOLECULAR_FILE_EXTENSION = ".fasta";
   public static final String METADATA_FILE_EXTENSION = ".tsv";
-  public static final String ARCHIVE_EXTENSION = ".tar";
+  public static final String ARCHIVE_EXTENSION = ".tar.gz";
 
   private final String archiveFilename;
   private final String downloadDirectory;
@@ -49,6 +50,7 @@ public class FilesArchive {
   private final BufferedOutputStream molecularFileOutputStream;
   private final BufferedOutputStream metadataFileOutputStream;
 
+  @Setter private GzipCompressorOutputStream archiveGzipOutputStream;
   @Setter private TarArchiveOutputStream archiveTarOutputStream;
 
   @SneakyThrows
