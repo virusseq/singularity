@@ -21,12 +21,14 @@ package org.cancogenvirusseq.singularity.api;
 import static java.lang.String.format;
 import static org.cancogenvirusseq.singularity.components.model.FilesArchive.DOWNLOAD_DIR;
 
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
+import org.cancogenvirusseq.singularity.components.DownloadArchiveById;
 import org.cancogenvirusseq.singularity.pipelines.Contributors;
 import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
@@ -38,7 +40,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Slf4j
@@ -46,13 +50,40 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class ApiController implements ApiDefinition {
   private final Contributors contributors;
+  private final DownloadArchiveById downloadArchiveById;
   private final ArchivesRepo archivesRepo;
 
   public Mono<EntityListResponse<String>> getContributors() {
     return contributors.getContributors().transform(this::listResponseTransform);
   }
 
-  public ResponseEntity<Mono<Resource>> getFiles() {
+  public Mono<ResponseEntity<Flux<ByteBuffer>>> downloadLatestAllArchive() {
+    return archivesRepo
+        .findTopByOrderByCreatedAtDesc()
+        .flatMap(
+            archive ->
+                downloadArchiveById
+                    .apply(archive.getObjectId())
+                    .map(
+                        archiveDownload ->
+                            ResponseEntity.ok()
+                                .header(
+                                    HttpHeaders.CONTENT_DISPOSITION,
+                                    format(
+                                        "attachment; filename=%s",
+                                        "archive.tar.gz")) // todo: make filename here
+                                .header(
+                                    HttpHeaders.CONTENT_TYPE,
+                                    MediaType.APPLICATION_OCTET_STREAM_VALUE)
+                                .body(archiveDownload.getFlux())))
+        .onErrorContinue(
+            (throwable, obj) ->
+                ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .header("X-Reason", "file-bundle-not-built")
+                    .build());
+  }
+
+  public ResponseEntity<Mono<Resource>> downloadArchiveById(@PathVariable("id") UUID id) {
     return Optional.ofNullable("disabledForNow")
         .<ResponseEntity<Mono<Resource>>>map(
             fileBundleName ->

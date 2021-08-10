@@ -91,8 +91,8 @@ public class ArchiveUpload implements Function<Path, Mono<String>> {
     return createPutObjectRequest
         .andThen(createPutObjectPresignRequest)
         .andThen(
-            putObjectPresignRequest ->
-                createPresignedPutObjectRequest.apply(s3Presigner, putObjectPresignRequest))
+            putObjectPreSignRequest ->
+                createPresignedPutObjectRequest.apply(s3Presigner, putObjectPreSignRequest))
         .andThen(PresignedRequest::url)
         .andThen(URL::toString)
         .apply(s3ClientProperties, filesArchivePath);

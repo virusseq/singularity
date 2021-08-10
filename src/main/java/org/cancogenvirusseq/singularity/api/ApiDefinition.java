@@ -22,6 +22,8 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+
+import java.nio.ByteBuffer;
 import java.util.UUID;
 import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
 import org.cancogenvirusseq.singularity.api.model.ErrorResponse;
@@ -36,6 +38,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @CrossOrigin
@@ -47,7 +50,7 @@ public interface ApiDefinition {
       value = "Get All Contributors",
       nickname = "Get Contributors",
       response = EntityListResponse.class,
-      tags = "Singularity")
+      tags = "Contributors")
   @ApiResponses(
       value = {
         @ApiResponse(code = 200, message = "", response = EntityListResponse.class),
@@ -60,20 +63,36 @@ public interface ApiDefinition {
   Mono<EntityListResponse<String>> getContributors();
 
   @ApiOperation(
-      value = "Download all molecular files as a single .fasta.gz gzip compressed file",
-      nickname = "Download Files",
+      value = "Download the latest data archive containing all molecular and meta data",
+      nickname = "Download All",
       response = MultipartFile.class,
-      tags = "Singularity")
+      tags = "Download")
   @ApiResponses(
       value = {
         @ApiResponse(code = 200, message = "", response = MultipartFile.class),
         @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
       })
   @RequestMapping(
-      value = "/files",
+      value = "/download/archive/all",
       produces = MediaType.APPLICATION_OCTET_STREAM_VALUE,
       method = RequestMethod.GET)
-  ResponseEntity<Mono<Resource>> getFiles();
+  Mono<ResponseEntity<Flux<ByteBuffer>>> downloadLatestAllArchive();
+
+  @ApiOperation(
+      value = "Download an archive by ID",
+      nickname = "Download Archive by ID",
+      response = MultipartFile.class,
+      tags = "Download")
+  @ApiResponses(
+      value = {
+        @ApiResponse(code = 200, message = "", response = MultipartFile.class),
+        @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
+      })
+  @RequestMapping(
+      value = "/download/archive/{id}",
+      produces = MediaType.APPLICATION_OCTET_STREAM_VALUE,
+      method = RequestMethod.GET)
+  ResponseEntity<Mono<Resource>> downloadArchiveById(@PathVariable("id") UUID id);
 
   @ApiOperation(
       value = "Get details of any archives that bundles all sample data.",
