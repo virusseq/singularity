@@ -1,4 +1,4 @@
-package org.cancogenvirusseq.singularity.utils;
+package org.cancogenvirusseq.singularity.components.utils;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;

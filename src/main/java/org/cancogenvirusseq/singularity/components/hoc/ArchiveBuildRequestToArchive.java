@@ -16,9 +16,9 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.singularity.components;
+package org.cancogenvirusseq.singularity.components.hoc;
 
-import static org.cancogenvirusseq.singularity.utils.FileArchiveUtils.createArchiveFromPairsWithInstant;
+import static org.cancogenvirusseq.singularity.components.utils.FileArchiveUtils.createArchiveFromPairsWithInstant;
 
 import java.util.UUID;
 import java.util.function.Function;

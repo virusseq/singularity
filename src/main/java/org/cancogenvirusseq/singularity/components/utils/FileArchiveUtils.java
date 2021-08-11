@@ -16,17 +16,13 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.singularity.utils;
+package org.cancogenvirusseq.singularity.components.utils;
 
 import static java.lang.String.format;
 import static org.cancogenvirusseq.singularity.components.model.FilesArchive.DOWNLOAD_DIR;
 import static org.cancogenvirusseq.singularity.components.model.FilesArchive.archiveFilenameFromInstant;
-import static org.cancogenvirusseq.singularity.utils.CommonUtils.writeToFileStream;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
@@ -53,6 +49,15 @@ public class FileArchiveUtils {
             .flux()
             .log("Download::downloadAndArchiveFunctionWithInstant");
   }
+
+  private static final BiConsumer<BufferedOutputStream, byte[]> writeToFileStream =
+      (stream, bytes) -> {
+        try {
+          stream.write(bytes);
+        } catch (IOException e) {
+          log.error(e.getLocalizedMessage(), e);
+        }
+      };
 
   private static final BiFunction<FilesArchive, AnalysisDocumentMolecularDataPair, FilesArchive>
       addDownloadPairToFileArchive =

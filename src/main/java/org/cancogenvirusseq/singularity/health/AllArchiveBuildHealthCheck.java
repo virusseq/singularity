@@ -21,7 +21,7 @@ package org.cancogenvirusseq.singularity.health;
 import java.util.Optional;
 import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
-import org.cancogenvirusseq.singularity.pipelines.AllArchiveBuild;
+import org.cancogenvirusseq.singularity.components.pipelines.AllArchiveBuild;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.stereotype.Component;
@@ -29,19 +29,25 @@ import reactor.core.Disposable;
 
 @Component
 @RequiredArgsConstructor
-public class UpdateFileBundleHealthCheck implements HealthIndicator {
+public class AllArchiveBuildHealthCheck implements HealthIndicator {
 
   private static final String MESSAGE_KEY = "updateFileBundleDisposable";
   private final AllArchiveBuild allArchiveBuild;
 
   @Override
   public Health health() {
-    return Optional.of(isDisposableRunning.test(allArchiveBuild.getBuildAllArchiveDisposable()))
+    return Optional.of(isDisposableRunning.test(allArchiveBuild.getAllArchiveDisposable()))
         .filter(Boolean::booleanValue)
         .map(
             isRunning ->
-                Health.up().withDetail(MESSAGE_KEY, "Update File Bundle disposable is running."))
-        .orElse(Health.down().withDetail(MESSAGE_KEY, "Update File Bundle disposable has stopped."))
+                Health.up()
+                    .withDetail(
+                        MESSAGE_KEY,
+                        "AllArchiveBuild::allArchiveDisposable disposable is running."))
+        .orElse(
+            Health.down()
+                .withDetail(
+                    MESSAGE_KEY, "AllArchiveBuild::allArchiveDisposable disposable has stopped."))
         .build();
   }
 

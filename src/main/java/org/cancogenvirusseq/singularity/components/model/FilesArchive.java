@@ -31,7 +31,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
-import org.cancogenvirusseq.singularity.utils.TsvUtils;
+import org.cancogenvirusseq.singularity.components.utils.TsvUtils;
 
 @Slf4j
 @Getter

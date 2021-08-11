@@ -16,7 +16,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.singularity.utils;
+package org.cancogenvirusseq.singularity.components.utils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;

@@ -1,7 +1,6 @@
-package org.cancogenvirusseq.singularity.components;
+package org.cancogenvirusseq.singularity.components.hoc;
 
 import java.time.Instant;
-import java.util.UUID;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

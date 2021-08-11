@@ -16,9 +16,9 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.singularity.pipelines;
+package org.cancogenvirusseq.singularity.components.pipelines;
 
-import static org.cancogenvirusseq.singularity.utils.FileArchiveUtils.deleteArchiveForInstant;
+import static org.cancogenvirusseq.singularity.components.utils.FileArchiveUtils.deleteArchiveForInstant;
 
 import java.time.Instant;
 import java.util.function.Function;
@@ -26,9 +26,9 @@ import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.cancogenvirusseq.singularity.components.ArchiveBuildRequestToArchive;
-import org.cancogenvirusseq.singularity.components.InstantToArchiveBuildRequest;
 import org.cancogenvirusseq.singularity.components.events.EventEmitter;
+import org.cancogenvirusseq.singularity.components.hoc.ArchiveBuildRequestToArchive;
+import org.cancogenvirusseq.singularity.components.hoc.InstantToArchiveBuildRequest;
 import org.cancogenvirusseq.singularity.components.model.ArchiveBuildRequest;
 import org.springframework.stereotype.Component;
 import reactor.core.Disposable;
