@@ -23,7 +23,7 @@ import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.cancogenvirusseq.singularity.exceptions.BaseException;
+import org.cancogenvirusseq.singularity.exceptions.http.BaseHttpException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -41,7 +41,7 @@ public class ErrorResponse {
     return new ResponseEntity<>(new ErrorResponse(status, message, Map.of()), status);
   }
 
-  public static ResponseEntity<ErrorResponse> errorResponseEntity(BaseException ex) {
+  public static ResponseEntity<ErrorResponse> errorResponseEntity(BaseHttpException ex) {
     return new ResponseEntity<>(
         new ErrorResponse(ex.getStatusCode(), ex.getMessage(), ex.getErrorInfo()),
         ex.getStatusCode());

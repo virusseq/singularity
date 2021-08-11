@@ -1,4 +1,4 @@
-package org.cancogenvirusseq.singularity.exceptions;
+package org.cancogenvirusseq.singularity.exceptions.http;
 
 import lombok.EqualsAndHashCode;
 import lombok.Value;
@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 
 @Value
 @EqualsAndHashCode(callSuper = true)
-public class ArchiveNotFoundException extends Throwable implements BaseException {
+public class ArchiveNotFoundHttpException extends Throwable implements BaseHttpException {
   @Override
   public HttpStatus getStatusCode() {
     return HttpStatus.NOT_FOUND;

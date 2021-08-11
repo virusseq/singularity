@@ -12,8 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.singularity.components.model.AwsSdkFluxResponse;
 import org.cancogenvirusseq.singularity.components.utils.FluxResponseProvider;
 import org.cancogenvirusseq.singularity.config.s3Client.S3ClientProperties;
-import org.cancogenvirusseq.singularity.exceptions.DownloadFailedException;
-import org.cancogenvirusseq.singularity.repository.model.Archive;
+import org.cancogenvirusseq.singularity.exceptions.runtime.S3DownloadFailedException;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.http.SdkHttpResponse;
@@ -35,10 +34,6 @@ public class DownloadObjectById implements Function<UUID, Mono<AwsSdkFluxRespons
         .map(verifyResponse);
   }
 
-  public Mono<AwsSdkFluxResponse> apply(Archive archive) {
-    return this.apply(archive.getObjectId());
-  }
-
   private GetObjectRequest getObjectRequestForObjectId(UUID objectId) {
     return GetObjectRequest.builder()
         .key(format("%s/%s", s3ClientProperties.getDataDir(), objectId))
@@ -58,6 +53,6 @@ public class DownloadObjectById implements Function<UUID, Mono<AwsSdkFluxRespons
           return response;
         }
 
-        throw new DownloadFailedException(response.getSdkResponse());
+        throw new S3DownloadFailedException(response.getSdkResponse());
       };
 }

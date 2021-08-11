@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.singularity.config.s3Client.S3ClientProperties;
+import org.cancogenvirusseq.singularity.exceptions.runtime.S3ArchiveUploadException;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.netty.ByteBufFlux;
@@ -47,23 +48,7 @@ public class ArchiveUpload implements Function<Path, Mono<String>> {
         .uri(getPresignedUrlStringForFileArchive(filesArchivePath))
         .send(ByteBufFlux.fromPath(filesArchivePath))
         .response()
-        .map(
-            response -> {
-              if (response.status() != HttpResponseStatus.OK) {
-                throw new RuntimeException(
-                    format(
-                        "ArchiveUpload failed to send archive to object storage with response: %s",
-                        response));
-              }
-
-              log.debug(
-                  "Successfully uploaded archive: {} to s3 path: {}",
-                  filesArchivePath.getFileName(),
-                  response.path());
-
-              // return the objectId only
-              return getObjectIdFromResponse(response);
-            })
+        .map(getResponseFunctionForPath(filesArchivePath))
         .log("ArchiveUpload");
   }
 
@@ -100,6 +85,22 @@ public class ArchiveUpload implements Function<Path, Mono<String>> {
   @SneakyThrows
   private Long getFileSize(Path path) {
     return Files.size(path);
+  }
+
+  private Function<HttpClientResponse, String> getResponseFunctionForPath(Path filesArchivePath) {
+    return response -> {
+      if (response.status() != HttpResponseStatus.OK) {
+        throw new S3ArchiveUploadException(response);
+      }
+
+      log.debug(
+          "Successfully uploaded archive: {} to s3 path: {}",
+          filesArchivePath.getFileName(),
+          response.path());
+
+      // return the objectId only
+      return getObjectIdFromResponse(response);
+    };
   }
 
   private String getObjectIdFromResponse(HttpClientResponse response) {

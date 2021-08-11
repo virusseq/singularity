@@ -29,8 +29,8 @@ import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
 import org.cancogenvirusseq.singularity.api.model.ErrorResponse;
 import org.cancogenvirusseq.singularity.components.base.DownloadObjectById;
 import org.cancogenvirusseq.singularity.components.pipelines.Contributors;
-import org.cancogenvirusseq.singularity.exceptions.ArchiveNotFoundException;
-import org.cancogenvirusseq.singularity.exceptions.BaseException;
+import org.cancogenvirusseq.singularity.exceptions.http.ArchiveNotFoundHttpException;
+import org.cancogenvirusseq.singularity.exceptions.http.BaseHttpException;
 import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
 import org.cancogenvirusseq.singularity.repository.query.FindArchivesQuery;
@@ -70,7 +70,7 @@ public class ApiController implements ApiDefinition {
   }
 
   public Mono<Archive> getArchive(UUID id) {
-    return archivesRepo.findById(id).switchIfEmpty(Mono.error(new ArchiveNotFoundException()));
+    return archivesRepo.findById(id).switchIfEmpty(Mono.error(new ArchiveNotFoundHttpException()));
   }
 
   private <T> Mono<EntityListResponse<T>> listResponseTransform(
@@ -104,8 +104,8 @@ public class ApiController implements ApiDefinition {
   @ExceptionHandler
   public ResponseEntity<ErrorResponse> handle(Throwable ex) {
     log.error("ApiController exception handler", ex);
-    if (ex instanceof BaseException) {
-      return ErrorResponse.errorResponseEntity((BaseException) ex);
+    if (ex instanceof BaseHttpException) {
+      return ErrorResponse.errorResponseEntity((BaseHttpException) ex);
     } else {
       return ErrorResponse.errorResponseEntity(
           HttpStatus.INTERNAL_SERVER_ERROR, ex.getLocalizedMessage());

@@ -28,23 +28,27 @@ public class ElasticSearchScroll implements Function<QueryBuilder, Flux<Analysis
 
   @Override
   public Flux<AnalysisDocument> apply(QueryBuilder queryBuilder) {
-    return Mono.just(
-            new SearchSourceBuilder()
-                .query(queryBuilder)
-                .fetchSource(AnalysisDocument.getEsIncludeFields(), null))
-        .flatMapMany(
-            source ->
-                reactiveElasticSearchClientConfig
-                    .reactiveElasticsearchClient()
-                    .scroll(
-                        new SearchRequest()
-                            .indices(elasticsearchProperties.getFileCentricIndex())
-                            .source(source)
-                            .scroll(
-                                new TimeValue(
-                                    elasticsearchProperties.getScrollTimeoutMinutes(),
-                                    TimeUnit.MINUTES))))
+    return Mono.just(searchSourceBuilderFromQueryBuilder(queryBuilder))
+        .flatMapMany(this::executeScrollQuery)
         .map(this::hitMapToAnalysisDocument);
+  }
+
+  private SearchSourceBuilder searchSourceBuilderFromQueryBuilder(QueryBuilder queryBuilder) {
+    return new SearchSourceBuilder()
+        .query(queryBuilder)
+        .fetchSource(AnalysisDocument.getEsIncludeFields(), null);
+  }
+
+  private Flux<SearchHit> executeScrollQuery(SearchSourceBuilder searchSourceBuilder) {
+    return reactiveElasticSearchClientConfig
+        .reactiveElasticsearchClient()
+        .scroll(
+            new SearchRequest()
+                .indices(elasticsearchProperties.getFileCentricIndex())
+                .source(searchSourceBuilder)
+                .scroll(
+                    new TimeValue(
+                        elasticsearchProperties.getScrollTimeoutMinutes(), TimeUnit.MINUTES)));
   }
 
   @SneakyThrows

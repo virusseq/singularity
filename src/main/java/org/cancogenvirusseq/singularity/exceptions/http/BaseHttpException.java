@@ -1,10 +1,10 @@
-package org.cancogenvirusseq.singularity.exceptions;
+package org.cancogenvirusseq.singularity.exceptions.http;
 
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 
-public interface BaseException {
+public interface BaseHttpException {
   default HttpStatus getStatusCode() {
     return HttpStatus.BAD_REQUEST;
   }
