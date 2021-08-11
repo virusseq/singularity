@@ -26,7 +26,10 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
+import org.cancogenvirusseq.singularity.api.model.ErrorResponse;
 import org.cancogenvirusseq.singularity.components.base.DownloadObjectById;
+import org.cancogenvirusseq.singularity.exceptions.ArchiveNotFoundException;
+import org.cancogenvirusseq.singularity.exceptions.BaseException;
 import org.cancogenvirusseq.singularity.pipelines.Contributors;
 import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
@@ -37,6 +40,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
@@ -55,11 +59,11 @@ public class ApiController implements ApiDefinition {
   }
 
   public Mono<ResponseEntity<Flux<ByteBuffer>>> downloadLatestAllArchive() {
-    return archivesRepo.findLatestAllArchive().flatMap(this::fetchAllArchiveAndRespond);
+    return archivesRepo.findLatestAllArchive().transform(this::processArchiveDownloadRequest);
   }
 
   public Mono<ResponseEntity<Flux<ByteBuffer>>> downloadArchiveById(@PathVariable("id") UUID id) {
-    return archivesRepo.findById(id).flatMap(this::fetchAllArchiveAndRespond);
+    return archivesRepo.findById(id).transform(this::processArchiveDownloadRequest);
   }
 
   public Mono<Page<Archive>> getArchives(FindArchivesQuery findArchivesQuery) {
@@ -67,7 +71,7 @@ public class ApiController implements ApiDefinition {
   }
 
   public Mono<Archive> getArchive(UUID id) {
-    return archivesRepo.findById(id);
+    return archivesRepo.findById(id).switchIfEmpty(Mono.error(new ArchiveNotFoundException()));
   }
 
   private <T> Mono<EntityListResponse<T>> listResponseTransform(
@@ -75,33 +79,47 @@ public class ApiController implements ApiDefinition {
     return entities.map(entityList -> EntityListResponse.<T>builder().data(entityList).build());
   }
 
-  private Mono<ResponseEntity<Flux<ByteBuffer>>> fetchAllArchiveAndRespond(Archive archive) {
-    return archivesRepo
-        .save(incrementDownloads(archive))
-        .flatMap(downloadObjectById::apply)
-        .map(
-            archiveDownload ->
-                ResponseEntity.ok()
-                    .header(
-                        HttpHeaders.CONTENT_DISPOSITION,
-                        format("attachment; filename=%s", parseFilenameFromArchive(archive)))
-                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM_VALUE)
-                    .body(archiveDownload.getFlux()))
-        .onErrorContinue(
-            (throwable, obj) ->
-                // todo: rework this for correct error handling
-                ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .header("X-Reason", "file-bundle-not-built")
-                    .build());
+  private Mono<ResponseEntity<Flux<ByteBuffer>>> processArchiveDownloadRequest(
+      Mono<Archive> archiveMono) {
+    return archiveMono
+        .map(ApiController::incrementDownloads)
+        .flatMap(
+            archive ->
+                downloadObjectById
+                    .apply(archive.getObjectId())
+                    .map(
+                        archiveDownload ->
+                            ResponseEntity.ok()
+                                .header(
+                                    HttpHeaders.CONTENT_DISPOSITION,
+                                    format(
+                                        "attachment; filename=%s",
+                                        parseFilenameFromArchive(archive)))
+                                .header(
+                                    HttpHeaders.CONTENT_TYPE,
+                                    MediaType.APPLICATION_OCTET_STREAM_VALUE)
+                                .body(archiveDownload.getFlux())))
+        .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+  }
+
+  @ExceptionHandler
+  public ResponseEntity<ErrorResponse> handle(Throwable ex) {
+    log.error("ApiController exception handler", ex);
+    if (ex instanceof BaseException) {
+      return ErrorResponse.errorResponseEntity((BaseException) ex);
+    } else {
+      return ErrorResponse.errorResponseEntity(
+          HttpStatus.INTERNAL_SERVER_ERROR, ex.getLocalizedMessage());
+    }
   }
 
   private static String parseFilenameFromArchive(Archive archive) {
     if (archive.getType().equals(ArchiveType.ALL)) {
       // for a download all entry the hash info is the instant string
-      return format("virusseq-consensus-export-all-%s.tar.gz", archive.getHashInfo());
+      return format("virusseq-consensus-archive-all-%s.tar.gz", archive.getHashInfo());
     } else {
-      // otherwise just note the archiveId with the download + todo: confirm this with someone!!!
-      return format("virusseq-consensus-export-%s.tar.gz", archive.getId());
+      // otherwise just note the archiveId with the download
+      return format("virusseq-consensus-archive-%s.tar.gz", archive.getId());
     }
   }
 

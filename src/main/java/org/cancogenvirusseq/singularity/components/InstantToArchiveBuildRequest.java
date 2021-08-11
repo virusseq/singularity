@@ -65,9 +65,7 @@ public class InstantToArchiveBuildRequest implements Function<Instant, Mono<Arch
                     Archive.builder()
                         .status(ArchiveStatus.BUILDING)
                         .type(ArchiveType.ALL)
-                        .hashInfo(
-                            aggTuple.getT1().getValueAsString()
-                                + UUID.randomUUID()) // todo: temp UUID hash to build every bundle
+                        .hashInfo(aggTuple.getT1().getValueAsString())
                         .numOfSamples((int) aggTuple.getT2().getValue())
                         .build()))
         // why this? because R2DBC does not hydrate fields

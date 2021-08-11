@@ -1,6 +1,7 @@
 package org.cancogenvirusseq.singularity.repository;
 
 import java.util.UUID;
+import lombok.NonNull;
 import lombok.val;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveStatus;
@@ -19,10 +20,11 @@ public interface ArchivesRepo extends ReactiveCrudRepository<Archive, UUID> {
   Mono<Integer> countByStatusAndTypeAndCreatedAtGreaterThanEqualAndCreatedAtLessThanEqual(
       ArchiveStatus status, ArchiveType type, Long fromTime, Long toTime);
 
-  Mono<Archive> findTopByTypeOrderByCreatedAtDesc(ArchiveType archiveType);
+  Mono<Archive> findTopByTypeAndStatusOrderByCreatedAtDesc(
+      @NonNull ArchiveType type, @NonNull ArchiveStatus status);
 
   default Mono<Archive> findLatestAllArchive() {
-    return findTopByTypeOrderByCreatedAtDesc(ArchiveType.ALL);
+    return findTopByTypeAndStatusOrderByCreatedAtDesc(ArchiveType.ALL, ArchiveStatus.COMPLETE);
   }
 
   default Mono<Archive> findByArchiveObject(Archive archive) {

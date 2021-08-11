@@ -23,6 +23,7 @@ import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.cancogenvirusseq.singularity.exceptions.BaseException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -38,5 +39,11 @@ public class ErrorResponse {
   public static ResponseEntity<ErrorResponse> errorResponseEntity(
       HttpStatus status, String message) {
     return new ResponseEntity<>(new ErrorResponse(status, message, Map.of()), status);
+  }
+
+  public static ResponseEntity<ErrorResponse> errorResponseEntity(BaseException ex) {
+    return new ResponseEntity<>(
+        new ErrorResponse(ex.getStatusCode(), ex.getMessage(), ex.getErrorInfo()),
+        ex.getStatusCode());
   }
 }
