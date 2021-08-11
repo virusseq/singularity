@@ -33,7 +33,6 @@ import org.cancogenvirusseq.singularity.exceptions.ArchiveNotFoundException;
 import org.cancogenvirusseq.singularity.exceptions.BaseException;
 import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
-import org.cancogenvirusseq.singularity.repository.model.ArchiveType;
 import org.cancogenvirusseq.singularity.repository.query.FindArchivesQuery;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
@@ -82,7 +81,7 @@ public class ApiController implements ApiDefinition {
   private Mono<ResponseEntity<Flux<ByteBuffer>>> processArchiveDownloadRequest(
       Mono<Archive> archiveMono) {
     return archiveMono
-        .map(ApiController::incrementDownloads)
+        .map(Archive::incrementDownloadsForArchive)
         .flatMap(
             archive ->
                 downloadObjectById
@@ -94,7 +93,7 @@ public class ApiController implements ApiDefinition {
                                     HttpHeaders.CONTENT_DISPOSITION,
                                     format(
                                         "attachment; filename=%s",
-                                        parseFilenameFromArchive(archive)))
+                                        Archive.parseFilenameFromArchive(archive)))
                                 .header(
                                     HttpHeaders.CONTENT_TYPE,
                                     MediaType.APPLICATION_OCTET_STREAM_VALUE)
@@ -111,20 +110,5 @@ public class ApiController implements ApiDefinition {
       return ErrorResponse.errorResponseEntity(
           HttpStatus.INTERNAL_SERVER_ERROR, ex.getLocalizedMessage());
     }
-  }
-
-  private static String parseFilenameFromArchive(Archive archive) {
-    if (archive.getType().equals(ArchiveType.ALL)) {
-      // for a download all entry the hash info is the instant string
-      return format("virusseq-consensus-archive-all-%s.tar.gz", archive.getHashInfo());
-    } else {
-      // otherwise just note the archiveId with the download
-      return format("virusseq-consensus-archive-%s.tar.gz", archive.getId());
-    }
-  }
-
-  private static Archive incrementDownloads(Archive archive) {
-    archive.setNumOfDownloads(archive.getNumOfDownloads() + 1);
-    return archive;
   }
 }
