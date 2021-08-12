@@ -43,6 +43,7 @@ public class AnalysisDocument {
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class Analysis {
     private Experiment experiment = new Experiment();
+    private DatabaseIdentifiers databaseIdentifiers = new DatabaseIdentifiers();
     private Host host = new Host();
     private PathogenDiagnosticTesting pathogenDiagnosticTesting = new PathogenDiagnosticTesting();
     private SampleCollection sampleCollection = new SampleCollection();
@@ -58,6 +59,14 @@ public class AnalysisDocument {
     private String purposeOfSequencingDetails;
     private String sequencingInstrument;
     private String sequencingProtocol;
+  }
+
+  @Data
+  @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+  public static class DatabaseIdentifiers {
+    private String gisaidAccession;
   }
 
   @Data
@@ -81,6 +90,7 @@ public class AnalysisDocument {
   public static class PathogenDiagnosticTesting {
     private String geneName;
     private String diagnosticPcrCtValue;
+    private String diagnosticPcrCtValueNullReason;
   }
 
   @Data
@@ -149,6 +159,8 @@ public class AnalysisDocument {
         "analysis.experiment.purpose_of_sequencing_details",
         "analysis.experiment.sequencing_instrument",
         "analysis.experiment.sequencing_protocol",
+        // database_identifiers
+        "analysis.database_identifiers.gisaid_accession",
         // host
         "analysis.host.host_age",
         "analysis.host.host_age_null_reason",
@@ -160,6 +172,7 @@ public class AnalysisDocument {
         // pathogen diagnostic testing
         "analysis.pathogen_diagnostic_testing.gene_name",
         "analysis.pathogen_diagnostic_testing.diagnostic_pcr_ct_value",
+        "analysis.pathogen_diagnostic_testing.diagnostic_pcr_ct_value_null_reason",
         // sample_collection
         "analysis.sample_collection.isolate",
         "analysis.sample_collection.fasta_header_name",
