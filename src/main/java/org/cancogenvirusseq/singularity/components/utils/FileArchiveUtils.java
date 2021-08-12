@@ -16,28 +16,23 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.singularity.utils;
+package org.cancogenvirusseq.singularity.components.utils;
 
 import static java.lang.String.format;
-import static org.cancogenvirusseq.singularity.utils.CommonUtils.dataBufferToBytes;
-import static org.cancogenvirusseq.singularity.utils.CommonUtils.writeToFileStream;
+import static org.cancogenvirusseq.singularity.components.model.FilesArchive.DOWNLOAD_DIR;
+import static org.cancogenvirusseq.singularity.components.model.FilesArchive.archiveFilenameFromInstant;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
+import java.util.function.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
-import org.cancogenvirusseq.singularity.components.model.BatchedDownloadPair;
+import org.cancogenvirusseq.singularity.components.model.AnalysisDocumentMolecularDataPair;
 import org.cancogenvirusseq.singularity.components.model.FilesArchive;
 import org.springframework.util.FileSystemUtils;
 import reactor.core.publisher.Flux;
@@ -45,26 +40,33 @@ import reactor.core.publisher.Flux;
 @Slf4j
 public class FileArchiveUtils {
 
-  public static Function<Flux<BatchedDownloadPair>, Flux<String>>
-      batchedDownloadPairsToFileArchiveWithInstant(Instant instant) {
-    return batchedDownloadPairs ->
-        batchedDownloadPairs
-            .reduce(new FilesArchive(instant), addBatchedPairToFileArchive)
-            .map(tarGzipBundleAndClose)
+  public static Function<Flux<AnalysisDocumentMolecularDataPair>, Flux<Path>>
+      createArchiveFromPairsWithInstant(Instant instant) {
+    return dataPairFlux ->
+        dataPairFlux
+            .reduce(new FilesArchive(instant), addDownloadPairToFileArchive)
+            .map(tarGzipArchiveAndClose)
             .flux()
             .log("Download::downloadAndArchiveFunctionWithInstant");
   }
 
-  private static final BiFunction<FilesArchive, BatchedDownloadPair, FilesArchive>
-      addBatchedPairToFileArchive =
-          (filesArchive, batchedDownloadPair) -> {
+  private static final BiConsumer<BufferedOutputStream, byte[]> writeToFileStream =
+      (stream, bytes) -> {
+        try {
+          stream.write(bytes);
+        } catch (IOException e) {
+          log.error(e.getLocalizedMessage(), e);
+        }
+      };
+
+  private static final BiFunction<FilesArchive, AnalysisDocumentMolecularDataPair, FilesArchive>
+      addDownloadPairToFileArchive =
+          (filesArchive, downloadPair) -> {
             writeToFileStream.accept(
-                filesArchive.getMolecularFileOutputStream(),
-                dataBufferToBytes.apply(batchedDownloadPair.getMolecularData()));
+                filesArchive.getMolecularFileOutputStream(), downloadPair.getMolecularData());
             writeToFileStream.accept(
                 filesArchive.getMetadataFileOutputStream(),
-                TsvUtils.analysisDocumentsToTsvRowsBytes(
-                    batchedDownloadPair.getAnalysisDocuments()));
+                TsvUtils.analysisDocumentToTsvRowBytes(downloadPair.getAnalysisDocument()));
             return filesArchive;
           };
 
@@ -142,21 +144,35 @@ public class FileArchiveUtils {
         return filesArchive;
       };
 
-  private static final Function<FilesArchive, String> finalize =
+  private static final Function<FilesArchive, Path> finalize =
       filesArchive -> {
         try {
           FileSystemUtils.deleteRecursively(Paths.get(filesArchive.getDownloadDirectory()));
         } catch (IOException e) {
           log.error(e.getLocalizedMessage(), e);
         }
-        return filesArchive.getArchiveFilename();
+        return Paths.get(format("%s/%s", DOWNLOAD_DIR, filesArchive.getArchiveFilename()));
+      };
+
+  public static final Consumer<Instant> deleteArchiveForInstant =
+      instant -> {
+        try {
+          FileSystemUtils.deleteRecursively(
+              Paths.get(format("%s/%s", DOWNLOAD_DIR, archiveFilenameFromInstant(instant))));
+          log.debug(
+              "File archive '{}/{}' deleted from disk",
+              DOWNLOAD_DIR,
+              archiveFilenameFromInstant(instant));
+        } catch (IOException e) {
+          log.error(e.getLocalizedMessage(), e);
+        }
       };
 
   /**
    * Function that takes a fileBundle, closes it's files, generates the tar.gz, deletes the download
-   * directory and returns the archive filename
+   * directory and returns the full path to the archive
    */
-  public static final Function<FilesArchive, String> tarGzipBundleAndClose =
+  public static final Function<FilesArchive, Path> tarGzipArchiveAndClose =
       closeMolecularAndMetadataFileStreams
           .andThen(createGzipOutputStream)
           .andThen(createTarOutputStream)

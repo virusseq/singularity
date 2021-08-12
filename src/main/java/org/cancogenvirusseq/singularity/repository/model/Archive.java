@@ -1,16 +1,15 @@
 package org.cancogenvirusseq.singularity.repository.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import static java.lang.String.format;
+
 import java.util.UUID;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
 @Data
-@Builder(toBuilder = true)
-@NoArgsConstructor
+@Builder
 @AllArgsConstructor
-@JsonIgnoreProperties(ignoreUnknown = true)
 @Table("archive")
 public class Archive {
   @Id private UUID id;
@@ -22,7 +21,9 @@ public class Archive {
   private Long createdAt;
 
   @NonNull private Integer numOfSamples;
-  @NonNull private Integer numOfDownloads;
+
+  // always initialized to zero when creating
+  private Integer numOfDownloads;
 
   @RequiredArgsConstructor
   public enum Fields {
@@ -39,6 +40,21 @@ public class Archive {
 
     public String toString() {
       return text;
+    }
+  }
+
+  public static Archive incrementDownloadsForArchive(Archive archive) {
+    archive.setNumOfDownloads(archive.getNumOfDownloads() + 1);
+    return archive;
+  }
+
+  public static String parseFilenameFromArchive(Archive archive) {
+    if (archive.getType().equals(ArchiveType.ALL)) {
+      // for a download all entry the hash info is the instant string
+      return format("virusseq-consensus-archive-all-%s.tar.gz", archive.getHashInfo());
+    } else {
+      // otherwise just note the archiveId with the download
+      return format("virusseq-consensus-archive-%s.tar.gz", archive.getId());
     }
   }
 }

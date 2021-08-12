@@ -32,6 +32,9 @@ import lombok.NonNull;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class AnalysisDocument {
+  public static final String ID_FIELD = "_id";
+  public static final String LAST_UPDATED_AT_FIELD = "analysis.updated_at";
+
   @NonNull private String objectId;
   @NonNull private String studyId;
   @NonNull private Analysis analysis;

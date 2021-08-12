@@ -16,6 +16,14 @@ postgres:
   maxPoolIdleTimeMs: 1000
   maxPoolSize: 20
 
+s3:
+  region:
+  endpoint: https://object.cancercollaboratory.org:9080
+  accessKeyId: SOME_KEY
+  secretAccessKey: SOME_SECRET
+  bucket: cancogen
+  dataDir: data
+
 elastic:
   host: localhost
   port: 9200
@@ -36,13 +44,6 @@ kafka:
 contributors:
   filterList:
   appendList:
-
-download:
-  museHost: "localhost:8087/download"
-  retryMaxAttempts: 3
-  retryDelaySec: 10
-  batchSize: 100
-  concurrentRequests: 5
 
 files:
   finalEventCheckSeconds: 60

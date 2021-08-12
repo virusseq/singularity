@@ -4,7 +4,7 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 pom.xml.versionsBackup
-.application.yaml
+.application.*
 
 ### STS ###
 .apt_generated
