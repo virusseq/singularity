@@ -17,7 +17,7 @@ postgres:
   maxPoolSize: 20
 
 s3:
-  region:
+  region: collab
   endpoint: https://object.cancercollaboratory.org:9080
   accessKeyId: SOME_KEY
   secretAccessKey: SOME_SECRET
