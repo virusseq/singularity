@@ -32,6 +32,7 @@ elastic:
   username: elastic
   password: testing
   fileCentricIndex: file_centric
+  arrangerSetsIndex: arranger-sets
   scrollTimeoutMinutes: 10
 
 kafka:

@@ -34,7 +34,7 @@ import reactor.core.publisher.Flux;
 @Component
 @Profile("kafka")
 @RequiredArgsConstructor
-public class KafkaEventEmitter implements EventEmitter {
+public class KafkaEventEmitter implements EventEmitter<Instant> {
   private final KafkaConsumerConfig kafkaConsumerConfig;
 
   @Value("${files.finalEventCheckSeconds}")
@@ -42,6 +42,7 @@ public class KafkaEventEmitter implements EventEmitter {
 
   private static final AtomicReference<Instant> lastEvent = new AtomicReference<>();
 
+  @Override
   public Flux<Instant> receive() {
     return kafkaConsumerConfig
         .getReceiver()

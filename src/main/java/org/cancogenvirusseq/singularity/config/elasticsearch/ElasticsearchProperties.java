@@ -33,5 +33,6 @@ public class ElasticsearchProperties {
   String username;
   String password;
   String fileCentricIndex;
+  String arrangerSetsIndex;
   Long scrollTimeoutMinutes;
 }

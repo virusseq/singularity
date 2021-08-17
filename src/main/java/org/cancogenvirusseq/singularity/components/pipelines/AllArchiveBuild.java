@@ -38,7 +38,7 @@ import reactor.core.publisher.Mono;
 @Component
 @RequiredArgsConstructor
 public class AllArchiveBuild {
-  private final EventEmitter eventEmitter;
+  private final EventEmitter<Instant> eventEmitter;
   private final InstantToArchiveBuildRequest instantToArchiveBuildRequest;
   private final ArchiveBuildRequestToArchive archiveBuildRequestToArchive;
 
