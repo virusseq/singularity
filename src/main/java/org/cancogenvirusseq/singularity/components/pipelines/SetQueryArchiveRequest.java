@@ -2,7 +2,6 @@ package org.cancogenvirusseq.singularity.components.pipelines;
 
 import io.r2dbc.spi.R2dbcDataIntegrityViolationException;
 import io.r2dbc.spi.R2dbcException;
-import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
@@ -105,8 +104,7 @@ public class SetQueryArchiveRequest implements Function<UUID, Mono<Archive>> {
                     archiveBuildRequestEmitter
                         .getSink()
                         .tryEmitNext(
-                            new ArchiveBuildRequest(
-                                createdArchive, arrangerSetTermsQuery(setId), Instant.now())))
+                            new ArchiveBuildRequest(createdArchive, arrangerSetTermsQuery(setId))))
             // in the event of a duplicate insert, return the existing archive
             .onErrorResume(
                 DataIntegrityViolationException.class,

@@ -18,7 +18,8 @@
 
 package org.cancogenvirusseq.singularity.components.hoc;
 
-import static org.cancogenvirusseq.singularity.components.utils.FileArchiveUtils.createArchiveFromPairsWithInstant;
+import static org.cancogenvirusseq.singularity.components.utils.FileBundleUtils.createFileBundleFromPairsWithArchive;
+import static org.cancogenvirusseq.singularity.components.utils.FileBundleUtils.deleteFileBundleForArchive;
 
 import java.util.UUID;
 import java.util.function.Function;
@@ -50,7 +51,7 @@ public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildReques
     return elasticSearchScroll
         .apply(archiveBuildRequest.getQueryBuilder())
         .transform(downloadMolecularDataToPair)
-        .transform(createArchiveFromPairsWithInstant(archiveBuildRequest.getInstant()))
+        .transform(createFileBundleFromPairsWithArchive(archiveBuildRequest.getArchive()))
         .flatMap(archiveUpload)
         .flatMap(
             archiveObjectId ->
@@ -72,6 +73,8 @@ public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildReques
                           "processArchiveBuildRequest error: {}", throwable.getLocalizedMessage());
                       return archivesRepo.save(archiveBuildRequestCtx.getArchive());
                     }))
+        .doFinally(
+            signalType -> deleteFileBundleForArchive.accept(archiveBuildRequest.getArchive()))
         .contextWrite(ctx -> ctx.put("archiveBuildRequest", archiveBuildRequest))
         .log("ArchiveBuildRequestToArchive");
   }

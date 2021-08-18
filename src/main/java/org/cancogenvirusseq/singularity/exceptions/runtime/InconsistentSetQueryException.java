@@ -1,6 +1,5 @@
 package org.cancogenvirusseq.singularity.exceptions.runtime;
 
-
 import static java.lang.String.format;
 
 public class InconsistentSetQueryException extends RuntimeException {

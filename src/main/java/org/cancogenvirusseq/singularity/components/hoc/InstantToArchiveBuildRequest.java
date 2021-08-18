@@ -51,6 +51,6 @@ public class InstantToArchiveBuildRequest implements Function<Instant, Mono<Arch
   private Function<Archive, ArchiveBuildRequest> transformToArchiveBuildRequest(Instant instant) {
     return archive ->
         new ArchiveBuildRequest(
-            archive, QueryBuilders.rangeQuery(LAST_UPDATED_AT_FIELD).to(instant), instant);
+            archive, QueryBuilders.rangeQuery(LAST_UPDATED_AT_FIELD).to(instant));
   }
 }
