@@ -12,7 +12,7 @@ public class SetQueryArchiveHashInfo {
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
   private final Map<String, Object> sqon;
-  private final Integer numSamples;
+  private final Long numSamples;
   private final String lastUpdated;
 
   @Override

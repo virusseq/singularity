@@ -24,30 +24,34 @@ CREATE TYPE archive_type as enum ('ALL', 'SET_QUERY');
 
 CREATE TABLE if not exists archive
 (
-    id                  uuid             NOT NULL DEFAULT uuid_generate_v4(),
-    status              archive_status   NOT NULL,
-    created_at          bigint           NOT NULL DEFAULT extract(epoch from now()),
-    hash_info           VARCHAR          NOT NULL CHECK (hash_info <> ''),
-    hash                VARCHAR          NOT NULL UNIQUE CHECK (hash <> ''),
-    type                archive_type     NOT NULL,
-    num_of_samples      int              NOT NULL,
-    num_of_downloads    int              NOT NULL DEFAULT 0,
-    object_id           uuid,
+    id               uuid           NOT NULL DEFAULT uuid_generate_v4(),
+    status           archive_status NOT NULL,
+    created_at       bigint         NOT NULL DEFAULT extract(epoch from now()),
+    hash_info        VARCHAR        NOT NULL CHECK (hash_info <> ''),
+    hash             VARCHAR        NOT NULL UNIQUE CHECK (hash <> ''),
+    type             archive_type   NOT NULL,
+    num_of_samples   bigint         NOT NULL,
+    num_of_downloads int            NOT NULL DEFAULT 0,
+    object_id        uuid,
     PRIMARY KEY (id)
 );
 
-CREATE FUNCTION add_hash() RETURNS trigger AS $add_hash$
-    BEGIN
-        -- Check that empname and salary are given
-        IF NEW.hash_info IS NULL THEN
-            RAISE EXCEPTION 'hash_info cannot be null';
-        END IF;
+CREATE FUNCTION add_hash() RETURNS trigger AS
+$add_hash$
+BEGIN
+    -- Check that empname and salary are given
+    IF NEW.hash_info IS NULL THEN
+        RAISE EXCEPTION 'hash_info cannot be null';
+    END IF;
 
-        -- Update the hash
-        NEW.hash := MD5(NEW.hash_info);
-        RETURN NEW;
-    END;
+    -- Update the hash
+    NEW.hash := MD5(NEW.hash_info);
+    RETURN NEW;
+END;
 $add_hash$ LANGUAGE plpgsql;
 
-CREATE TRIGGER add_hash BEFORE INSERT OR UPDATE ON archive
-    FOR EACH ROW EXECUTE PROCEDURE add_hash();
+CREATE TRIGGER add_hash
+    BEFORE INSERT OR UPDATE
+    ON archive
+    FOR EACH ROW
+EXECUTE PROCEDURE add_hash();

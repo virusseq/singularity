@@ -16,5 +16,5 @@ public class ArrangerSetDocument {
   @NonNull private Long createdAt;
   @NonNull private List<String> ids;
   @NonNull private Map<String, Object> sqon;
-  @NonNull private Integer size;
+  @NonNull private Long size;
 }

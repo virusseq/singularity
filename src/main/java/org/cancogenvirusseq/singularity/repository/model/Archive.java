@@ -21,7 +21,7 @@ public class Archive {
   private UUID objectId;
   private Long createdAt;
 
-  @NonNull private Integer numOfSamples;
+  @NonNull private Long numOfSamples;
 
   // always initialized to zero when creating
   private Integer numOfDownloads;

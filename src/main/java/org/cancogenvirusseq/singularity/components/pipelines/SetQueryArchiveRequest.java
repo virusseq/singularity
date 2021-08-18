@@ -78,10 +78,9 @@ public class SetQueryArchiveRequest implements Function<UUID, Mono<Archive>> {
     return countAndLastUpdatedResult -> {
       if (!arrangerSetDocument
           .getSize()
-          .equals((int) countAndLastUpdatedResult.getNumDocuments().getValue())) {
+          .equals(countAndLastUpdatedResult.getNumDocuments().getValue())) {
         throw new InconsistentSetQueryException(
-            arrangerSetDocument.getSize(),
-            (int) countAndLastUpdatedResult.getNumDocuments().getValue());
+            arrangerSetDocument.getSize(), countAndLastUpdatedResult.getNumDocuments().getValue());
       }
 
       return countAndLastUpdatedResult;

@@ -44,7 +44,7 @@ public class InstantToArchiveBuildRequest implements Function<Instant, Mono<Arch
             .status(ArchiveStatus.BUILDING)
             .type(ArchiveType.ALL)
             .hashInfo(countAndLastUpdatedResult.getLastUpdatedDate().getValueAsString())
-            .numOfSamples((int) countAndLastUpdatedResult.getNumDocuments().getValue())
+            .numOfSamples(countAndLastUpdatedResult.getNumDocuments().getValue())
             .build());
   }
 
