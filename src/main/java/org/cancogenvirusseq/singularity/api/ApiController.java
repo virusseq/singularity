@@ -82,6 +82,7 @@ public class ApiController implements ApiDefinition {
       Mono<Archive> archiveMono) {
     return archiveMono
         .map(Archive::incrementDownloadsForArchive)
+        .flatMap(archivesRepo::save)
         .flatMap(
             archive ->
                 downloadObjectById
