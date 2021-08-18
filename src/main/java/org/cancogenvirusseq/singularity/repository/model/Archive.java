@@ -44,7 +44,7 @@ public class Archive {
     }
   }
 
-  public static Archive fromSetQueryArchiveFromHashInfo(
+  public static Archive newFromSetQueryArchiveHashInfo(
       SetQueryArchiveHashInfo setQueryArchiveHashInfo) {
     return Archive.builder()
         .status(ArchiveStatus.BUILDING)

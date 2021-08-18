@@ -29,10 +29,11 @@ import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
 import org.cancogenvirusseq.singularity.api.model.ErrorResponse;
 import org.cancogenvirusseq.singularity.api.model.SetIdBuildRequest;
 import org.cancogenvirusseq.singularity.components.base.DownloadObjectById;
-import org.cancogenvirusseq.singularity.components.base.SetIdToSetQueryArchive;
 import org.cancogenvirusseq.singularity.components.pipelines.Contributors;
+import org.cancogenvirusseq.singularity.components.pipelines.SetQueryArchiveRequest;
 import org.cancogenvirusseq.singularity.exceptions.http.ArchiveNotFoundHttpException;
 import org.cancogenvirusseq.singularity.exceptions.http.BaseHttpException;
+import org.cancogenvirusseq.singularity.exceptions.http.SetNotFoundHttpException;
 import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
 import org.cancogenvirusseq.singularity.repository.query.FindArchivesQuery;
@@ -52,7 +53,7 @@ import reactor.core.publisher.Mono;
 public class ApiController implements ApiDefinition {
   private final Contributors contributors;
   private final DownloadObjectById downloadObjectById;
-  private final SetIdToSetQueryArchive setIdToSetQueryArchive;
+  private final SetQueryArchiveRequest setQueryArchiveRequest;
   private final ArchivesRepo archivesRepo;
 
   @Override
@@ -82,7 +83,9 @@ public class ApiController implements ApiDefinition {
 
   @Override
   public Mono<Archive> buildArchiveWithSetId(SetIdBuildRequest setIdBuildRequest) {
-    return setIdToSetQueryArchive.apply(setIdBuildRequest.getSetId());
+    return setQueryArchiveRequest
+        .apply(setIdBuildRequest.getSetId())
+        .switchIfEmpty(Mono.error(new SetNotFoundHttpException()));
   }
 
   private <T> Mono<EntityListResponse<T>> listResponseTransform(

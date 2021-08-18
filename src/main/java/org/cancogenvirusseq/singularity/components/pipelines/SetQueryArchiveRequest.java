@@ -1,16 +1,19 @@
-package org.cancogenvirusseq.singularity.components.base;
+package org.cancogenvirusseq.singularity.components.pipelines;
 
 import static org.cancogenvirusseq.singularity.components.model.AnalysisDocument.LAST_UPDATED_AT_FIELD;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.r2dbc.spi.R2dbcDataIntegrityViolationException;
 import io.r2dbc.spi.R2dbcException;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.cancogenvirusseq.singularity.components.events.ArchiveBuildRequestEmitter;
+import org.cancogenvirusseq.singularity.components.model.ArchiveBuildRequest;
 import org.cancogenvirusseq.singularity.components.model.ArrangerSetDocument;
 import org.cancogenvirusseq.singularity.components.model.SetQueryArchiveHashInfo;
 import org.cancogenvirusseq.singularity.config.elasticsearch.ElasticsearchProperties;
@@ -20,6 +23,7 @@ import org.cancogenvirusseq.singularity.repository.model.Archive;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.index.get.GetResult;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.indices.TermsLookup;
 import org.elasticsearch.search.aggregations.Aggregation;
@@ -34,7 +38,9 @@ import reactor.core.publisher.Mono;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class SetIdToSetQueryArchive implements Function<UUID, Mono<Archive>> {
+public class SetQueryArchiveRequest implements Function<UUID, Mono<Archive>> {
+  private final ArchiveBuildRequestEmitter archiveBuildRequestEmitter;
+
   private final ElasticsearchProperties elasticsearchProperties;
   private final ReactiveElasticSearchClientConfig reactiveElasticSearchClientConfig;
   private final ArchivesRepo archivesRepo;
@@ -46,21 +52,11 @@ public class SetIdToSetQueryArchive implements Function<UUID, Mono<Archive>> {
   private static final String LAST_UPDATED_AGG_NAME = "lastUpdatedDate";
 
   @Override
-  public Mono<Archive> apply(UUID uuid) {
-    return getArrangerSetDocument(uuid)
-        .flatMap(
-            arrangerSetDocument ->
-                Mono.just(aggregateArrangerSetTermsQuery(uuid))
-                    .map(this::executeAggregationQuery)
-                    .flatMap(this::extractAggregationResult)
-                    .map(
-                        lastUpdatedTimestamp ->
-                            new SetQueryArchiveHashInfo(
-                                arrangerSetDocument.getSqon(),
-                                arrangerSetDocument.getSize(),
-                                lastUpdatedTimestamp.getValueAsString())))
-        .map(Archive::fromSetQueryArchiveFromHashInfo)
-        .flatMap(this::saveAndOrGetArchive);
+  public Mono<Archive> apply(UUID setId) {
+    return getArrangerSetDocument(setId)
+        .flatMap(arrangerSetDocumentToSetQueryHashInfoFunctionForSetId(setId))
+        .map(Archive::newFromSetQueryArchiveHashInfo)
+        .flatMap(saveAndTriggerBuildOrGetArchiveFunctionForSetId(setId));
   }
 
   private Mono<ArrangerSetDocument> getArrangerSetDocument(UUID id) {
@@ -70,6 +66,20 @@ public class SetIdToSetQueryArchive implements Function<UUID, Mono<Archive>> {
         .map(this::getResultToArrangerSetDocument);
   }
 
+  private Function<ArrangerSetDocument, Mono<SetQueryArchiveHashInfo>>
+      arrangerSetDocumentToSetQueryHashInfoFunctionForSetId(UUID uuid) {
+    return arrangerSetDocument ->
+        Mono.just(aggregateArrangerSetTermsQuery(uuid))
+            .map(this::executeAggregationQuery)
+            .flatMap(this::extractAggregationResult)
+            .map(
+                lastUpdatedTimestamp ->
+                    new SetQueryArchiveHashInfo(
+                        arrangerSetDocument.getSqon(),
+                        arrangerSetDocument.getSize(),
+                        lastUpdatedTimestamp.getValueAsString()));
+  }
+
   @SneakyThrows
   private ArrangerSetDocument getResultToArrangerSetDocument(GetResult getResult) {
     return objectMapper.convertValue(getResult.getSource(), ArrangerSetDocument.class);
@@ -77,14 +87,9 @@ public class SetIdToSetQueryArchive implements Function<UUID, Mono<Archive>> {
 
   private SearchSourceBuilder aggregateArrangerSetTermsQuery(UUID setId) {
     return new SearchSourceBuilder()
-        .query(
-            QueryBuilders.termsLookupQuery(
-                TERMS_LOOKUP_FIELD,
-                new TermsLookup(
-                    elasticsearchProperties.getArrangerSetsIndex(),
-                    setId.toString(),
-                    TERMS_LOOKUP_PATH)))
+        .query(arrangerSetTermsQuery(setId))
         .aggregation(AggregationBuilders.max(LAST_UPDATED_AGG_NAME).field(LAST_UPDATED_AT_FIELD))
+        // todo: include count aggregation here too in order to validate set is current?
         .fetchSource(false);
   }
 
@@ -103,23 +108,42 @@ public class SetIdToSetQueryArchive implements Function<UUID, Mono<Archive>> {
         .map(aggMap -> ((ParsedMax) aggMap.get(LAST_UPDATED_AGG_NAME)));
   }
 
-  private Mono<Archive> saveAndOrGetArchive(Archive archive) {
-    return archivesRepo
-        .save(archive)
-        // why this? because R2DBC does not hydrate fields
-        // (https://github.com/spring-projects/spring-data-r2dbc/issues/455)
-        .flatMap(archivesRepo::findByArchiveObject)
-        // in the event of a duplicate insert, return the existing archive
-        .onErrorResume(
-            DataIntegrityViolationException.class,
-            dataViolation ->
-                Optional.ofNullable(
-                        ((R2dbcDataIntegrityViolationException) dataViolation.getRootCause()))
-                    .map(R2dbcException::getSqlState)
-                    .filter(errorCode -> errorCode.equals("23505"))
-                    .map(
-                        uniqueConstraint ->
-                            archivesRepo.findArchiveByHashInfoEquals(archive.getHashInfo()))
-                    .orElseThrow(() -> dataViolation));
+  private Function<Archive, Mono<Archive>> saveAndTriggerBuildOrGetArchiveFunctionForSetId(
+      UUID setId) {
+    return archive ->
+        archivesRepo
+            .save(archive)
+            // why this? because R2DBC does not hydrate fields
+            // (https://github.com/spring-projects/spring-data-r2dbc/issues/455)
+            .flatMap(archivesRepo::findByArchiveObject)
+            // this onSuccess will only execute when the archive is created and will not be
+            // triggered by
+            // the onErrorResume
+            .doOnSuccess(
+                createdArchive ->
+                    archiveBuildRequestEmitter
+                        .getSink()
+                        .tryEmitNext(
+                            new ArchiveBuildRequest(
+                                createdArchive, arrangerSetTermsQuery(setId), Instant.now())))
+            // in the event of a duplicate insert, return the existing archive
+            .onErrorResume(
+                DataIntegrityViolationException.class,
+                dataViolation ->
+                    Optional.ofNullable(
+                            ((R2dbcDataIntegrityViolationException) dataViolation.getRootCause()))
+                        .map(R2dbcException::getSqlState)
+                        .filter(errorCode -> errorCode.equals("23505"))
+                        .map(
+                            uniqueConstraint ->
+                                archivesRepo.findArchiveByHashInfoEquals(archive.getHashInfo()))
+                        .orElseThrow(() -> dataViolation));
+  }
+
+  private QueryBuilder arrangerSetTermsQuery(UUID setId) {
+    return QueryBuilders.termsLookupQuery(
+        TERMS_LOOKUP_FIELD,
+        new TermsLookup(
+            elasticsearchProperties.getArrangerSetsIndex(), setId.toString(), TERMS_LOOKUP_PATH));
   }
 }
