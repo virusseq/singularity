@@ -30,14 +30,14 @@ import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignReques
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ArchiveUpload implements Function<Path, Mono<String>> {
+public class FileBundleUpload implements Function<Path, Mono<UUID>> {
   private final String ARCHIVE_MEDIA_TYPE = "application/x-gtar";
 
   private final S3Presigner s3Presigner;
   private final S3ClientProperties s3ClientProperties;
 
   @Override
-  public Mono<String> apply(Path fileBundlePath) {
+  public Mono<UUID> apply(Path fileBundlePath) {
     return HttpClient.create()
         .headers(
             h -> {
@@ -48,7 +48,13 @@ public class ArchiveUpload implements Function<Path, Mono<String>> {
         .uri(getPresignedUrlStringForFileBundle(fileBundlePath))
         .send(ByteBufFlux.fromPath(fileBundlePath))
         .response()
-        .map(getResponseFunctionForPath(fileBundlePath))
+        .doOnNext(
+            response ->
+                log.debug(
+                    "Successfully uploaded archive: {} to s3 path: {}",
+                    fileBundlePath.getFileName(),
+                    response.path()))
+        .map(this::extractUploadObjectId)
         .log("ArchiveUpload");
   }
 
@@ -87,23 +93,16 @@ public class ArchiveUpload implements Function<Path, Mono<String>> {
     return Files.size(path);
   }
 
-  private Function<HttpClientResponse, String> getResponseFunctionForPath(Path fileBundlePath) {
-    return response -> {
-      if (response.status() != HttpResponseStatus.OK) {
-        throw new S3ArchiveUploadException(response);
-      }
+  private UUID extractUploadObjectId(HttpClientResponse response) {
+    if (response.status() != HttpResponseStatus.OK) {
+      throw new S3ArchiveUploadException(response);
+    }
 
-      log.debug(
-          "Successfully uploaded archive: {} to s3 path: {}",
-          fileBundlePath.getFileName(),
-          response.path());
-
-      // return the objectId only
-      return getObjectIdFromResponse(response);
-    };
+    // return the objectId only
+    return getObjectIdFromResponse(response);
   }
 
-  private String getObjectIdFromResponse(HttpClientResponse response) {
-    return response.path().substring(response.path().lastIndexOf("/") + 1);
+  private UUID getObjectIdFromResponse(HttpClientResponse response) {
+    return UUID.fromString(response.path().substring(response.path().lastIndexOf("/") + 1));
   }
 }

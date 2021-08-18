@@ -21,13 +21,12 @@ package org.cancogenvirusseq.singularity.components.hoc;
 import static org.cancogenvirusseq.singularity.components.utils.FileBundleUtils.createFileBundleFromPairsWithArchive;
 import static org.cancogenvirusseq.singularity.components.utils.FileBundleUtils.deleteFileBundleForArchive;
 
-import java.util.UUID;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.cancogenvirusseq.singularity.components.base.ArchiveUpload;
 import org.cancogenvirusseq.singularity.components.base.DownloadMolecularDataToPair;
 import org.cancogenvirusseq.singularity.components.base.ElasticSearchScroll;
+import org.cancogenvirusseq.singularity.components.base.FileBundleUpload;
 import org.cancogenvirusseq.singularity.components.model.ArchiveBuildRequest;
 import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
@@ -43,7 +42,7 @@ public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildReques
 
   private final ElasticSearchScroll elasticSearchScroll;
   private final DownloadMolecularDataToPair downloadMolecularDataToPair;
-  private final ArchiveUpload archiveUpload;
+  private final FileBundleUpload fileBundleUpload;
   private final ArchivesRepo archivesRepo;
 
   @Override
@@ -52,14 +51,12 @@ public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildReques
         .apply(archiveBuildRequest.getQueryBuilder())
         .transform(downloadMolecularDataToPair)
         .transform(createFileBundleFromPairsWithArchive(archiveBuildRequest.getArchive()))
-        .flatMap(archiveUpload)
+        .flatMap(fileBundleUpload)
         .flatMap(
-            archiveObjectId ->
+            uploadObjectId ->
                 withArchiveBuildRequestContext(
                     archiveBuildRequestCtx -> {
-                      archiveBuildRequestCtx
-                          .getArchive()
-                          .setObjectId(UUID.fromString(archiveObjectId));
+                      archiveBuildRequestCtx.getArchive().setObjectId(uploadObjectId);
                       archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.COMPLETE);
                       log.debug("processArchiveBuildRequest is done!");
                       return archivesRepo.save(archiveBuildRequestCtx.getArchive());
