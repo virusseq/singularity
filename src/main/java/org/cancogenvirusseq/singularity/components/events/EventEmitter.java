@@ -18,7 +18,6 @@
 
 package org.cancogenvirusseq.singularity.components.events;
 
-import java.time.Instant;
 import reactor.core.publisher.Flux;
 
 public interface EventEmitter<T> {

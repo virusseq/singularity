@@ -1,13 +1,12 @@
 package org.cancogenvirusseq.singularity.components.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
 
 @Data
 @NoArgsConstructor

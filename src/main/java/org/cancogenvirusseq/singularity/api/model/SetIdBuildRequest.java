@@ -1,9 +1,8 @@
 package org.cancogenvirusseq.singularity.api.model;
 
+import java.util.UUID;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.UUID;
 
 @Data
 @NoArgsConstructor
