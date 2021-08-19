@@ -30,34 +30,40 @@ import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignReques
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ArchiveUpload implements Function<Path, Mono<String>> {
+public class FileBundleUpload implements Function<Path, Mono<UUID>> {
   private final String ARCHIVE_MEDIA_TYPE = "application/x-gtar";
 
   private final S3Presigner s3Presigner;
   private final S3ClientProperties s3ClientProperties;
 
   @Override
-  public Mono<String> apply(Path filesArchivePath) {
+  public Mono<UUID> apply(Path fileBundlePath) {
     return HttpClient.create()
         .headers(
             h -> {
-              h.set(HttpHeaderNames.CONTENT_LENGTH, getFileSize(filesArchivePath));
+              h.set(HttpHeaderNames.CONTENT_LENGTH, getFileSize(fileBundlePath));
               h.set(HttpHeaderNames.CONTENT_TYPE, ARCHIVE_MEDIA_TYPE);
             })
         .put()
-        .uri(getPresignedUrlStringForFileArchive(filesArchivePath))
-        .send(ByteBufFlux.fromPath(filesArchivePath))
+        .uri(getPresignedUrlStringForFileBundle(fileBundlePath))
+        .send(ByteBufFlux.fromPath(fileBundlePath))
         .response()
-        .map(getResponseFunctionForPath(filesArchivePath))
+        .doOnNext(
+            response ->
+                log.debug(
+                    "Successfully uploaded archive: {} to s3 path: {}",
+                    fileBundlePath.getFileName(),
+                    response.path()))
+        .map(this::extractUploadObjectId)
         .log("ArchiveUpload");
   }
 
   private final BiFunction<S3ClientProperties, Path, PutObjectRequest> createPutObjectRequest =
-      (s3ClientProperties, filesArchivePath) ->
+      (s3ClientProperties, fileBundlePath) ->
           PutObjectRequest.builder()
               .key(format("%s/%s", s3ClientProperties.getDataDir(), UUID.randomUUID()))
               .bucket(s3ClientProperties.getBucket())
-              .contentLength(getFileSize(filesArchivePath))
+              .contentLength(getFileSize(fileBundlePath))
               .contentType(ARCHIVE_MEDIA_TYPE)
               .build();
 
@@ -71,7 +77,7 @@ public class ArchiveUpload implements Function<Path, Mono<String>> {
   private final BiFunction<S3Presigner, PutObjectPresignRequest, PresignedPutObjectRequest>
       createPresignedPutObjectRequest = S3Presigner::presignPutObject;
 
-  private String getPresignedUrlStringForFileArchive(Path filesArchivePath) {
+  private String getPresignedUrlStringForFileBundle(Path fileBundlePath) {
     return createPutObjectRequest
         .andThen(createPutObjectPresignRequest)
         .andThen(
@@ -79,7 +85,7 @@ public class ArchiveUpload implements Function<Path, Mono<String>> {
                 createPresignedPutObjectRequest.apply(s3Presigner, putObjectPreSignRequest))
         .andThen(PresignedRequest::url)
         .andThen(URL::toString)
-        .apply(s3ClientProperties, filesArchivePath);
+        .apply(s3ClientProperties, fileBundlePath);
   }
 
   @SneakyThrows
@@ -87,23 +93,16 @@ public class ArchiveUpload implements Function<Path, Mono<String>> {
     return Files.size(path);
   }
 
-  private Function<HttpClientResponse, String> getResponseFunctionForPath(Path filesArchivePath) {
-    return response -> {
-      if (response.status() != HttpResponseStatus.OK) {
-        throw new S3ArchiveUploadException(response);
-      }
+  private UUID extractUploadObjectId(HttpClientResponse response) {
+    if (response.status() != HttpResponseStatus.OK) {
+      throw new S3ArchiveUploadException(response);
+    }
 
-      log.debug(
-          "Successfully uploaded archive: {} to s3 path: {}",
-          filesArchivePath.getFileName(),
-          response.path());
-
-      // return the objectId only
-      return getObjectIdFromResponse(response);
-    };
+    // return the objectId only
+    return getObjectIdFromResponse(response);
   }
 
-  private String getObjectIdFromResponse(HttpClientResponse response) {
-    return response.path().substring(response.path().lastIndexOf("/") + 1);
+  private UUID getObjectIdFromResponse(HttpClientResponse response) {
+    return UUID.fromString(response.path().substring(response.path().lastIndexOf("/") + 1));
   }
 }

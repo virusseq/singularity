@@ -18,27 +18,22 @@
 
 package org.cancogenvirusseq.singularity.components.pipelines;
 
-import static org.cancogenvirusseq.singularity.components.utils.FileArchiveUtils.deleteArchiveForInstant;
-
 import java.time.Instant;
-import java.util.function.Function;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.cancogenvirusseq.singularity.components.base.InstantToArchiveBuildRequest;
 import org.cancogenvirusseq.singularity.components.events.EventEmitter;
 import org.cancogenvirusseq.singularity.components.hoc.ArchiveBuildRequestToArchive;
-import org.cancogenvirusseq.singularity.components.model.ArchiveBuildRequest;
+import org.cancogenvirusseq.singularity.components.hoc.InstantToArchiveBuildRequest;
 import org.springframework.stereotype.Component;
 import reactor.core.Disposable;
-import reactor.core.publisher.Mono;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class AllArchiveBuild {
-  private final EventEmitter eventEmitter;
+  private final EventEmitter<Instant> eventEmitter;
   private final InstantToArchiveBuildRequest instantToArchiveBuildRequest;
   private final ArchiveBuildRequestToArchive archiveBuildRequestToArchive;
 
@@ -77,11 +72,6 @@ public class AllArchiveBuild {
     return instantToArchiveBuildRequest
         .apply(instant)
         .flatMapMany(archiveBuildRequestToArchive)
-        .doFinally(signalType -> deleteArchiveForInstant.accept(instant))
         .subscribe();
-  }
-
-  private <R> Mono<R> withArchiveBuildRequestContext(Function<ArchiveBuildRequest, Mono<R>> func) {
-    return Mono.deferContextual(ctx -> func.apply(ctx.get("archiveBuildRequest")));
   }
 }

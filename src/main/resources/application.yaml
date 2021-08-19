@@ -32,6 +32,7 @@ elastic:
   username: elastic
   password: testing
   fileCentricIndex: file_centric
+  arrangerSetsIndex: arranger-sets
   scrollTimeoutMinutes: 10
 
 kafka:
@@ -47,7 +48,6 @@ contributors:
 
 files:
   finalEventCheckSeconds: 60
-  bundleBuildingCheckSeconds: 60
 
 intervalEventEmitter:
   intervalTimerSeconds: 600

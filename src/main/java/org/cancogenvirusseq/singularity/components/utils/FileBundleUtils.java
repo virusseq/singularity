@@ -19,13 +19,12 @@
 package org.cancogenvirusseq.singularity.components.utils;
 
 import static java.lang.String.format;
-import static org.cancogenvirusseq.singularity.components.model.FilesArchive.DOWNLOAD_DIR;
-import static org.cancogenvirusseq.singularity.components.model.FilesArchive.archiveFilenameFromInstant;
+import static org.cancogenvirusseq.singularity.components.model.FileBundle.DOWNLOAD_DIR;
+import static org.cancogenvirusseq.singularity.components.model.FileBundle.archiveFilenameFromArchiveId;
 
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Instant;
 import java.util.function.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -33,18 +32,19 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.cancogenvirusseq.singularity.components.model.AnalysisDocumentMolecularDataPair;
-import org.cancogenvirusseq.singularity.components.model.FilesArchive;
+import org.cancogenvirusseq.singularity.components.model.FileBundle;
+import org.cancogenvirusseq.singularity.repository.model.Archive;
 import org.springframework.util.FileSystemUtils;
 import reactor.core.publisher.Flux;
 
 @Slf4j
-public class FileArchiveUtils {
+public class FileBundleUtils {
 
   public static Function<Flux<AnalysisDocumentMolecularDataPair>, Flux<Path>>
-      createArchiveFromPairsWithInstant(Instant instant) {
+      createFileBundleFromPairsWithArchive(Archive archive) {
     return dataPairFlux ->
         dataPairFlux
-            .reduce(new FilesArchive(instant), addDownloadPairToFileArchive)
+            .reduce(new FileBundle(archive.getId()), addDownloadPairToFileBundle)
             .map(tarGzipArchiveAndClose)
             .flux()
             .log("Download::downloadAndArchiveFunctionWithInstant");
@@ -59,44 +59,44 @@ public class FileArchiveUtils {
         }
       };
 
-  private static final BiFunction<FilesArchive, AnalysisDocumentMolecularDataPair, FilesArchive>
-      addDownloadPairToFileArchive =
-          (filesArchive, downloadPair) -> {
+  private static final BiFunction<FileBundle, AnalysisDocumentMolecularDataPair, FileBundle>
+      addDownloadPairToFileBundle =
+          (fileBundle, downloadPair) -> {
             writeToFileStream.accept(
-                filesArchive.getMolecularFileOutputStream(), downloadPair.getMolecularData());
+                fileBundle.getMolecularFileOutputStream(), downloadPair.getMolecularData());
             writeToFileStream.accept(
-                filesArchive.getMetadataFileOutputStream(),
+                fileBundle.getMetadataFileOutputStream(),
                 TsvUtils.analysisDocumentToTsvRowBytes(downloadPair.getAnalysisDocument()));
-            return filesArchive;
+            return fileBundle;
           };
 
-  private static final UnaryOperator<FilesArchive> closeMolecularAndMetadataFileStreams =
-      filesArchive -> {
+  private static final UnaryOperator<FileBundle> closeMolecularAndMetadataFileStreams =
+      fileBundle -> {
         try {
-          filesArchive.getMolecularFileOutputStream().close();
-          filesArchive.getMetadataFileOutputStream().close();
+          fileBundle.getMolecularFileOutputStream().close();
+          fileBundle.getMetadataFileOutputStream().close();
         } catch (IOException e) {
           log.error(e.getLocalizedMessage(), e);
         }
-        return filesArchive;
+        return fileBundle;
       };
 
-  private static final UnaryOperator<FilesArchive> createGzipOutputStream =
-      filesArchive -> {
+  private static final UnaryOperator<FileBundle> createGzipOutputStream =
+      fileBundle -> {
         try {
-          filesArchive.setArchiveGzipOutputStream(
-              new GzipCompressorOutputStream(filesArchive.getArchiveFileOutputStream()));
+          fileBundle.setArchiveGzipOutputStream(
+              new GzipCompressorOutputStream(fileBundle.getArchiveFileOutputStream()));
         } catch (IOException e) {
           log.error(e.getLocalizedMessage(), e);
         }
-        return filesArchive;
+        return fileBundle;
       };
 
-  private static final UnaryOperator<FilesArchive> createTarOutputStream =
-      filesArchive -> {
-        filesArchive.setArchiveTarOutputStream(
-            new TarArchiveOutputStream(filesArchive.getArchiveGzipOutputStream()));
-        return filesArchive;
+  private static final UnaryOperator<FileBundle> createTarOutputStream =
+      fileBundle -> {
+        fileBundle.setArchiveTarOutputStream(
+            new TarArchiveOutputStream(fileBundle.getArchiveGzipOutputStream()));
+        return fileBundle;
       };
 
   private static final BiConsumer<TarArchiveOutputStream, File> archiveFile =
@@ -110,59 +110,59 @@ public class FileArchiveUtils {
         }
       };
 
-  private static final UnaryOperator<FilesArchive> putBundleFilesInArchive =
-      filesArchive -> {
+  private static final UnaryOperator<FileBundle> putBundleFilesInArchive =
+      fileBundle -> {
 
         // put both bundle files in the archive
         archiveFile.accept(
-            filesArchive.getArchiveTarOutputStream(),
+            fileBundle.getArchiveTarOutputStream(),
             new File(
                 format(
                     "%s/%s",
-                    filesArchive.getDownloadDirectory(), filesArchive.getMolecularFilename())));
+                    fileBundle.getDownloadDirectory(), fileBundle.getMolecularFilename())));
         archiveFile.accept(
-            filesArchive.getArchiveTarOutputStream(),
+            fileBundle.getArchiveTarOutputStream(),
             new File(
                 format(
-                    "%s/%s",
-                    filesArchive.getDownloadDirectory(), filesArchive.getMetadataFilename())));
+                    "%s/%s", fileBundle.getDownloadDirectory(), fileBundle.getMetadataFilename())));
 
         // return the FileBundle
-        return filesArchive;
+        return fileBundle;
       };
 
-  private static final UnaryOperator<FilesArchive> closeAllStreams =
-      filesArchive -> {
+  private static final UnaryOperator<FileBundle> closeAllStreams =
+      fileBundle -> {
         // closing the ArchiveTarOutputStream cascades and closes the underlying gzip and buffered
         // file
         // input streams
         try {
-          filesArchive.getArchiveTarOutputStream().close();
+          fileBundle.getArchiveTarOutputStream().close();
         } catch (IOException e) {
           log.error(e.getLocalizedMessage(), e);
         }
-        return filesArchive;
+        return fileBundle;
       };
 
-  private static final Function<FilesArchive, Path> finalize =
-      filesArchive -> {
+  private static final Function<FileBundle, Path> finalize =
+      fileBundle -> {
         try {
-          FileSystemUtils.deleteRecursively(Paths.get(filesArchive.getDownloadDirectory()));
+          FileSystemUtils.deleteRecursively(Paths.get(fileBundle.getDownloadDirectory()));
         } catch (IOException e) {
           log.error(e.getLocalizedMessage(), e);
         }
-        return Paths.get(format("%s/%s", DOWNLOAD_DIR, filesArchive.getArchiveFilename()));
+        return Paths.get(format("%s/%s", DOWNLOAD_DIR, fileBundle.getArchiveFilename()));
       };
 
-  public static final Consumer<Instant> deleteArchiveForInstant =
-      instant -> {
+  public static final Consumer<Archive> deleteFileBundleForArchive =
+      archive -> {
         try {
           FileSystemUtils.deleteRecursively(
-              Paths.get(format("%s/%s", DOWNLOAD_DIR, archiveFilenameFromInstant(instant))));
+              Paths.get(
+                  format("%s/%s", DOWNLOAD_DIR, archiveFilenameFromArchiveId(archive.getId()))));
           log.debug(
               "File archive '{}/{}' deleted from disk",
               DOWNLOAD_DIR,
-              archiveFilenameFromInstant(instant));
+              archiveFilenameFromArchiveId(archive.getId()));
         } catch (IOException e) {
           log.error(e.getLocalizedMessage(), e);
         }
@@ -172,7 +172,7 @@ public class FileArchiveUtils {
    * Function that takes a fileBundle, closes it's files, generates the tar.gz, deletes the download
    * directory and returns the full path to the archive
    */
-  public static final Function<FilesArchive, Path> tarGzipArchiveAndClose =
+  public static final Function<FileBundle, Path> tarGzipArchiveAndClose =
       closeMolecularAndMetadataFileStreams
           .andThen(createGzipOutputStream)
           .andThen(createTarOutputStream)

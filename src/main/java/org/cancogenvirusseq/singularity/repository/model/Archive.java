@@ -4,6 +4,7 @@ import static java.lang.String.format;
 
 import java.util.UUID;
 import lombok.*;
+import org.cancogenvirusseq.singularity.components.model.SetQueryArchiveHashInfo;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
@@ -20,7 +21,7 @@ public class Archive {
   private UUID objectId;
   private Long createdAt;
 
-  @NonNull private Integer numOfSamples;
+  @NonNull private Long numOfSamples;
 
   // always initialized to zero when creating
   private Integer numOfDownloads;
@@ -41,6 +42,16 @@ public class Archive {
     public String toString() {
       return text;
     }
+  }
+
+  public static Archive newFromSetQueryArchiveHashInfo(
+      SetQueryArchiveHashInfo setQueryArchiveHashInfo) {
+    return Archive.builder()
+        .status(ArchiveStatus.BUILDING)
+        .type(ArchiveType.SET_QUERY)
+        .hashInfo(setQueryArchiveHashInfo.toString())
+        .numOfSamples(setQueryArchiveHashInfo.getNumSamples())
+        .build();
   }
 
   public static Archive incrementDownloadsForArchive(Archive archive) {

@@ -23,6 +23,8 @@ public interface ArchivesRepo extends ReactiveCrudRepository<Archive, UUID> {
   Mono<Archive> findTopByTypeAndStatusOrderByCreatedAtDesc(
       @NonNull ArchiveType type, @NonNull ArchiveStatus status);
 
+  Mono<Archive> findArchiveByHashInfoEquals(String hashInfo);
+
   default Mono<Archive> findLatestAllArchive() {
     return findTopByTypeAndStatusOrderByCreatedAtDesc(ArchiveType.ALL, ArchiveStatus.COMPLETE);
   }

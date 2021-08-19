@@ -27,10 +27,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
 import org.cancogenvirusseq.singularity.api.model.ErrorResponse;
+import org.cancogenvirusseq.singularity.api.model.SetIdBuildRequest;
 import org.cancogenvirusseq.singularity.components.base.DownloadObjectById;
 import org.cancogenvirusseq.singularity.components.pipelines.Contributors;
+import org.cancogenvirusseq.singularity.components.pipelines.SetQueryArchiveRequest;
 import org.cancogenvirusseq.singularity.exceptions.http.ArchiveNotFoundHttpException;
 import org.cancogenvirusseq.singularity.exceptions.http.BaseHttpException;
+import org.cancogenvirusseq.singularity.exceptions.http.SetNotFoundHttpException;
 import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
 import org.cancogenvirusseq.singularity.repository.query.FindArchivesQuery;
@@ -40,7 +43,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -51,26 +53,39 @@ import reactor.core.publisher.Mono;
 public class ApiController implements ApiDefinition {
   private final Contributors contributors;
   private final DownloadObjectById downloadObjectById;
+  private final SetQueryArchiveRequest setQueryArchiveRequest;
   private final ArchivesRepo archivesRepo;
 
+  @Override
   public Mono<EntityListResponse<String>> getContributors() {
     return contributors.getContributors().transform(this::listResponseTransform);
   }
 
+  @Override
   public Mono<ResponseEntity<Flux<ByteBuffer>>> downloadLatestAllArchive() {
     return archivesRepo.findLatestAllArchive().transform(this::processArchiveDownloadRequest);
   }
 
-  public Mono<ResponseEntity<Flux<ByteBuffer>>> downloadArchiveById(@PathVariable("id") UUID id) {
+  @Override
+  public Mono<ResponseEntity<Flux<ByteBuffer>>> downloadArchiveById(UUID id) {
     return archivesRepo.findById(id).transform(this::processArchiveDownloadRequest);
   }
 
+  @Override
   public Mono<Page<Archive>> getArchives(FindArchivesQuery findArchivesQuery) {
     return archivesRepo.findByCommand(findArchivesQuery);
   }
 
+  @Override
   public Mono<Archive> getArchive(UUID id) {
     return archivesRepo.findById(id).switchIfEmpty(Mono.error(new ArchiveNotFoundHttpException()));
+  }
+
+  @Override
+  public Mono<Archive> buildArchiveWithSetId(SetIdBuildRequest setIdBuildRequest) {
+    return setQueryArchiveRequest
+        .apply(setIdBuildRequest.getSetId())
+        .switchIfEmpty(Mono.error(new SetNotFoundHttpException()));
   }
 
   private <T> Mono<EntityListResponse<T>> listResponseTransform(

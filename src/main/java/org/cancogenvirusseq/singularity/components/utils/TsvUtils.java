@@ -139,7 +139,10 @@ public class TsvUtils {
         analysisDocument.getAnalysis().getSequenceAnalysis().getBioinformaticsProtocol(),
         analysisDocument.getAnalysis().getPathogenDiagnosticTesting().getGeneName(),
         analysisDocument.getAnalysis().getPathogenDiagnosticTesting().getDiagnosticPcrCtValue(),
-        analysisDocument.getAnalysis().getPathogenDiagnosticTesting().getDiagnosticPcrCtValueNullReason(),
+        analysisDocument
+            .getAnalysis()
+            .getPathogenDiagnosticTesting()
+            .getDiagnosticPcrCtValueNullReason(),
         analysisDocument.getAnalysis().getDatabaseIdentifiers().getGisaidAccession());
   }
 
