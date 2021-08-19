@@ -1,8 +1,8 @@
 package org.cancogenvirusseq.singularity.components.pipelines;
 
-import io.r2dbc.spi.R2dbcDataIntegrityViolationException;
-import io.r2dbc.spi.R2dbcException;
-import java.util.Optional;
+import static org.cancogenvirusseq.singularity.components.utils.PostgresUtils.getSqlStateOptionalFromException;
+import static org.cancogenvirusseq.singularity.components.utils.PostgresUtils.isUniqueViolationError;
+
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
@@ -108,10 +108,8 @@ public class SetQueryArchiveRequest implements Function<UUID, Mono<Archive>> {
             .onErrorResume(
                 DataIntegrityViolationException.class,
                 dataViolation ->
-                    Optional.ofNullable(
-                            ((R2dbcDataIntegrityViolationException) dataViolation.getRootCause()))
-                        .map(R2dbcException::getSqlState)
-                        .filter(errorCode -> errorCode.equals("23505"))
+                    getSqlStateOptionalFromException(dataViolation)
+                        .filter(isUniqueViolationError)
                         .map(
                             uniqueConstraint ->
                                 archivesRepo.findArchiveByHashInfoEquals(archive.getHashInfo()))
