@@ -68,7 +68,7 @@ public class ApiController implements ApiDefinition {
 
   @Override
   public Mono<ResponseEntity<Flux<ByteBuffer>>> downloadArchiveById(UUID id) {
-    return archivesRepo.findById(id).transform(this::processArchiveDownloadRequest);
+    return archivesRepo.findCompletedArchiveById(id).transform(this::processArchiveDownloadRequest);
   }
 
   @Override
