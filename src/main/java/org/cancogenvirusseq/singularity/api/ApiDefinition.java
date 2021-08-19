@@ -39,7 +39,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @CrossOrigin
-@Api(value = "Singularity - All Contributors, All Files", tags = "Singularity")
+@Api(value = "Singularity - All Contributors, All Files", tags = "Singularity API")
 public interface ApiDefinition {
   String UNKNOWN_MSG = "An unexpected error occurred.";
 
@@ -47,7 +47,7 @@ public interface ApiDefinition {
       value = "Get All Contributors",
       nickname = "Get Contributors",
       response = EntityListResponse.class,
-      tags = "Contributors")
+      tags = "Singularity API")
   @ApiResponses(
       value = {
         @ApiResponse(code = 200, message = "", response = EntityListResponse.class),
@@ -63,7 +63,7 @@ public interface ApiDefinition {
       value = "Download the latest data archive containing all molecular and meta data",
       nickname = "Download All",
       response = MultipartFile.class,
-      tags = "Download")
+      tags = "Singularity API")
   @ApiResponses(
       value = {
         @ApiResponse(code = 200, message = "", response = MultipartFile.class),
@@ -80,7 +80,7 @@ public interface ApiDefinition {
       value = "Download an archive by ID",
       nickname = "Download Archive by ID",
       response = MultipartFile.class,
-      tags = "Download")
+      tags = "Singularity API")
   @ApiResponses(
       value = {
         @ApiResponse(code = 200, message = "", response = MultipartFile.class),
@@ -96,7 +96,7 @@ public interface ApiDefinition {
   @ApiOperation(
       value = "Get details of any archives that bundles all sample data.",
       nickname = "Archive",
-      tags = "Archives")
+      tags = "Singularity API")
   @ApiResponses(
       value = {
         @ApiResponse(code = 200, message = "", response = Object.class),
@@ -111,7 +111,7 @@ public interface ApiDefinition {
   @ApiOperation(
       value = "Get details of a specific archive that bundle sample data.",
       nickname = "Archive",
-      tags = "Archives")
+      tags = "Singularity API")
   @ApiResponses(
       value = {
         @ApiResponse(code = 200, message = "", response = Archive.class),
@@ -126,7 +126,7 @@ public interface ApiDefinition {
   @ApiOperation(
       value = "Build a new set query archive given set id",
       nickname = "Build Set Query Archive",
-      tags = "Build Archive")
+      tags = "Singularity API")
   @ApiResponses(
       value = {
         @ApiResponse(code = 200, message = "", response = Archive.class),
