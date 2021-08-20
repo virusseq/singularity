@@ -16,7 +16,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.singularity.utils;
+package org.cancogenvirusseq.singularity.components.utils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -89,6 +89,13 @@ public class TsvUtils {
         .getBytes(StandardCharsets.UTF_8);
   }
 
+  public static byte[] analysisDocumentToTsvRowBytes(AnalysisDocument analysisDocument) {
+    return (analysisDocumentToTsvRow(analysisDocument)
+            + "\n" // append newline to final batch of rows
+        )
+        .getBytes(StandardCharsets.UTF_8);
+  }
+
   private static String analysisDocumentToTsvRow(AnalysisDocument analysisDocument) {
     return stringsToTsvRow(
         analysisDocument.getStudyId(),
@@ -132,7 +139,10 @@ public class TsvUtils {
         analysisDocument.getAnalysis().getSequenceAnalysis().getBioinformaticsProtocol(),
         analysisDocument.getAnalysis().getPathogenDiagnosticTesting().getGeneName(),
         analysisDocument.getAnalysis().getPathogenDiagnosticTesting().getDiagnosticPcrCtValue(),
-        analysisDocument.getAnalysis().getPathogenDiagnosticTesting().getDiagnosticPcrCtValueNullReason(),
+        analysisDocument
+            .getAnalysis()
+            .getPathogenDiagnosticTesting()
+            .getDiagnosticPcrCtValueNullReason(),
         analysisDocument.getAnalysis().getDatabaseIdentifiers().getGisaidAccession());
   }
 

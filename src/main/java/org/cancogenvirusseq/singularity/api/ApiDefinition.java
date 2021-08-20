@@ -22,19 +22,24 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import java.nio.ByteBuffer;
+import java.util.UUID;
 import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
 import org.cancogenvirusseq.singularity.api.model.ErrorResponse;
-import org.springframework.core.io.Resource;
+import org.cancogenvirusseq.singularity.api.model.SetIdBuildRequest;
+import org.cancogenvirusseq.singularity.repository.model.Archive;
+import org.cancogenvirusseq.singularity.repository.query.FindArchivesQuery;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @CrossOrigin
-@Api(value = "Singularity - All Contributors, All Files", tags = "Singularity")
+@Api(value = "Singularity - All Contributors, All Files", tags = "Singularity API")
 public interface ApiDefinition {
   String UNKNOWN_MSG = "An unexpected error occurred.";
 
@@ -42,7 +47,7 @@ public interface ApiDefinition {
       value = "Get All Contributors",
       nickname = "Get Contributors",
       response = EntityListResponse.class,
-      tags = "Singularity")
+      tags = "Singularity API")
   @ApiResponses(
       value = {
         @ApiResponse(code = 200, message = "", response = EntityListResponse.class),
@@ -55,18 +60,82 @@ public interface ApiDefinition {
   Mono<EntityListResponse<String>> getContributors();
 
   @ApiOperation(
-      value = "Download all molecular files as a single .fasta.gz gzip compressed file",
-      nickname = "Download Files",
+      value = "Download the latest data archive containing all molecular and meta data",
+      nickname = "Download All",
       response = MultipartFile.class,
-      tags = "Singularity")
+      tags = "Singularity API")
   @ApiResponses(
       value = {
         @ApiResponse(code = 200, message = "", response = MultipartFile.class),
         @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
       })
   @RequestMapping(
-      value = "/files",
+      value = "/download/archive/all",
       produces = MediaType.APPLICATION_OCTET_STREAM_VALUE,
       method = RequestMethod.GET)
-  ResponseEntity<Mono<Resource>> getFiles();
+  @Transactional
+  Mono<ResponseEntity<Flux<ByteBuffer>>> downloadLatestAllArchive();
+
+  @ApiOperation(
+      value = "Download an archive by ID",
+      nickname = "Download Archive by ID",
+      response = MultipartFile.class,
+      tags = "Singularity API")
+  @ApiResponses(
+      value = {
+        @ApiResponse(code = 200, message = "", response = MultipartFile.class),
+        @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
+      })
+  @RequestMapping(
+      value = "/download/archive/{id}",
+      produces = MediaType.APPLICATION_OCTET_STREAM_VALUE,
+      method = RequestMethod.GET)
+  @Transactional
+  Mono<ResponseEntity<Flux<ByteBuffer>>> downloadArchiveById(@PathVariable("id") UUID id);
+
+  @ApiOperation(
+      value = "Get details of any archives that bundles all sample data.",
+      nickname = "Archive",
+      tags = "Singularity API")
+  @ApiResponses(
+      value = {
+        @ApiResponse(code = 200, message = "", response = Object.class),
+        @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
+      })
+  @RequestMapping(
+      value = "/archives",
+      produces = MediaType.APPLICATION_JSON_VALUE,
+      method = RequestMethod.GET)
+  Mono<Page<Archive>> getArchives(FindArchivesQuery req);
+
+  @ApiOperation(
+      value = "Get details of a specific archive that bundle sample data.",
+      nickname = "Archive",
+      tags = "Singularity API")
+  @ApiResponses(
+      value = {
+        @ApiResponse(code = 200, message = "", response = Archive.class),
+        @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
+      })
+  @RequestMapping(
+      value = "/archives/{id}",
+      produces = MediaType.APPLICATION_JSON_VALUE,
+      method = RequestMethod.GET)
+  Mono<Archive> getArchive(@PathVariable("id") UUID id);
+
+  @ApiOperation(
+      value = "Build a new set query archive given set id",
+      nickname = "Build Set Query Archive",
+      tags = "Singularity API")
+  @ApiResponses(
+      value = {
+        @ApiResponse(code = 200, message = "", response = Archive.class),
+        @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
+      })
+  @RequestMapping(
+      value = "/build-archive/set-query",
+      consumes = MediaType.APPLICATION_JSON_VALUE,
+      produces = MediaType.APPLICATION_JSON_VALUE,
+      method = RequestMethod.POST)
+  Mono<Archive> buildArchiveWithSetId(@RequestBody SetIdBuildRequest setIdBuildRequest);
 }

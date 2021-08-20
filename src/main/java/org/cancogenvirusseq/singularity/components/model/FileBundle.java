@@ -24,20 +24,20 @@ import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.time.Instant;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
-import org.cancogenvirusseq.singularity.utils.TsvUtils;
+import org.cancogenvirusseq.singularity.components.utils.TsvUtils;
 
 @Slf4j
 @Getter
-public class FilesArchive {
+public class FileBundle {
   public static final String DOWNLOAD_DIR = "/tmp";
-  public static final String FILE_NAME_TEMPLATE = "virusseq-consensus-export-all-";
+  public static final String FILE_NAME_TEMPLATE = "files-archive-";
   public static final String MOLECULAR_FILE_EXTENSION = ".fasta";
   public static final String METADATA_FILE_EXTENSION = ".tsv";
   public static final String ARCHIVE_EXTENSION = ".tar.gz";
@@ -54,31 +54,36 @@ public class FilesArchive {
   @Setter private TarArchiveOutputStream archiveTarOutputStream;
 
   @SneakyThrows
-  public FilesArchive(Instant instant) {
+  public FileBundle(UUID archiveId) {
     // record archive name and create FileOutputStream (buffered)
-    this.archiveFilename = format("%s%s%s", FILE_NAME_TEMPLATE, instant, ARCHIVE_EXTENSION);
+    this.archiveFilename = archiveFilenameFromArchiveId(archiveId);
     this.archiveFileOutputStream =
         new BufferedOutputStream(
             new FileOutputStream(format("%s/%s", DOWNLOAD_DIR, this.archiveFilename)));
 
     // create download directory for file downloads
-    this.downloadDirectory = format("%s/%s%s", DOWNLOAD_DIR, FILE_NAME_TEMPLATE, instant);
+    this.downloadDirectory = format("%s/%s%s", DOWNLOAD_DIR, FILE_NAME_TEMPLATE, archiveId);
     Files.createDirectory(Paths.get(this.downloadDirectory));
 
     // record molecular filename and create FileOutputStream (buffered)
     this.molecularFilename =
-        format("%s%s%s", FILE_NAME_TEMPLATE, instant, MOLECULAR_FILE_EXTENSION);
+        format("%s%s%s", FILE_NAME_TEMPLATE, archiveId, MOLECULAR_FILE_EXTENSION);
     this.molecularFileOutputStream =
         new BufferedOutputStream(
             new FileOutputStream(format("%s/%s", this.downloadDirectory, this.molecularFilename)));
 
     // record metadata filename and create FileOutputStream (buffered)
-    this.metadataFilename = format("%s%s%s", FILE_NAME_TEMPLATE, instant, METADATA_FILE_EXTENSION);
+    this.metadataFilename =
+        format("%s%s%s", FILE_NAME_TEMPLATE, archiveId, METADATA_FILE_EXTENSION);
     this.metadataFileOutputStream =
         new BufferedOutputStream(
             new FileOutputStream(format("%s/%s", this.downloadDirectory, this.metadataFilename)));
 
     // write the tsv header
     this.metadataFileOutputStream.write(TsvUtils.getHeader());
+  }
+
+  public static String archiveFilenameFromArchiveId(UUID archiveId) {
+    return format("%s%s%s", FILE_NAME_TEMPLATE, archiveId, ARCHIVE_EXTENSION);
   }
 }

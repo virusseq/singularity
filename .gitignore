@@ -3,7 +3,8 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-.application.yaml
+pom.xml.versionsBackup
+.application.*
 
 ### STS ###
 .apt_generated

@@ -16,34 +16,20 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.singularity.api.model;
+package org.cancogenvirusseq.singularity.config.s3Client;
 
-import io.swagger.annotations.ApiModel;
-import java.util.Map;
-import lombok.AllArgsConstructor;
+import java.net.URI;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.cancogenvirusseq.singularity.exceptions.http.BaseHttpException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import software.amazon.awssdk.regions.Region;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@ApiModel(description = "An object that can optionally include information about the error.")
-public class ErrorResponse {
-  private HttpStatus status;
-  private String message;
-  private Map<String, Object> errorInfo;
-
-  public static ResponseEntity<ErrorResponse> errorResponseEntity(
-      HttpStatus status, String message) {
-    return new ResponseEntity<>(new ErrorResponse(status, message, Map.of()), status);
-  }
-
-  public static ResponseEntity<ErrorResponse> errorResponseEntity(BaseHttpException ex) {
-    return new ResponseEntity<>(
-        new ErrorResponse(ex.getStatusCode(), ex.getMessage(), ex.getErrorInfo()),
-        ex.getStatusCode());
-  }
+@ConfigurationProperties(prefix = "s3")
+public class S3ClientProperties {
+  private Region region = Region.US_EAST_1;
+  private URI endpoint = null;
+  private String accessKeyId;
+  private String secretAccessKey;
+  private String bucket;
+  private String dataDir;
 }

@@ -16,7 +16,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.cancogenvirusseq.singularity.components;
+package org.cancogenvirusseq.singularity.components.pipelines;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -58,7 +58,7 @@ public class Contributors {
                     AggregationBuilders.terms("submitters")
                         .field("analysis.sample_collection.sequence_submitted_by")
                         .size(MAX_AGGREGATE_BUCKETS))
-                .size(0)) // number of documents returned by query set to zero, buckets set above
+                .fetchSource(false))
         .map(
             source ->
                 reactiveElasticSearchClientConfig

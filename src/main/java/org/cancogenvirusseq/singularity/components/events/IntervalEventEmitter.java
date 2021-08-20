@@ -31,10 +31,11 @@ import reactor.core.publisher.Flux;
 @Component
 @Profile("!kafka")
 @RequiredArgsConstructor
-public class IntervalEventEmitter implements EventEmitter {
+public class IntervalEventEmitter implements EventEmitter<Instant> {
   @Value("${intervalEventEmitter.intervalTimerSeconds}")
   private final Integer intervalTimerSeconds = 600; // default to 10 minutes interval
 
+  @Override
   public Flux<Instant> receive() {
     return Flux.interval(Duration.ofSeconds(intervalTimerSeconds))
         .map(value -> Instant.now())

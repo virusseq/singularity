@@ -7,6 +7,23 @@ spring:
 server:
   port: 8080
 
+postgres:
+  host: localhost
+  port: 5432
+  database: singularity
+  username: postgres
+  password: password
+  maxPoolIdleTimeMs: 1000
+  maxPoolSize: 20
+
+s3:
+  region: collab
+  endpoint: https://object.cancercollaboratory.org:9080
+  accessKeyId: SOME_KEY
+  secretAccessKey: SOME_SECRET
+  bucket: cancogen
+  dataDir: data
+
 elastic:
   host: localhost
   port: 9200
@@ -15,6 +32,7 @@ elastic:
   username: elastic
   password: testing
   fileCentricIndex: file_centric
+  arrangerSetsIndex: arranger-sets
   scrollTimeoutMinutes: 10
 
 kafka:
@@ -28,16 +46,8 @@ contributors:
   filterList:
   appendList:
 
-download:
-  museHost: "localhost:8087/download"
-  retryMaxAttempts: 3
-  retryDelaySec: 10
-  batchSize: 100
-  concurrentRequests: 5
-
 files:
   finalEventCheckSeconds: 60
-  bundleBuildingCheckSeconds: 60
 
 intervalEventEmitter:
   intervalTimerSeconds: 600
