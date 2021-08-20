@@ -2,6 +2,7 @@ package org.cancogenvirusseq.singularity.repository.model;
 
 import static java.lang.String.format;
 
+import java.time.Instant;
 import java.util.UUID;
 import lombok.*;
 import org.cancogenvirusseq.singularity.components.model.SetQueryArchiveHashInfo;
@@ -61,11 +62,11 @@ public class Archive {
 
   public static String parseFilenameFromArchive(Archive archive) {
     if (archive.getType().equals(ArchiveType.ALL)) {
-      // for a download all entry the hash info is the instant string
-      return format("virusseq-consensus-archive-all-%s.tar.gz", archive.getHashInfo());
+      // for a download all entry the hash info is the instant string for the release
+      return format("virusseq-data-release-%s.tar.gz", archive.getHashInfo());
     } else {
-      // otherwise just note the archiveId with the download
-      return format("virusseq-consensus-archive-%s.tar.gz", archive.getId());
+      // for all other export types just note that it's an export and the download time
+      return format("virusseq-search-export-%s.tar.gz", Instant.now());
     }
   }
 }
