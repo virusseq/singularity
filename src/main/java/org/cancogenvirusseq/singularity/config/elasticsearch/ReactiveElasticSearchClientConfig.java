@@ -21,6 +21,7 @@ package org.cancogenvirusseq.singularity.config.elasticsearch;
 import static java.lang.String.format;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +29,7 @@ import org.springframework.data.elasticsearch.client.ClientConfiguration;
 import org.springframework.data.elasticsearch.client.reactive.ReactiveElasticsearchClient;
 import org.springframework.data.elasticsearch.client.reactive.ReactiveRestClients;
 import org.springframework.data.elasticsearch.config.AbstractReactiveElasticsearchConfiguration;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 
 @Configuration
 @RequiredArgsConstructor
@@ -37,6 +39,7 @@ public class ReactiveElasticSearchClientConfig extends AbstractReactiveElasticse
 
   private static final Integer connectTimeout = 15_000;
   private static final Integer socketTimeout = 15_000;
+  private static final Integer maxInMemorySize = -1;
 
   @Override
   @Bean
@@ -64,6 +67,16 @@ public class ReactiveElasticSearchClientConfig extends AbstractReactiveElasticse
             .get()
             .withConnectTimeout(connectTimeout)
             .withSocketTimeout(socketTimeout)
+            // Avoid default buffer size limit
+            .withWebClientConfigurer(
+                webClient ->
+                    webClient.mutate().exchangeStrategies(exchangeStrategies.get()).build())
             .build());
   }
+
+  private static final Supplier<ExchangeStrategies> exchangeStrategies =
+      () ->
+          ExchangeStrategies.builder()
+              .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(maxInMemorySize))
+              .build();
 }
