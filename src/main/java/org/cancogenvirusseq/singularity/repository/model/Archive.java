@@ -5,6 +5,8 @@ import static java.lang.String.format;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.*;
+import org.cancogenvirusseq.singularity.components.model.AllArchiveHashInfo;
+import org.cancogenvirusseq.singularity.components.model.CountAndLastUpdatedResult;
 import org.cancogenvirusseq.singularity.components.model.SetQueryArchiveHashInfo;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
@@ -45,6 +47,18 @@ public class Archive {
     }
   }
 
+  public static Archive newAllArchiveFromCountAndLastUpdatedResult(
+      CountAndLastUpdatedResult countAndLastUpdatedResult) {
+    return Archive.builder()
+        .status(ArchiveStatus.BUILDING)
+        .type(ArchiveType.ALL)
+        .hashInfo(
+            AllArchiveHashInfo.parseFromCountAndLastUpdatedResult(countAndLastUpdatedResult)
+                .toString())
+        .numOfSamples(countAndLastUpdatedResult.getNumDocuments().getValue())
+        .build();
+  }
+
   public static Archive newFromSetQueryArchiveHashInfo(
       SetQueryArchiveHashInfo setQueryArchiveHashInfo) {
     return Archive.builder()
@@ -62,8 +76,9 @@ public class Archive {
 
   public static String parseFilenameFromArchive(Archive archive) {
     if (archive.getType().equals(ArchiveType.ALL)) {
-      // for a download all entry the hash info is the instant string for the release
-      return format("virusseq-data-release-%s.tar.gz", archive.getHashInfo());
+      // for a download all entry, use the createdAt timestamp for the filename
+      return format(
+          "virusseq-data-release-%s.tar.gz", Instant.ofEpochSecond(archive.getCreatedAt()));
     } else {
       // for all other export types just note that it's an export and the download time
       return format("virusseq-search-export-%s.tar.gz", Instant.now());
