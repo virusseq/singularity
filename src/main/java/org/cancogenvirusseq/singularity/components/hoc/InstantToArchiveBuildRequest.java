@@ -11,8 +11,6 @@ import org.cancogenvirusseq.singularity.components.model.ArchiveBuildRequest;
 import org.cancogenvirusseq.singularity.components.model.CountAndLastUpdatedResult;
 import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
-import org.cancogenvirusseq.singularity.repository.model.ArchiveStatus;
-import org.cancogenvirusseq.singularity.repository.model.ArchiveType;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -40,12 +38,7 @@ public class InstantToArchiveBuildRequest implements Function<Instant, Mono<Arch
   private Mono<Archive> createAndSaveArchiveToDatabase(
       CountAndLastUpdatedResult countAndLastUpdatedResult) {
     return archivesRepo.save(
-        Archive.builder()
-            .status(ArchiveStatus.BUILDING)
-            .type(ArchiveType.ALL)
-            .hashInfo(countAndLastUpdatedResult.getLastUpdatedDate().getValueAsString())
-            .numOfSamples(countAndLastUpdatedResult.getNumDocuments().getValue())
-            .build());
+        Archive.newAllArchiveFromCountAndLastUpdatedResult(countAndLastUpdatedResult));
   }
 
   private Function<Archive, ArchiveBuildRequest> transformToArchiveBuildRequest(Instant instant) {
