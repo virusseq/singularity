@@ -51,6 +51,7 @@ public class AnalysisDocument {
     private PathogenDiagnosticTesting pathogenDiagnosticTesting = new PathogenDiagnosticTesting();
     private SampleCollection sampleCollection = new SampleCollection();
     private SequenceAnalysis sequenceAnalysis = new SequenceAnalysis();
+    private String firstPublishedAt;
   }
 
   @Data
@@ -157,6 +158,8 @@ public class AnalysisDocument {
       new String[] {
         "object_id",
         "study_id",
+        // analysis
+        "analysis.first_published_at",
         // experiment
         "analysis.experiment.purpose_of_sequencing",
         "analysis.experiment.purpose_of_sequencing_details",
