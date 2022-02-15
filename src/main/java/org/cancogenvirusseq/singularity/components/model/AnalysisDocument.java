@@ -21,12 +21,18 @@ package org.cancogenvirusseq.singularity.components.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Data
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -52,6 +58,19 @@ public class AnalysisDocument {
     private SampleCollection sampleCollection = new SampleCollection();
     private SequenceAnalysis sequenceAnalysis = new SequenceAnalysis();
     private String firstPublishedAt;
+
+    public void setFirstPublishedAt(String firstPublishedAt) {
+      try {
+        // firstPublishedAt is stored in Epoch millisecond which should be a long
+        long epoch = Long.parseLong(firstPublishedAt);
+        Date date = Date.from(Instant.ofEpochMilli(epoch));
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        this.firstPublishedAt = dateFormat.format(date);
+      } catch (Exception e) {
+        log.error("Couldn't convert analysis.firstPublishedAt", e);
+        this.firstPublishedAt = "";
+      }
+    }
   }
 
   @Data
