@@ -46,7 +46,8 @@ public class DownloadMolecularDataToPair
                         new AnalysisDocumentMolecularDataPair(
                             analysisDocument,
                             molecularDataBufferWithNewline(
-                                getObjectResponseResponseBytes.asByteArray()))));
+                                getObjectResponseResponseBytes.asByteArray()))),
+        s3ClientProperties.getMaxDownloadConnections());
   }
 
   private GetObjectRequest getObjectRequestForAnalysisDocument(AnalysisDocument analysisDocument) {
