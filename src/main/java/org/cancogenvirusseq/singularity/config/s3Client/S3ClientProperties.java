@@ -32,4 +32,5 @@ public class S3ClientProperties {
   private String secretAccessKey;
   private String bucket;
   private String dataDir;
+  private Integer maxDownloadConnections;
 }

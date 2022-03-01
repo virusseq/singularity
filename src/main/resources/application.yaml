@@ -23,6 +23,7 @@ s3:
   secretAccessKey: SOME_SECRET
   bucket: cancogen
   dataDir: data
+  maxDownloadConnections: 100
 
 elastic:
   host: localhost
