@@ -31,23 +31,26 @@ public class DownloadMolecularDataToPair
   @Override
   public Flux<AnalysisDocumentMolecularDataPair> apply(
       Flux<AnalysisDocument> analysisDocumentFlux) {
-    return analysisDocumentFlux.flatMap(
-        analysisDocument ->
-            Mono.fromFuture(
-                    // we can go straight to object storage and get the bytes as we know that these
-                    // objects are already verified to be there by song/score else they wouldn't be
-                    // in an AnalysisDocument, otherwise we would use the DownloadObjectById
-                    // component here
-                    s3AsyncClient.getObject(
-                        getObjectRequestForAnalysisDocument(analysisDocument),
-                        AsyncResponseTransformer.toBytes()))
-                .map(
-                    getObjectResponseResponseBytes ->
-                        new AnalysisDocumentMolecularDataPair(
-                            analysisDocument,
-                            molecularDataBufferWithNewline(
-                                getObjectResponseResponseBytes.asByteArray()))),
-        s3ClientProperties.getMaxDownloadConnections());
+    return analysisDocumentFlux
+        .flatMap(
+            analysisDocument ->
+                // we can go straight to object storage and get the bytes as we know that these
+                // objects are already verified to be there by song/score else they wouldn't be
+                // in an AnalysisDocument, otherwise we would use the DownloadObjectById
+                // component here
+                Mono.fromFuture(
+                        s3AsyncClient.getObject(
+                            getObjectRequestForAnalysisDocument(analysisDocument),
+                            AsyncResponseTransformer.toBytes()))
+                    .map(
+                        getObjectResponseResponseBytes ->
+                            new AnalysisDocumentMolecularDataPair(
+                                analysisDocument,
+                                molecularDataBufferWithNewline(
+                                    getObjectResponseResponseBytes.asByteArray()))),
+            s3ClientProperties.getMaxConcurrency())
+        .doOnError(
+            throwable -> log.info("DownloadMolecularDataToPair" + throwable.getLocalizedMessage()));
   }
 
   private GetObjectRequest getObjectRequestForAnalysisDocument(AnalysisDocument analysisDocument) {
