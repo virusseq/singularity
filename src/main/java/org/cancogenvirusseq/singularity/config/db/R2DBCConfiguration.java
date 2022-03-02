@@ -27,12 +27,12 @@ import io.r2dbc.postgresql.codec.EnumCodec;
 import io.r2dbc.spi.ConnectionFactory;
 import java.time.Duration;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveStatus;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveStatusConverter;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveType;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveTypeConverter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -42,15 +42,10 @@ import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 
 @Configuration
 @EnableR2dbcRepositories(basePackages = "org.cancogenvirusseq.singularity.repository")
+@RequiredArgsConstructor
 public class R2DBCConfiguration extends AbstractR2dbcConfiguration {
 
   private final PostgresProperties postgresProperties;
-
-  @Autowired
-  public R2DBCConfiguration(PostgresProperties postgresProperties) {
-    this.postgresProperties = postgresProperties;
-    System.out.println(postgresProperties.toString());
-  }
 
   @Bean
   ConnectionFactoryInitializer initializer(ConnectionFactory connectionFactory) {

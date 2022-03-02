@@ -23,6 +23,8 @@ s3:
   secretAccessKey: SOME_SECRET
   bucket: cancogen
   dataDir: data
+  maxConcurrency: 64
+  acquisitionTimeoutMs: 30000
 
 elastic:
   host: localhost

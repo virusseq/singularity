@@ -32,4 +32,6 @@ public class S3ClientProperties {
   private String secretAccessKey;
   private String bucket;
   private String dataDir;
+  private Integer maxConcurrency;
+  private Long acquisitionTimeoutMs;
 }

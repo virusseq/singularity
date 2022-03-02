@@ -18,6 +18,8 @@
 
 package org.cancogenvirusseq.singularity.config.s3Client;
 
+import static java.time.Duration.ofMillis;
+
 import com.nimbusds.oauth2.sdk.util.StringUtils;
 import java.time.Duration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -53,7 +55,11 @@ public class S3ClientConfiguration {
       S3ClientProperties s3props, AwsCredentialsProvider credentialsProvider) {
 
     SdkAsyncHttpClient httpClient =
-        NettyNioAsyncHttpClient.builder().writeTimeout(Duration.ZERO).maxConcurrency(64).build();
+        NettyNioAsyncHttpClient.builder()
+            .writeTimeout(Duration.ZERO)
+            .maxConcurrency(s3props.getMaxConcurrency())
+            .connectionAcquisitionTimeout(ofMillis(s3props.getAcquisitionTimeoutMs()))
+            .build();
 
     S3AsyncClientBuilder s3AsyncClientBuilder =
         S3AsyncClient.builder()

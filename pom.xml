@@ -10,7 +10,7 @@
     </parent>
     <groupId>org.cancogen-virus-seq</groupId>
     <artifactId>singularity</artifactId>
-    <version>0.3.0</version>
+    <version>0.4.0</version>
     <name>singularity</name>
     <description>Singularity - All contributors, All files</description>
     <properties>
