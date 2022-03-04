@@ -27,6 +27,7 @@ import java.util.UUID;
 import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
 import org.cancogenvirusseq.singularity.api.model.ErrorResponse;
 import org.cancogenvirusseq.singularity.api.model.SetIdBuildRequest;
+import org.cancogenvirusseq.singularity.components.model.TotalCounts;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
 import org.cancogenvirusseq.singularity.repository.query.FindArchivesQuery;
 import org.springframework.data.domain.Page;
@@ -58,6 +59,22 @@ public interface ApiDefinition {
       produces = MediaType.APPLICATION_JSON_VALUE,
       method = RequestMethod.GET)
   Mono<EntityListResponse<String>> getContributors();
+
+  @ApiOperation(
+          value = "Get total counts of samples, files and studies",
+          nickname = "Get Total Counts",
+          response = EntityListResponse.class,
+          tags = "Singularity API")
+  @ApiResponses(
+          value = {
+                  @ApiResponse(code = 200, message = "", response = TotalCounts.class),
+                  @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
+          })
+  @RequestMapping(
+          value = "/aggregations/total-counts",
+          produces = MediaType.APPLICATION_JSON_VALUE,
+          method = RequestMethod.GET)
+  Mono<ResponseEntity<TotalCounts>> getTotalCounts();
 
   @ApiOperation(
       value = "Download the latest data archive containing all molecular and meta data",
