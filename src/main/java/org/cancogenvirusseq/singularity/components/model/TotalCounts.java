@@ -6,8 +6,10 @@ import lombok.Value;
 @Value
 @Builder
 public class TotalCounts {
-    Long files;
-    Long samples;
-    Integer studies;
-    Double fileSize;
+  Long files;
+  Long samples;
+  Integer studies;
+  Long fileSizeBytes;
+  String fileSizeHumanReadable;
+  Long timestamp;
 }

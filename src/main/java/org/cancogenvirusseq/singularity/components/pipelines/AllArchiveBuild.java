@@ -54,14 +54,14 @@ public class AllArchiveBuild {
         .receive()
         .doOnNext(
             instant -> {
-              log.debug("createAllArchiveDisposable received instant: {}", instant);
+              log.info("createAllArchiveDisposable received instant: {}", instant);
 
               if (!buildAllArchiveDisposable.isDisposed()) {
-                log.debug("Existing archive build detected!");
+                log.info("Killing existing archive build!");
                 this.buildAllArchiveDisposable.dispose();
               }
 
-              log.debug("Spawning new archive build...");
+              log.info("Spawning new archive build...");
               this.buildAllArchiveDisposable = createBuildAllArchiveDisposable(instant);
             })
         .log("Files::createAllArchiveDisposable")

@@ -30,9 +30,9 @@ import org.cancogenvirusseq.singularity.api.model.ErrorResponse;
 import org.cancogenvirusseq.singularity.api.model.SetIdBuildRequest;
 import org.cancogenvirusseq.singularity.components.base.DownloadObjectById;
 import org.cancogenvirusseq.singularity.components.model.TotalCounts;
-import org.cancogenvirusseq.singularity.components.pipelines.Aggregations;
 import org.cancogenvirusseq.singularity.components.pipelines.Contributors;
 import org.cancogenvirusseq.singularity.components.pipelines.SetQueryArchiveRequest;
+import org.cancogenvirusseq.singularity.components.pipelines.TotalCountsPipeline;
 import org.cancogenvirusseq.singularity.exceptions.http.ArchiveNotFoundHttpException;
 import org.cancogenvirusseq.singularity.exceptions.http.BaseHttpException;
 import org.cancogenvirusseq.singularity.exceptions.http.SetNotFoundHttpException;
@@ -53,7 +53,7 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequiredArgsConstructor
 public class ApiController implements ApiDefinition {
-  private final Aggregations aggregations;
+  private final TotalCountsPipeline totalCountsPipeline;
   private final Contributors contributors;
   private final DownloadObjectById downloadObjectById;
   private final SetQueryArchiveRequest setQueryArchiveRequest;
@@ -66,7 +66,10 @@ public class ApiController implements ApiDefinition {
 
   @Override
   public Mono<ResponseEntity<TotalCounts>> getTotalCounts() {
-    return aggregations.getAggregationCounts().map(ResponseEntity::ok);
+    return totalCountsPipeline
+        .getTotalCounts()
+        .map(ResponseEntity::ok)
+        .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build()));
   }
 
   @Override

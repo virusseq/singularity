@@ -61,19 +61,19 @@ public interface ApiDefinition {
   Mono<EntityListResponse<String>> getContributors();
 
   @ApiOperation(
-          value = "Get total counts of samples, files and studies",
-          nickname = "Get Total Counts",
-          response = EntityListResponse.class,
-          tags = "Singularity API")
+      value = "Get total counts of samples, files and studies",
+      nickname = "Get Total Counts",
+      response = EntityListResponse.class,
+      tags = "Singularity API")
   @ApiResponses(
-          value = {
-                  @ApiResponse(code = 200, message = "", response = TotalCounts.class),
-                  @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
-          })
+      value = {
+        @ApiResponse(code = 200, message = "", response = TotalCounts.class),
+        @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
+      })
   @RequestMapping(
-          value = "/aggregations/total-counts",
-          produces = MediaType.APPLICATION_JSON_VALUE,
-          method = RequestMethod.GET)
+      value = "/aggregations/total-counts",
+      produces = MediaType.APPLICATION_JSON_VALUE,
+      method = RequestMethod.GET)
   Mono<ResponseEntity<TotalCounts>> getTotalCounts();
 
   @ApiOperation(
