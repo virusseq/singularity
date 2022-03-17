@@ -22,13 +22,17 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.UnaryOperator;
+import javax.annotation.PostConstruct;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.singularity.config.kafka.KafkaConsumerConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 
 @Slf4j
 @Component
@@ -42,8 +46,26 @@ public class KafkaEventEmitter implements EventEmitter<Instant> {
 
   private static final AtomicReference<Instant> lastEvent = new AtomicReference<>();
 
+  private final Sinks.Many<Instant> proxyManySink = Sinks.many().multicast().onBackpressureBuffer();
+
+  @Getter private Disposable kafkaConsumerDisposable;
+
+  @PostConstruct
+  public void init() {
+    // setup disposable to events to proxy sink
+    kafkaConsumerDisposable = createKafkaConsumeAndSinkDisposable();
+  }
+
   @Override
   public Flux<Instant> receive() {
+    // reactor kafka doesn't allow multiple subscriptions on its fluxes.
+    // We only use kafa messages as an event source to trigger instants.
+    // The proxyManySink is used to tryEmit the instants to trigger
+    // operations for multiple subscribed components
+    return proxyManySink.asFlux();
+  }
+
+  private Disposable createKafkaConsumeAndSinkDisposable() {
     return kafkaConsumerConfig
         .getReceiver()
         .receiveAutoAck()
@@ -54,10 +76,12 @@ public class KafkaEventEmitter implements EventEmitter<Instant> {
         .map(value -> Instant.now())
         .doOnNext(lastEvent::set)
         .transform(takeOnlyFinalInstant)
+        .doOnNext(proxyManySink::tryEmitNext)
         .onErrorContinue(
             ((throwable, value) ->
                 log.debug("intervalEmit emission {}, threw: {}", throwable, value)))
-        .log("KafkaEventEmitter::emit");
+        .log("KafkaEventEmitter::emit")
+        .subscribe();
   }
 
   /**
