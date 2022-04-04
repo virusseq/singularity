@@ -19,7 +19,7 @@ import org.cancogenvirusseq.singularity.components.events.EventEmitter;
 import org.cancogenvirusseq.singularity.components.model.TotalCounts;
 import org.cancogenvirusseq.singularity.config.elasticsearch.ElasticsearchProperties;
 import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.Aggregation;
