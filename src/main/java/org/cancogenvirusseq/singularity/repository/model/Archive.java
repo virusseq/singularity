@@ -78,10 +78,10 @@ public class Archive {
     if (archive.getType().equals(ArchiveType.ALL)) {
       // for a download all entry, use the createdAt timestamp for the filename
       return format(
-          "virusseq-data-release-%s.tar.gz", Instant.ofEpochSecond(archive.getCreatedAt()));
+              "virusseq-data-release-%s.tar.gz", Instant.ofEpochSecond(archive.getCreatedAt()));
     } else {
       // for all other export types just note that it's an export and the download time
-      return format("virusseq-search-export-%s.tar.gz", Instant.now());
+      return format("virusseq-search-export-%s.gz", Instant.now());
     }
   }
 }

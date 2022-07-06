@@ -12,33 +12,33 @@ postgres:
   port: 5432
   database: singularity
   username: postgres
-  password: password
+  password: ngtHd5yH2E
   maxPoolIdleTimeMs: 1000
   maxPoolSize: 20
 
-s3:
+s3X:
   region: collab
   endpoint: https://object.cancercollaboratory.org:9080
-  accessKeyId: SOME_KEY
-  secretAccessKey: SOME_SECRET
-  bucket: cancogen
+  accessKeyId: BWTI2DG7O01VL7KALBD8
+  secretAccessKey: N2zhtQO9aDnQ1AQ6kDWJK8C6xGalvYtdCEqdw9wn
+  bucket: cancogen-dev
   dataDir: data
   maxConcurrency: 64
   acquisitionTimeoutMs: 30000
 
-elastic:
-  host: localhost
-  port: 9200
+elasticX:
+  host: virus-seq-es.dev.cancogen.cancercollaboratory.org
+  port: 443
   useHttps: false
   useAuthentication: false
   username: elastic
-  password: testing
+  password: 2zw8cv7fmdh9d5t8bmbkqf9j
   fileCentricIndex: file_centric
   arrangerSetsIndex: arranger-sets
   scrollTimeoutMinutes: 10
 
 kafka:
-  bootstrapServer: localhost:9092
+  bootstrapServer: kafka-headless:9092
   clientId: singularity-instance
   groupId: singularity-instance
   autoOffsetReset: latest
@@ -53,3 +53,31 @@ files:
 
 intervalEventEmitter:
   intervalTimerSeconds: 600
+
+logging:
+  level:
+    org.springframework: DEBUG
+    org.springframework.data: DEBUG
+
+#PROD
+s3:
+  region: collab
+  endpoint: https://object.cancercollaboratory.org:9080
+  accessKeyId: SK3701SRFDZ828YGP1Y7
+  secretAccessKey: D0ozXaTlO2KoBuCxRgr1kic9aMsLSwKvX5vceIOa
+  #bucket: cancogen
+  bucket: CanCOGeN-collab
+  dataDir: data
+  maxConcurrency: 64
+  acquisitionTimeoutMs: 30000
+
+elastic:
+  host: virus-seq-es.virusseq-dataportal.ca
+  port: 443
+  useHttps: true
+  useAuthentication: true
+  username: elastic
+  password: Pua85cPs789uT02N8AF33JPo
+  fileCentricIndex: file_centric
+  arrangerSetsIndex: arranger-sets
+  scrollTimeoutMinutes: 10
