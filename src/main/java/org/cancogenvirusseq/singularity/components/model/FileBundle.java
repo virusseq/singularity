@@ -40,7 +40,7 @@ public class FileBundle {
   public static final String FILE_NAME_TEMPLATE = "files-archive-";
   public static final String MOLECULAR_FILE_EXTENSION = ".fasta";
   public static final String METADATA_FILE_EXTENSION = ".tsv";
-  public static final String ARCHIVE_EXTENSION = ".tar.gz";
+  public static final String ARCHIVE_EXTENSION = ".gz";
 
   private final String archiveFilename;
   private final String downloadDirectory;
