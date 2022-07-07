@@ -113,7 +113,6 @@ public class FileBundleUtils {
 
   private static final UnaryOperator<FileBundle> putBundleFilesInArchive =
       fileBundle -> {
-          System.out.println("fileBundle.getMolecularFilename()-> "+fileBundle.getMolecularFilename());
         // put both bundle files in the archive
         archiveFile.accept(
             fileBundle.getArchiveGzipOutputStream(),
