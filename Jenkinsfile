@@ -77,7 +77,10 @@ spec:
         }
         stage('Build & Publish Develop') {
             when {
-                branch 'develop'
+                anyOf {
+                    branch 'develop'
+                    branch 'remove_tar'
+                }
             }
             steps {
                 container('docker') {
