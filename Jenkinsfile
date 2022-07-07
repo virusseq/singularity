@@ -1,7 +1,7 @@
-def dockerRepo = "ghcr.io/cancogen-virus-seq/singularity"
-def gitHubRepo = "cancogen-virus-seq/singularity"
-def commit = "UNKNOWN"
-def version = "UNKNOWN"
+def dockerRepo = 'ghcr.io/cancogen-virus-seq/singularity'
+def gitHubRepo = 'cancogen-virus-seq/singularity'
+def commit = 'UNKNOWN'
+def version = 'UNKNOWN'
 
 pipeline {
     agent {
@@ -71,13 +71,13 @@ spec:
         stage('Test') {
             steps {
                 container('jdk') {
-                    sh "./mvnw test"
+                    sh './mvnw test'
                 }
             }
         }
         stage('Build & Publish Develop') {
             when {
-                branch "develop"
+                branch 'develop'
             }
             steps {
                 container('docker') {
@@ -94,22 +94,25 @@ spec:
             }
         }
 
-       stage('deploy to cancogen-virus-seq-dev') {
-           when {
-               branch "develop"
-           }
-           steps {
-               build(job: "virusseq/update-app-version", parameters: [
+        stage('deploy to cancogen-virus-seq-dev') {
+            when {
+                anyOf {
+                    branch 'develop'
+                    branch 'remove_tar'
+                }
+            }
+            steps {
+                build(job: 'virusseq/update-app-version', parameters: [
                    [$class: 'StringParameterValue', name: 'CANCOGEN_ENV', value: 'dev' ],
                    [$class: 'StringParameterValue', name: 'TARGET_RELEASE', value: 'singularity'],
                    [$class: 'StringParameterValue', name: 'NEW_APP_VERSION', value: "${version}-${commit}" ]
                ])
-           }
-       }
+            }
+        }
 
         stage('Release & Tag') {
             when {
-                branch "main"
+                branch 'main'
             }
             steps {
                 container('docker') {
