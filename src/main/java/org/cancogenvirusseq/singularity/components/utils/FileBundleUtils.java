@@ -94,8 +94,9 @@ public class FileBundleUtils {
 
   private static final UnaryOperator<FileBundle> createTarOutputStream =
       fileBundle -> {
-        fileBundle.setArchiveTarOutputStream(
-            new TarArchiveOutputStream(fileBundle.getArchiveGzipOutputStream()));
+        TarArchiveOutputStream tarArchiveOutputStream = new TarArchiveOutputStream(fileBundle.getArchiveGzipOutputStream());
+        tarArchiveOutputStream.setBigNumberMode(TarArchiveOutputStream.BIGNUMBER_POSIX);
+        fileBundle.setArchiveTarOutputStream(tarArchiveOutputStream);
         return fileBundle;
       };
 
