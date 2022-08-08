@@ -79,6 +79,7 @@ spec:
             when {
                 anyOf {
                     branch 'develop'
+                    branch 'arrays'
                 }
             }
             steps {
@@ -100,6 +101,7 @@ spec:
             when {
                 anyOf {
                     branch 'develop'
+                    branch 'arrays'
                 }
             }
             steps {

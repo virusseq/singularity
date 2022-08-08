@@ -78,7 +78,7 @@ public class AnalysisDocument {
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class Experiment {
-    private String purposeOfSequencing;
+    private List<String> purposeOfSequencing;
     private String purposeOfSequencingDetails;
     private String sequencingInstrument;
     private String sequencingProtocol;
@@ -125,7 +125,7 @@ public class AnalysisDocument {
     private String fastaHeaderName;
     private String organism;
     private String bodyProduct;
-    private String anatomicalPart;
+    private List<String> anatomicalPart;
     private String geoLocCountry;
     private String geoLocProvince;
     private String collectionDevice;
