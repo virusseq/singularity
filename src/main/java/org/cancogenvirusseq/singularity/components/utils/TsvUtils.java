@@ -24,10 +24,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import org.cancogenvirusseq.singularity.components.model.AnalysisDocument;
 
 public class TsvUtils {
+
+  private static final String LIST_SEPARATOR = ",";
+
   @Getter
   private static final byte[] header =
       (String.join(
@@ -114,7 +119,7 @@ public class TsvUtils {
         analysisDocument.getAnalysis().getSampleCollection().getPurposeOfSampling(),
         analysisDocument.getAnalysis().getSampleCollection().getPurposeOfSamplingDetails(),
         analysisDocument.getAnalysis().getSampleCollection().getAnatomicalMaterial(),
-        analysisDocument.getAnalysis().getSampleCollection().getAnatomicalPart(),
+        jsonNodeToString(analysisDocument.getAnalysis().getSampleCollection().getAnatomicalPart()),
         analysisDocument.getAnalysis().getSampleCollection().getBodyProduct(),
         analysisDocument.getAnalysis().getSampleCollection().getEnvironmentalMaterial(),
         analysisDocument.getAnalysis().getSampleCollection().getEnvironmentalSite(),
@@ -127,7 +132,7 @@ public class TsvUtils {
         analysisDocument.getAnalysis().getHost().getHostAgeUnit(),
         analysisDocument.getAnalysis().getHost().getHostAgeBin(),
         analysisDocument.getAnalysis().getHost().getHostGender(),
-        analysisDocument.getAnalysis().getExperiment().getPurposeOfSequencing(),
+        jsonNodeToString(analysisDocument.getAnalysis().getExperiment().getPurposeOfSequencing()),
         analysisDocument.getAnalysis().getExperiment().getPurposeOfSequencingDetails(),
         analysisDocument.getAnalysis().getExperiment().getSequencingInstrument(),
         analysisDocument.getAnalysis().getExperiment().getSequencingProtocol(),
@@ -146,6 +151,10 @@ public class TsvUtils {
             .getPathogenDiagnosticTesting()
             .getDiagnosticPcrCtValueNullReason(),
         analysisDocument.getAnalysis().getDatabaseIdentifiers().getGisaidAccession());
+  }
+
+  private static String jsonNodeToString(JsonNode jsonNode) {
+      return (jsonNode.isArray()) ? String.join(LIST_SEPARATOR, jsonNode.toString()) : jsonNode.toString();
   }
 
   private static String stringsToTsvRow(String... strings) {

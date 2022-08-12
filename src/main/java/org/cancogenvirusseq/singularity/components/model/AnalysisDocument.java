@@ -19,6 +19,7 @@
 package org.cancogenvirusseq.singularity.components.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import java.text.DateFormat;
@@ -78,10 +79,12 @@ public class AnalysisDocument {
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class Experiment {
-    private List<String> purposeOfSequencing;
+    private JsonNode purposeOfSequencing;
     private String purposeOfSequencingDetails;
     private String sequencingInstrument;
     private String sequencingProtocol;
+
+
   }
 
   @Data
@@ -125,7 +128,7 @@ public class AnalysisDocument {
     private String fastaHeaderName;
     private String organism;
     private String bodyProduct;
-    private List<String> anatomicalPart;
+    private JsonNode anatomicalPart;
     private String geoLocCountry;
     private String geoLocProvince;
     private String collectionDevice;
