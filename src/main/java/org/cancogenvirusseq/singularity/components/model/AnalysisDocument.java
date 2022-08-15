@@ -19,6 +19,7 @@
 package org.cancogenvirusseq.singularity.components.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
@@ -27,6 +28,8 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -42,10 +45,11 @@ public class AnalysisDocument {
   public static final String ID_FIELD = "_id";
   public static final String LAST_UPDATED_AT_FIELD = "analysis.updated_at";
 
-  @NonNull private String objectId;
-  @NonNull private String studyId;
+  @NonNull private JsonNode objectId;
+  @NonNull private JsonNode studyId;
   @NonNull private Analysis analysis;
   @NonNull private List<Donor> donors;
+
 
   @Data
   @NoArgsConstructor
@@ -58,18 +62,18 @@ public class AnalysisDocument {
     private PathogenDiagnosticTesting pathogenDiagnosticTesting = new PathogenDiagnosticTesting();
     private SampleCollection sampleCollection = new SampleCollection();
     private SequenceAnalysis sequenceAnalysis = new SequenceAnalysis();
-    private String firstPublishedAt;
+    private JsonNode firstPublishedAt;
 
-    public void setFirstPublishedAt(String firstPublishedAt) {
+    public void setFirstPublishedAt(JsonNode firstPublishedAt) {
       try {
         // firstPublishedAt is stored in Epoch millisecond which should be a long
-        long epoch = Long.parseLong(firstPublishedAt);
+        long epoch = Long.parseLong(firstPublishedAt.toString());
         Date date = Date.from(Instant.ofEpochMilli(epoch));
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        this.firstPublishedAt = dateFormat.format(date);
+        this.firstPublishedAt = JsonNodeFactory.instance.textNode(dateFormat.format(date));
       } catch (Exception e) {
         log.error("Couldn't convert analysis.firstPublishedAt", e);
-        this.firstPublishedAt = "";
+        this.firstPublishedAt = JsonNodeFactory.instance.textNode("");
       }
     }
   }
@@ -80,10 +84,9 @@ public class AnalysisDocument {
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class Experiment {
     private JsonNode purposeOfSequencing;
-    private String purposeOfSequencingDetails;
-    private String sequencingInstrument;
-    private String sequencingProtocol;
-
+    private JsonNode purposeOfSequencingDetails;
+    private JsonNode sequencingInstrument;
+    private JsonNode sequencingProtocol;
 
   }
 
@@ -92,7 +95,7 @@ public class AnalysisDocument {
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class DatabaseIdentifiers {
-    private String gisaidAccession;
+    private JsonNode gisaidAccession;
   }
 
   @Data
@@ -100,13 +103,15 @@ public class AnalysisDocument {
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class Host {
-    private String hostAge;
-    private String hostAgeNullReason;
-    private String hostGender;
-    private String hostAgeBin;
-    private String hostDisease;
-    private String hostAgeUnit;
-    private String hostScientificName;
+    private JsonNode hostAge;
+    private JsonNode hostAgeNullReason;
+    private JsonNode hostGender;
+    private JsonNode hostAgeBin;
+    private JsonNode hostDisease;
+    private JsonNode hostAgeUnit;
+    private JsonNode hostScientificName;
+
+
   }
 
   @Data
@@ -114,9 +119,9 @@ public class AnalysisDocument {
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class PathogenDiagnosticTesting {
-    private String geneName;
-    private String diagnosticPcrCtValue;
-    private String diagnosticPcrCtValueNullReason;
+    private JsonNode geneName;
+    private JsonNode diagnosticPcrCtValue;
+    private JsonNode diagnosticPcrCtValueNullReason;
   }
 
   @Data
@@ -124,24 +129,24 @@ public class AnalysisDocument {
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class SampleCollection {
-    private String isolate;
-    private String fastaHeaderName;
-    private String organism;
-    private String bodyProduct;
+    private JsonNode isolate;
+    private JsonNode fastaHeaderName;
+    private JsonNode organism;
+    private JsonNode bodyProduct;
     private JsonNode anatomicalPart;
-    private String geoLocCountry;
-    private String geoLocProvince;
-    private String collectionDevice;
-    private String collectionMethod;
-    private String environmentalSite;
-    private String anatomicalMaterial;
-    private String purposeOfSampling;
-    private String sampleCollectedBy;
-    private String sequenceSubmittedBy;
-    private String environmentalMaterial;
-    private String sampleCollectionDate;
-    private String purposeOfSamplingDetails;
-    private String sampleCollectionDateNullReason;
+    private JsonNode geoLocCountry;
+    private JsonNode geoLocProvince;
+    private JsonNode collectionDevice;
+    private JsonNode collectionMethod;
+    private JsonNode environmentalSite;
+    private JsonNode anatomicalMaterial;
+    private JsonNode purposeOfSampling;
+    private JsonNode sampleCollectedBy;
+    private JsonNode sequenceSubmittedBy;
+    private JsonNode environmentalMaterial;
+    private JsonNode sampleCollectionDate;
+    private JsonNode purposeOfSamplingDetails;
+    private JsonNode sampleCollectionDateNullReason;
   }
 
   @Data
@@ -149,13 +154,13 @@ public class AnalysisDocument {
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class SequenceAnalysis {
-    private String consensusSequenceSoftwareName;
-    private String consensusSequenceSoftwareVersion;
-    private String dehostingMethod;
+    private JsonNode consensusSequenceSoftwareName;
+    private JsonNode consensusSequenceSoftwareVersion;
+    private JsonNode dehostingMethod;
     @NonNull private Metrics metrics;
-    private String referenceGenomeAccession;
-    private String rawSequenceDataProcessingMethod;
-    private String bioinformaticsProtocol;
+    private JsonNode referenceGenomeAccession;
+    private JsonNode rawSequenceDataProcessingMethod;
+    private JsonNode bioinformaticsProtocol;
   }
 
   @Data
@@ -163,8 +168,8 @@ public class AnalysisDocument {
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class Metrics {
-    private String depthOfCoverage;
-    private String breadthOfCoverage;
+    private JsonNode depthOfCoverage;
+    private JsonNode breadthOfCoverage;
   }
 
   @Data
@@ -172,7 +177,7 @@ public class AnalysisDocument {
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class Donor {
-    @NonNull private String submitterDonorId;
+    @NonNull private JsonNode submitterDonorId;
   }
 
   @Getter

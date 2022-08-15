@@ -19,6 +19,7 @@
 package org.cancogenvirusseq.singularity.components.utils;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +29,7 @@ import javax.annotation.Nullable;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import org.cancogenvirusseq.singularity.components.model.AnalysisDocument;
+
 
 public class TsvUtils {
 
@@ -103,7 +105,7 @@ public class TsvUtils {
   }
 
   private static String analysisDocumentToTsvRow(AnalysisDocument analysisDocument) {
-    return stringsToTsvRow(
+    return stringsToTsvRow(jsonNodeToString(
         analysisDocument.getStudyId(),
         analysisDocument.getDonors().get(0).getSubmitterDonorId(),
         analysisDocument.getAnalysis().getSampleCollection().getSampleCollectedBy(),
@@ -119,7 +121,7 @@ public class TsvUtils {
         analysisDocument.getAnalysis().getSampleCollection().getPurposeOfSampling(),
         analysisDocument.getAnalysis().getSampleCollection().getPurposeOfSamplingDetails(),
         analysisDocument.getAnalysis().getSampleCollection().getAnatomicalMaterial(),
-        jsonNodeToString(analysisDocument.getAnalysis().getSampleCollection().getAnatomicalPart()),
+        analysisDocument.getAnalysis().getSampleCollection().getAnatomicalPart(),
         analysisDocument.getAnalysis().getSampleCollection().getBodyProduct(),
         analysisDocument.getAnalysis().getSampleCollection().getEnvironmentalMaterial(),
         analysisDocument.getAnalysis().getSampleCollection().getEnvironmentalSite(),
@@ -132,7 +134,7 @@ public class TsvUtils {
         analysisDocument.getAnalysis().getHost().getHostAgeUnit(),
         analysisDocument.getAnalysis().getHost().getHostAgeBin(),
         analysisDocument.getAnalysis().getHost().getHostGender(),
-        jsonNodeToString(analysisDocument.getAnalysis().getExperiment().getPurposeOfSequencing()),
+        analysisDocument.getAnalysis().getExperiment().getPurposeOfSequencing(),
         analysisDocument.getAnalysis().getExperiment().getPurposeOfSequencingDetails(),
         analysisDocument.getAnalysis().getExperiment().getSequencingInstrument(),
         analysisDocument.getAnalysis().getExperiment().getSequencingProtocol(),
@@ -150,11 +152,19 @@ public class TsvUtils {
             .getAnalysis()
             .getPathogenDiagnosticTesting()
             .getDiagnosticPcrCtValueNullReason(),
-        analysisDocument.getAnalysis().getDatabaseIdentifiers().getGisaidAccession());
+        analysisDocument.getAnalysis().getDatabaseIdentifiers().getGisaidAccession()));
   }
 
-  private static String jsonNodeToString(JsonNode jsonNode) {
-      return (jsonNode.isArray()) ? String.join(LIST_SEPARATOR, jsonNode.toString()) : jsonNode.toString();
+  private static String[] jsonNodeToString(JsonNode... jsonNodeList) {
+      return Arrays.stream(jsonNodeList).map(jsonNode -> {
+          if (jsonNode.isArray()) {
+              List<String> newList = new ArrayList<>();
+              jsonNode.iterator().forEachRemaining(e ->newList.add(e.textValue()));
+              return String.join(LIST_SEPARATOR, newList);
+          } else {
+              return jsonNode.textValue();
+          }
+      }).toArray(String[]::new);
   }
 
   private static String stringsToTsvRow(String... strings) {
