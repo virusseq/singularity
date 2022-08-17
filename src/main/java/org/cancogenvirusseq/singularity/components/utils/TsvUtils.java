@@ -29,11 +29,18 @@ import javax.annotation.Nullable;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import org.cancogenvirusseq.singularity.components.model.AnalysisDocument;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
 
-
+@Configuration
 public class TsvUtils {
 
-  private static final String LIST_SEPARATOR = ",";
+  private static String LIST_SEPARATOR;
+
+  @Value("${utils.tsvListSeparator}")
+  public void setListSeparator(String listSeparator) {
+    LIST_SEPARATOR = listSeparator;
+  }
 
   @Getter
   private static final byte[] header =
@@ -156,15 +163,15 @@ public class TsvUtils {
   }
 
   private static String[] jsonNodeToString(JsonNode... jsonNodeList) {
-      return Arrays.stream(jsonNodeList).map(jsonNode -> {
-          if (jsonNode.isArray()) {
-              List<String> newList = new ArrayList<>();
-              jsonNode.iterator().forEachRemaining(e ->newList.add(e.textValue()));
-              return String.join(LIST_SEPARATOR, newList);
-          } else {
-              return jsonNode.textValue();
-          }
-      }).toArray(String[]::new);
+    return Arrays.stream(jsonNodeList).map(jsonNode -> {
+      if (jsonNode.isArray()) {
+        List<String> newList = new ArrayList<>();
+        jsonNode.iterator().forEachRemaining(e -> newList.add(e.textValue()));
+        return String.join(LIST_SEPARATOR, newList);
+      } else {
+        return jsonNode.textValue();
+      }
+    }).toArray(String[]::new);
   }
 
   private static String stringsToTsvRow(String... strings) {
