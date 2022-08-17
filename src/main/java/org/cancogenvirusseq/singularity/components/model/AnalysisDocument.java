@@ -49,7 +49,6 @@ public class AnalysisDocument {
   @NonNull private Analysis analysis;
   @NonNull private List<Donor> donors;
 
-
   @Data
   @NoArgsConstructor
   @JsonIgnoreProperties(ignoreUnknown = true)
