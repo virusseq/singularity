@@ -53,3 +53,6 @@ files:
 
 intervalEventEmitter:
   intervalTimerSeconds: 600
+
+utils:
+  tsvListSeparator: ";"
