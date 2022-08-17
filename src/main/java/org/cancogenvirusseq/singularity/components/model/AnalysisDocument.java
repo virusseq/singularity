@@ -108,8 +108,6 @@ public class AnalysisDocument {
     private JsonNode hostDisease;
     private JsonNode hostAgeUnit;
     private JsonNode hostScientificName;
-
-
   }
 
   @Data
