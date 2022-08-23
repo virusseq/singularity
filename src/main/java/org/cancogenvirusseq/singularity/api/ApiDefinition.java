@@ -24,8 +24,10 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import java.nio.ByteBuffer;
 import java.util.UUID;
+
 import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
 import org.cancogenvirusseq.singularity.api.model.ErrorResponse;
+import org.cancogenvirusseq.singularity.api.model.ItemsRequest;
 import org.cancogenvirusseq.singularity.api.model.SetIdBuildRequest;
 import org.cancogenvirusseq.singularity.components.model.TotalCounts;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
@@ -155,4 +157,20 @@ public interface ApiDefinition {
       produces = MediaType.APPLICATION_JSON_VALUE,
       method = RequestMethod.POST)
   Mono<Archive> buildArchiveWithSetId(@RequestBody SetIdBuildRequest setIdBuildRequest);
+
+  @ApiOperation(
+    value = "Cancel Build process of given hashes",
+    nickname = "Cancel Build",
+    tags = "Singularity API")
+  @ApiResponses(
+    value = {
+      @ApiResponse(code = 200, message = "", response = EntityListResponse.class),
+      @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
+    })
+  @RequestMapping(
+    value = "/build-archive/cancel",
+    consumes = MediaType.APPLICATION_JSON_VALUE,
+    produces = MediaType.APPLICATION_JSON_VALUE,
+    method = RequestMethod.PUT)
+  Mono<EntityListResponse> cancelBuildingArchives(@RequestBody ItemsRequest itemsRequest);
 }

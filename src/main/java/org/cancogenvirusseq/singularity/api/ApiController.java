@@ -27,9 +27,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
 import org.cancogenvirusseq.singularity.api.model.ErrorResponse;
+import org.cancogenvirusseq.singularity.api.model.ItemsRequest;
 import org.cancogenvirusseq.singularity.api.model.SetIdBuildRequest;
 import org.cancogenvirusseq.singularity.components.base.DownloadObjectById;
 import org.cancogenvirusseq.singularity.components.model.TotalCounts;
+import org.cancogenvirusseq.singularity.components.pipelines.CancelSetArchive;
 import org.cancogenvirusseq.singularity.components.pipelines.Contributors;
 import org.cancogenvirusseq.singularity.components.pipelines.SetQueryArchiveRequest;
 import org.cancogenvirusseq.singularity.components.pipelines.TotalCountsPipeline;
@@ -57,6 +59,7 @@ public class ApiController implements ApiDefinition {
   private final Contributors contributors;
   private final DownloadObjectById downloadObjectById;
   private final SetQueryArchiveRequest setQueryArchiveRequest;
+  private final CancelSetArchive cancelSetArchive;
   private final ArchivesRepo archivesRepo;
 
   @Override
@@ -137,5 +140,12 @@ public class ApiController implements ApiDefinition {
       return ErrorResponse.errorResponseEntity(
           HttpStatus.INTERNAL_SERVER_ERROR, ex.getLocalizedMessage());
     }
+  }
+
+  @Override
+  public Mono<EntityListResponse> cancelBuildingArchives(ItemsRequest itemsRequest) {
+    return cancelSetArchive
+      .apply(itemsRequest.getItems())
+      .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build()));
   }
 }
