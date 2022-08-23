@@ -49,7 +49,7 @@ contributors:
   appendList:
 
 files:
-  finalEventCheckSeconds: 60
+  finalEventCheckSeconds: 300 #60
 
 intervalEventEmitter:
   intervalTimerSeconds: 600

@@ -42,7 +42,7 @@ public class KafkaEventEmitter implements EventEmitter<Instant> {
   private final KafkaConsumerConfig kafkaConsumerConfig;
 
   @Value("${files.finalEventCheckSeconds}")
-  private final Integer finalEventCheckSeconds = 60; // default to 1 minute
+  private final Integer finalEventCheckSeconds = 300; // default to 1 minute
 
   private static final AtomicReference<Instant> lastEvent = new AtomicReference<>();
 
