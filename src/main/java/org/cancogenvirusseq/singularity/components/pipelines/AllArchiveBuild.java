@@ -47,6 +47,7 @@ public class AllArchiveBuild {
 
     // start file bundle update disposable
     allArchiveDisposable = createAllArchiveDisposable();
+      System.out.println("INIT CALLED in AllArchiveBuild");
   }
 
   private Disposable createAllArchiveDisposable() {
