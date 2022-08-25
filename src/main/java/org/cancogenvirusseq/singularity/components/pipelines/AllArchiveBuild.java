@@ -69,7 +69,7 @@ public class AllArchiveBuild {
         .subscribe();
   }
 
-  private Disposable createBuildAllArchiveDisposable(Instant instant) {
+  /*private*/ public Disposable createBuildAllArchiveDisposable(Instant instant) {
     return instantToArchiveBuildRequest
         .apply(instant)
         .flatMapMany(archiveBuildRequestToArchive)

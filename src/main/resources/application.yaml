@@ -45,6 +45,7 @@ kafka:
   groupId: singularity-instance
   autoOffsetReset: latest
   topic: song_analysis
+  archiveBuildTopic: release_archive
 
 contributors:
   filterList:
