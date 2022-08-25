@@ -44,7 +44,7 @@ public class DownloadMolecularDataToPair
                 Mono.fromFuture(
                         s3AsyncClient.getObject(
                             getObjectRequestForAnalysisDocument(analysisDocument),
-                            AsyncResponseTransformer.toBytes())).checkpoint("Calling s3 getObject").log("Calling s3 getObject log")
+                            AsyncResponseTransformer.toBytes())).checkpoint("Calling s3 getObject")
                     .map(
                         getObjectResponseResponseBytes ->
                             new AnalysisDocumentMolecularDataPair(
