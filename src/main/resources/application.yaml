@@ -41,10 +41,10 @@ elasticX:
 
 kafka:
   bootstrapServer: 127.0.0.1:9093
-  clientId: console-producer #singularity-instance
+  clientId: singularity-instance #console-producer #singularity-instance
   groupId: singularity-instance
   autoOffsetReset: latest
-  topic: song_analysis
+  topic: release_archive #song_analysis
   archiveBuildTopic: release_archive
 
 contributors:

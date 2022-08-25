@@ -12,6 +12,7 @@ import org.cancogenvirusseq.singularity.components.model.AnalysisDocumentMolecul
 import org.cancogenvirusseq.singularity.config.s3Client.S3ClientProperties;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.core.async.AsyncResponseTransformer;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
@@ -31,6 +32,8 @@ public class DownloadMolecularDataToPair
   @Override
   public Flux<AnalysisDocumentMolecularDataPair> apply(
       Flux<AnalysisDocument> analysisDocumentFlux) {
+    Hooks.onOperatorDebug();
+    System.out.println("s3ClientProperties.getEndpoint() ======= "+s3ClientProperties.getEndpoint());
     return analysisDocumentFlux
         .flatMap(
             analysisDocument ->
@@ -41,13 +44,13 @@ public class DownloadMolecularDataToPair
                 Mono.fromFuture(
                         s3AsyncClient.getObject(
                             getObjectRequestForAnalysisDocument(analysisDocument),
-                            AsyncResponseTransformer.toBytes()))
+                            AsyncResponseTransformer.toBytes())).checkpoint("Calling s3 getObject").log("Calling s3 getObject log")
                     .map(
                         getObjectResponseResponseBytes ->
                             new AnalysisDocumentMolecularDataPair(
                                 analysisDocument,
                                 molecularDataBufferWithNewline(
-                                    getObjectResponseResponseBytes.asByteArray()))),
+                                    getObjectResponseResponseBytes.asByteArray()))).checkpoint("Building document pair").log("Building document pair log"),
             s3ClientProperties.getMaxConcurrency())
         .doOnError(
             throwable -> log.info("DownloadMolecularDataToPair" + throwable.getLocalizedMessage()));

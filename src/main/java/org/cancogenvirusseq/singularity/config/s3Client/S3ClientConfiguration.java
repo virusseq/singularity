@@ -72,6 +72,7 @@ public class S3ClientConfiguration {
                     .putAdvancedOption(SdkAdvancedClientOption.SIGNER, AwsS3V4Signer.create())
                     .build());
 
+    System.out.println("S3 ENDPOINT =========== "+s3props.getEndpoint());
     if (s3props.getEndpoint() != null) {
       s3AsyncClientBuilder = s3AsyncClientBuilder.endpointOverride(s3props.getEndpoint());
     }

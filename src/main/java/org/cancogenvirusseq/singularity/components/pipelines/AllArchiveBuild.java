@@ -52,7 +52,7 @@ public class AllArchiveBuild {
 
   private Disposable createAllArchiveDisposable() {
     return eventEmitter
-        .receive()
+        .receive() // this returns a sink.
         .doOnNext(
             instant -> {
               log.info("createAllArchiveDisposable received instant: {}", instant);
