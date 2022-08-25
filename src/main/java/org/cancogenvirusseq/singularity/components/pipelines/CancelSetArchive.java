@@ -32,17 +32,25 @@ public class CancelSetArchive implements Function<Collection<String>, Mono<Cance
   private long cancelPeriodSeconds;
 
   @Override
-  public Mono<CancelListResponse> apply(Collection<String> strings) {
+  public Mono<CancelListResponse> apply(Collection<String> hashList) {
 
     List<ErrorArchive> errorList = new ArrayList<>();
     Map<String, HashResult> hashResultMap = new HashMap<>();
 
-    return Mono.just(strings)
+    return Mono.just(hashList)
       .flatMapMany(this::getArchivesToCancel)
       .doOnNext(a ->
         hashResultMap.put(
           a.getHash(),
-          new HashResult(a.getHash(), a.getStatus().toString(), null, new Date(a.getCreatedAt() * 1000).toString())))
+          HashResult
+            .builder()
+            .hash(a.getHash())
+            .oldStatus(a.getStatus().toString())
+            .createdAt(new Date(a.getCreatedAt() * 1000).toString())
+            .type(a.getType().name())
+            .numberOfSamples(a.getNumOfSamples())
+            .build()
+        ))
       .flatMap(a -> {
         a.setStatus(ArchiveStatus.CANCELLED);
         return archivesRepo
@@ -62,7 +70,7 @@ public class CancelSetArchive implements Function<Collection<String>, Mono<Cance
         new Summary(
           hashResultMap.size(),
           errorList.size(),
-          al.size() - hashResultMap.size() - errorList.size()
+          hashList.size() - hashResultMap.size() - errorList.size()
         )
       ))
       .log();

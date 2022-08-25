@@ -14,4 +14,6 @@ public class HashResult {
   private String oldStatus;
   private String newStatus;
   private String createdAt;
+  private String type;
+  private long numberOfSamples;
 }

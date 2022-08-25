@@ -143,6 +143,10 @@ public class ApiController implements ApiDefinition {
   public Mono<CancelListResponse> cancelBuildingArchives(ItemsRequest itemsRequest) {
     return cancelSetArchive
       .apply(itemsRequest.getItems())
-      .switchIfEmpty(Mono.just(CancelListResponse.builder().build()));
+      .switchIfEmpty(
+        Mono.just(CancelListResponse
+          .builder()
+          .summary(new Summary(0,0, itemsRequest.getItems().size()))
+          .build()));
   }
 }
