@@ -25,10 +25,7 @@ import io.swagger.annotations.ApiResponses;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
-import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
-import org.cancogenvirusseq.singularity.api.model.ErrorResponse;
-import org.cancogenvirusseq.singularity.api.model.ItemsRequest;
-import org.cancogenvirusseq.singularity.api.model.SetIdBuildRequest;
+import org.cancogenvirusseq.singularity.api.model.*;
 import org.cancogenvirusseq.singularity.components.model.TotalCounts;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
 import org.cancogenvirusseq.singularity.repository.query.FindArchivesQuery;
@@ -164,7 +161,7 @@ public interface ApiDefinition {
     tags = "Singularity API")
   @ApiResponses(
     value = {
-      @ApiResponse(code = 200, message = "", response = EntityListResponse.class),
+      @ApiResponse(code = 200, message = "", response = CancelListResponse.class),
       @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
     })
   @RequestMapping(
@@ -172,5 +169,5 @@ public interface ApiDefinition {
     consumes = MediaType.APPLICATION_JSON_VALUE,
     produces = MediaType.APPLICATION_JSON_VALUE,
     method = RequestMethod.PUT)
-  Mono<EntityListResponse> cancelBuildingArchives(@RequestBody ItemsRequest itemsRequest);
+  Mono<CancelListResponse> cancelBuildingArchives(@RequestBody ItemsRequest itemsRequest);
 }

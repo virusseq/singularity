@@ -25,10 +25,7 @@ import java.util.Collection;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.cancogenvirusseq.singularity.api.model.EntityListResponse;
-import org.cancogenvirusseq.singularity.api.model.ErrorResponse;
-import org.cancogenvirusseq.singularity.api.model.ItemsRequest;
-import org.cancogenvirusseq.singularity.api.model.SetIdBuildRequest;
+import org.cancogenvirusseq.singularity.api.model.*;
 import org.cancogenvirusseq.singularity.components.base.DownloadObjectById;
 import org.cancogenvirusseq.singularity.components.model.TotalCounts;
 import org.cancogenvirusseq.singularity.components.pipelines.CancelSetArchive;
@@ -143,9 +140,9 @@ public class ApiController implements ApiDefinition {
   }
 
   @Override
-  public Mono<EntityListResponse> cancelBuildingArchives(ItemsRequest itemsRequest) {
+  public Mono<CancelListResponse> cancelBuildingArchives(ItemsRequest itemsRequest) {
     return cancelSetArchive
       .apply(itemsRequest.getItems())
-      .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build()));
+      .switchIfEmpty(Mono.just(CancelListResponse.builder().build()));
   }
 }

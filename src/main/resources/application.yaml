@@ -56,3 +56,6 @@ intervalEventEmitter:
 
 utils:
   tsvListSeparator: ";"
+
+archive:
+  cancelPeriodSeconds: 14400
