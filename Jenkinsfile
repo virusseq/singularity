@@ -79,6 +79,7 @@ spec:
             when {
                 anyOf {
                     branch 'develop'
+                    branch 'archive_schedular_#292'
                 }
             }
             steps {
@@ -100,6 +101,7 @@ spec:
             when {
                 anyOf {
                     branch 'develop'
+                    branch 'archive_schedular_#292'
                 }
             }
             steps {
