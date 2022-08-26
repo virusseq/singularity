@@ -19,7 +19,6 @@ public class ArchiveBuildRequestEmitter implements EventEmitter<ArchiveBuildRequ
 
   @Override
   public Flux<ArchiveBuildRequest> receive() {
-    System.out.println("receive CALLED in ArchiveBuildRequestEmitter");
     return sink.asFlux();
   }
 }

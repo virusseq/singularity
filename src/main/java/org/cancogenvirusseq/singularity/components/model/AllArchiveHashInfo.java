@@ -26,7 +26,6 @@ public class AllArchiveHashInfo {
     AllArchiveHashInfo allArchiveHashInfo =  new AllArchiveHashInfo(
             countAndLastUpdatedResult.getNumDocuments().getValue(),
             countAndLastUpdatedResult.getLastUpdatedDate().getValueAsString());
-    System.out.println("HASH INFO: "+allArchiveHashInfo.toString());
     return allArchiveHashInfo;
   }
 

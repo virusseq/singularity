@@ -54,7 +54,6 @@ public class KafkaEventEmitter implements EventEmitter<Instant> {
   public void init() {
     // setup disposable to events to proxy sink
     kafkaConsumerDisposable = createKafkaConsumeAndSinkDisposable();
-    System.out.println("INIT CALLED in KafkaEventEmitter");
   }
 
   @Override

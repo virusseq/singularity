@@ -33,7 +33,6 @@ public class DownloadMolecularDataToPair
   public Flux<AnalysisDocumentMolecularDataPair> apply(
       Flux<AnalysisDocument> analysisDocumentFlux) {
     Hooks.onOperatorDebug();
-    System.out.println("s3ClientProperties.getEndpoint() ======= "+s3ClientProperties.getEndpoint());
     return analysisDocumentFlux
         .flatMap(
             analysisDocument ->

@@ -37,7 +37,6 @@ public class IntervalEventEmitter implements EventEmitter<Instant> {
 
   @Override
   public Flux<Instant> receive() {
-    System.out.println("receive CALLED in IntervalEventEmitter");
     return Flux.interval(Duration.ofSeconds(intervalTimerSeconds))
         .map(value -> Instant.now())
         .onErrorContinue(

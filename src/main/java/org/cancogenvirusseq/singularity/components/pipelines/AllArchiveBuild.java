@@ -47,12 +47,11 @@ public class AllArchiveBuild {
 
     // start file bundle update disposable
     allArchiveDisposable = createAllArchiveDisposable();
-      System.out.println("INIT CALLED in AllArchiveBuild");
   }
 
   private Disposable createAllArchiveDisposable() {
     return eventEmitter
-        .receive() // this returns a sink.
+        .receive()
         .doOnNext(
             instant -> {
               log.info("createAllArchiveDisposable received instant: {}", instant);
