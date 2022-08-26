@@ -1,5 +1,6 @@
 package org.cancogenvirusseq.singularity.components.events;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.singularity.config.kafka.KafkaArchiveBuildConsumerConfig;
@@ -9,6 +10,7 @@ import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
+import javax.annotation.PostConstruct;
 import java.time.Instant;
 
 @Slf4j
@@ -21,13 +23,21 @@ public class AllArchiveBuildKafkaEventEmitter implements EventEmitter<String>  {
 
   private final Sinks.Many<String> proxyManySink = Sinks.many().multicast().onBackpressureBuffer();
 
+  @Getter
+  private Disposable kafkaArchiveConsumerDisposable;
+
   @Override
   public Flux<String> receive() {
     return proxyManySink.asFlux();
   }
 
+  @PostConstruct
+  public void init() {
+    // setup disposable to events to proxy sink
+    kafkaArchiveConsumerDisposable = triggerAllArchiveBuildDisposable();
+  }
 
-  private Disposable triggerAllArchiveBuild(){
+  private Disposable triggerAllArchiveBuildDisposable(){
     return kafkaArchiveBuildConsumerConfig
             .getReceiver()
             .receiveAutoAck()
