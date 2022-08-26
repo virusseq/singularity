@@ -33,4 +33,5 @@ public class KafkaProperties {
   private String groupId;
   private String autoOffsetReset;
   private String topic;
+  private String archiveBuildTopic;
 }

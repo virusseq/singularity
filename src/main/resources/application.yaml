@@ -38,11 +38,11 @@ elastic:
   scrollTimeoutMinutes: 10
 
 kafka:
-  bootstrapServer: 127.0.0.1:9093
-  clientId: singularity-instance #console-producer #singularity-instance
+  bootstrapServer: localhost:9092
+  clientId: singularity-instance
   groupId: singularity-instance
   autoOffsetReset: latest
-  topic: release_archive #song_analysis
+  topic: song_analysis
   archiveBuildTopic: release_archive
 
 contributors:

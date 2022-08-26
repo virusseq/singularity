@@ -22,7 +22,7 @@ public class ArchiveBuildKafkaListener {
         topic = properties.getTopic();
     }
 
-    @KafkaListener(id = "listen1", topics = "release_archive", groupId = "singularity-instance")
+    //@KafkaListener(id = "listen1", topics = "release_archive", groupId = "singularity-instance")
     public void listen1(String in) {
         System.out.println("ArchiveBuildKafkaListener read the message: "+in);
         allArchiveBuild.createBuildAllArchiveDisposable(Instant.now());
