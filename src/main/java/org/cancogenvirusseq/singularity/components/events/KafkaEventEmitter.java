@@ -36,7 +36,7 @@ import reactor.core.publisher.Sinks;
 
 @Slf4j
 @Component
-//@Profile("kafka")
+@Profile("kafka")
 @RequiredArgsConstructor
 public class KafkaEventEmitter implements EventEmitter<Instant> {
   private final KafkaConsumerConfig kafkaConsumerConfig;
