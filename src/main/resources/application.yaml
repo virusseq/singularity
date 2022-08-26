@@ -1,6 +1,4 @@
 spring:
-  profiles:
-    active: kafka #UKZs
   application:
     name: "Singularity"
     version: @project.version@
@@ -9,7 +7,7 @@ spring:
 server:
   port: 8080
 
-postgresX:
+postgres:
   host: localhost
   port: 5432
   database: singularity
@@ -18,7 +16,7 @@ postgresX:
   maxPoolIdleTimeMs: 1000
   maxPoolSize: 20
 
-s3X:
+s3:
   region: collab
   endpoint: https://object.cancercollaboratory.org:9080
   accessKeyId: SOME_KEY
@@ -28,7 +26,7 @@ s3X:
   maxConcurrency: 64
   acquisitionTimeoutMs: 30000
 
-elasticX:
+elastic:
   host: localhost
   port: 9200
   useHttps: false
@@ -59,39 +57,6 @@ intervalEventEmitter:
 
 utils:
   tsvListSeparator: ";"
-
-#Dev Singularity
-postgres:
-  host: localhost
-  port: 5435
-  database: singularity
-  username: postgres
-  password: ngtHd5yH2E
-  maxPoolIdleTimeMs: 1000
-  maxPoolSize: 20
-
-elastic:
-  host: virus-seq-es.dev.cancogen.cancercollaboratory.org
-  port: 443
-  useHttps: true
-  useAuthentication: true
-  username: elastic
-  password: 2zw8cv7fmdh9d5t8bmbkqf9j
-  fileCentricIndex: file_centric
-  arrangerSetsIndex: arranger-sets
-  scrollTimeoutMinutes: 10
-
-s3:
-  region: collab
-  endpoint: https://object.cancercollaboratory.org:9080
-  accessKeyId: BWTI2DG7O01VL7KALBD8
-  secretAccessKey: N2zhtQO9aDnQ1AQ6kDWJK8C6xGalvYtdCEqdw9wn
-  #bucket: cancogen
-  bucket: cancogen-dev
-  dataDir: data
-  maxConcurrency: 64
-  acquisitionTimeoutMs: 30000
-
 
 logging:
   level:
