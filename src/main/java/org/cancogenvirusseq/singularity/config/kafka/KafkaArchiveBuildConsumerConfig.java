@@ -27,19 +27,19 @@ public class KafkaArchiveBuildConsumerConfig {
 
   private ReceiverOptions<String, String> buildOptions(KafkaProperties properties) {
     return ReceiverOptions.<String, String>create(
-                    Map.ofEntries(
-                            new AbstractMap.SimpleEntry<>(
-                                    ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, properties.getBootstrapServer()),
-                            new AbstractMap.SimpleEntry<>(
-                                    ConsumerConfig.CLIENT_ID_CONFIG, properties.getClientId()),
-                            new AbstractMap.SimpleEntry<>(
-                                    ConsumerConfig.GROUP_ID_CONFIG, properties.getGroupId()),
-                            new AbstractMap.SimpleEntry<>(
-                                    ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class),
-                            new AbstractMap.SimpleEntry<>(
-                                    ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class),
-                            new AbstractMap.SimpleEntry<>(
-                                    ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, properties.getAutoOffsetReset())))
+             Map.ofEntries(
+                 new AbstractMap.SimpleEntry<>(
+                     ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, properties.getBootstrapServer()),
+                 new AbstractMap.SimpleEntry<>(
+                     ConsumerConfig.CLIENT_ID_CONFIG, properties.getClientId()),
+                 new AbstractMap.SimpleEntry<>(
+                     ConsumerConfig.GROUP_ID_CONFIG, properties.getGroupId()),
+                 new AbstractMap.SimpleEntry<>(
+                      ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class),
+                 new AbstractMap.SimpleEntry<>(
+                     ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class),
+                 new AbstractMap.SimpleEntry<>(
+                     ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, properties.getAutoOffsetReset())))
             //.subscription(Collections.singleton(properties.getArchiveBuildTopic()))
             .subscription(Collections.singleton("release_archive"))
             .addAssignListener(partitions -> log.debug("onPartitionsAssigned {}", partitions))
