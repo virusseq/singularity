@@ -48,9 +48,9 @@ public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildReques
   @Override
   public Flux<Archive> apply(ArchiveBuildRequest archiveBuildRequest) {
     return elasticSearchScroll
-        .apply(archiveBuildRequest.getQueryBuilder()).checkpoint("Calling ES").log("Calling ES log")
-        .transform(downloadMolecularDataToPair).checkpoint("Downloaded file pairs").log("Downloaded file pairs log")
-        .transform(createFileBundleFromPairsWithArchive(archiveBuildRequest.getArchive())).checkpoint("Creating file bundles").log("Creating file bundles log")
+        .apply(archiveBuildRequest.getQueryBuilder())
+        .transform(downloadMolecularDataToPair)
+        .transform(createFileBundleFromPairsWithArchive(archiveBuildRequest.getArchive()))
         .flatMap(fileBundleUpload)
         .flatMap(
             uploadObjectId ->

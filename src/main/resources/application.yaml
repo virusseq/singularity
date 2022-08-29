@@ -58,7 +58,5 @@ intervalEventEmitter:
 utils:
   tsvListSeparator: ";"
 
-logging:
-  level:
-    org.springframework: DEBUG
-    org.springframework.data: DEBUG
+archive:
+  cancelPeriodSeconds: 14400

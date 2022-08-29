@@ -32,7 +32,6 @@ public class DownloadMolecularDataToPair
   @Override
   public Flux<AnalysisDocumentMolecularDataPair> apply(
       Flux<AnalysisDocument> analysisDocumentFlux) {
-    Hooks.onOperatorDebug();
     return analysisDocumentFlux
         .flatMap(
             analysisDocument ->
@@ -43,13 +42,13 @@ public class DownloadMolecularDataToPair
                 Mono.fromFuture(
                         s3AsyncClient.getObject(
                             getObjectRequestForAnalysisDocument(analysisDocument),
-                            AsyncResponseTransformer.toBytes())).checkpoint("Calling s3 getObject")
+                            AsyncResponseTransformer.toBytes()))
                     .map(
                         getObjectResponseResponseBytes ->
                             new AnalysisDocumentMolecularDataPair(
                                 analysisDocument,
                                 molecularDataBufferWithNewline(
-                                    getObjectResponseResponseBytes.asByteArray()))).checkpoint("Building document pair").log("Building document pair log"),
+                                    getObjectResponseResponseBytes.asByteArray()))),
             s3ClientProperties.getMaxConcurrency())
         .doOnError(
             throwable -> log.info("DownloadMolecularDataToPair" + throwable.getLocalizedMessage()));

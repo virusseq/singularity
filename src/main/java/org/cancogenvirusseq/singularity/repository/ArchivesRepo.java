@@ -1,5 +1,6 @@
 package org.cancogenvirusseq.singularity.repository;
 
+import java.util.List;
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.val;
@@ -27,12 +28,24 @@ public interface ArchivesRepo extends ReactiveCrudRepository<Archive, UUID> {
 
   Mono<Archive> findArchiveByHashInfoEquals(String hashInfo);
 
+  Flux<Archive> findByHashInAndStatus(List<String> hash, ArchiveStatus status);
+
+  Flux<Archive> findByStatusAndCreatedAtLessThan(ArchiveStatus status, Long fromTime);
+
   default Mono<Archive> findLatestAllArchive() {
     return findTopByTypeAndStatusOrderByCreatedAtDesc(ArchiveType.ALL, ArchiveStatus.COMPLETE);
   }
 
   default Mono<Archive> findCompletedArchiveById(UUID id) {
     return findArchiveByIdEqualsAndStatusEquals(id, ArchiveStatus.COMPLETE);
+  }
+
+  default Flux<Archive> findBuildingArchivesByHashList(List<String> hashList) {
+    return findByHashInAndStatus(hashList, ArchiveStatus.BUILDING);
+  }
+
+  default Flux<Archive> findBuildingArchivesOlderThan(Long fromTime){
+    return findByStatusAndCreatedAtLessThan(ArchiveStatus.BUILDING, fromTime);
   }
 
   default Mono<Archive> findByArchiveObject(Archive archive) {
