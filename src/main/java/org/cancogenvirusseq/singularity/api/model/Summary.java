@@ -11,4 +11,5 @@ public class Summary{
   private int success;
   private int error;
   private int ignored;
+  private int total;
 }

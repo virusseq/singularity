@@ -147,7 +147,7 @@ public class ApiController implements ApiDefinition {
       .switchIfEmpty(
         Mono.just(CancelListResponse
           .builder()
-          .summary(new Summary(0,0, itemsRequest.getItems().size()))
+          .summary(new Summary(0,0, itemsRequest.getItems().size(), 0))
           .build()));
   }
 
@@ -159,7 +159,7 @@ public class ApiController implements ApiDefinition {
       .switchIfEmpty(
         Mono.just(CancelListResponse
           .builder()
-          .summary(new Summary(0,0, itemsRequest.getItems().size()))
+          .summary(new Summary(0,0, itemsRequest.getItems().size(), 0))
           .build()));
   }
 }
