@@ -12,7 +12,6 @@ import org.cancogenvirusseq.singularity.components.model.AnalysisDocumentMolecul
 import org.cancogenvirusseq.singularity.config.s3Client.S3ClientProperties;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.core.async.AsyncResponseTransformer;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
