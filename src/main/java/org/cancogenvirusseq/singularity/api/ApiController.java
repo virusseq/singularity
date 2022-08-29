@@ -141,8 +141,21 @@ public class ApiController implements ApiDefinition {
 
   @Override
   public Mono<CancelListResponse> cancelBuildingArchives(ItemsRequest itemsRequest) {
+    log.info("cancelBuildingArchives Request: " + itemsRequest.getItems());
     return cancelSetArchive
-      .apply(itemsRequest.getItems())
+      .apply(itemsRequest.getItems(), false)
+      .switchIfEmpty(
+        Mono.just(CancelListResponse
+          .builder()
+          .summary(new Summary(0,0, itemsRequest.getItems().size()))
+          .build()));
+  }
+
+  @Override
+  public Mono<CancelListResponse> forceCancelBuildingArchives(ItemsRequest itemsRequest) {
+    log.info("forceCancelBuildingArchives Request: " + itemsRequest.getItems());
+    return cancelSetArchive
+      .apply(itemsRequest.getItems(), true)
       .switchIfEmpty(
         Mono.just(CancelListResponse
           .builder()
