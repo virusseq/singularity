@@ -14,19 +14,11 @@ public class AllArchiveHashInfo {
   private final Long numSamples;
   private final String lastUpdated;
 
-  /*public static AllArchiveHashInfo parseFromCountAndLastUpdatedResult(
+  public static AllArchiveHashInfo parseFromCountAndLastUpdatedResult(
       CountAndLastUpdatedResult countAndLastUpdatedResult) {
     return new AllArchiveHashInfo(
         countAndLastUpdatedResult.getNumDocuments().getValue(),
         countAndLastUpdatedResult.getLastUpdatedDate().getValueAsString());
-  }*/
-
-  public static AllArchiveHashInfo parseFromCountAndLastUpdatedResult(
-          CountAndLastUpdatedResult countAndLastUpdatedResult) {
-    AllArchiveHashInfo allArchiveHashInfo =  new AllArchiveHashInfo(
-            countAndLastUpdatedResult.getNumDocuments().getValue(),
-            countAndLastUpdatedResult.getLastUpdatedDate().getValueAsString());
-    return allArchiveHashInfo;
   }
 
   @Override
