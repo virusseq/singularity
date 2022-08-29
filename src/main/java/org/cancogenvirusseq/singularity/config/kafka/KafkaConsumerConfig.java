@@ -56,7 +56,6 @@ public class KafkaConsumerConfig {
                 new AbstractMap.SimpleEntry<>(
                     ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, properties.getAutoOffsetReset())))
          .subscription(Collections.singleton(properties.getTopic()))
-        //.subscription(Collections.singleton("release_archive"))
         .addAssignListener(partitions -> log.debug("onPartitionsAssigned {}", partitions))
         .addRevokeListener(partitions -> log.debug("onPartitionsRevoked {}", partitions));
   }

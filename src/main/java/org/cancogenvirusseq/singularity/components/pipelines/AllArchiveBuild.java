@@ -62,7 +62,6 @@ public class AllArchiveBuild {
               }
 
               log.info("Spawning new archive build...");
-              //this.buildAllArchiveDisposable = createBuildAllArchiveDisposable(instant);
               this.buildAllArchiveDisposable = createBuildAllArchiveDisposable(Instant.now());
             })
         .log("Files::createAllArchiveDisposable")
