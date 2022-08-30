@@ -170,4 +170,20 @@ public interface ApiDefinition {
     produces = MediaType.APPLICATION_JSON_VALUE,
     method = RequestMethod.PUT)
   Mono<CancelListResponse> cancelBuildingArchives(@RequestBody ItemsRequest itemsRequest);
+
+  @ApiOperation(
+    value = "Force cancel Build process of given hashes",
+    nickname = "Force cancel Build",
+    tags = "Singularity API")
+  @ApiResponses(
+    value = {
+      @ApiResponse(code = 200, message = "", response = CancelListResponse.class),
+      @ApiResponse(code = 500, message = UNKNOWN_MSG, response = ErrorResponse.class)
+    })
+  @RequestMapping(
+    value = "/build-archive/force-cancel",
+    consumes = MediaType.APPLICATION_JSON_VALUE,
+    produces = MediaType.APPLICATION_JSON_VALUE,
+    method = RequestMethod.PUT)
+  Mono<CancelListResponse> forceCancelBuildingArchives(@RequestBody ItemsRequest itemsRequest);
 }

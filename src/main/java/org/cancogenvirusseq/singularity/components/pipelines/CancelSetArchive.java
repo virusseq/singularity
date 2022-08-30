@@ -16,14 +16,14 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import java.time.Instant;
 import java.util.*;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 @ConfigurationProperties("archive")
-public class CancelSetArchive implements Function<Collection<String>, Mono<CancelListResponse>> {
+public class CancelSetArchive implements BiFunction<Collection<String>, Boolean, Mono<CancelListResponse>> {
 
   private final ArchivesRepo archivesRepo;
 
@@ -32,13 +32,14 @@ public class CancelSetArchive implements Function<Collection<String>, Mono<Cance
   private long cancelPeriodSeconds;
 
   @Override
-  public Mono<CancelListResponse> apply(Collection<String> hashList) {
+  public Mono<CancelListResponse> apply(Collection<String> hashList, Boolean force) {
 
     List<ErrorArchive> errorList = new ArrayList<>();
+    List<String> ignoredList = new ArrayList<>(hashList);
     Map<String, HashResult> hashResultMap = new HashMap<>();
 
     return Mono.just(hashList)
-      .flatMapMany(this::getArchivesToCancel)
+      .flatMapMany(hl -> this.getArchivesToCancel(hl, force))
       .doOnNext(a ->
         hashResultMap.put(
           a.getHash(),
@@ -51,6 +52,7 @@ public class CancelSetArchive implements Function<Collection<String>, Mono<Cance
             .numberOfSamples(a.getNumOfSamples())
             .build()
         ))
+      .doOnNext(a -> ignoredList.remove(a.getHash()))
       .flatMap(a -> {
         a.setStatus(ArchiveStatus.CANCELLED);
         return archivesRepo
@@ -65,34 +67,38 @@ public class CancelSetArchive implements Function<Collection<String>, Mono<Cance
       })
       .collectList()
       .map(al -> new CancelListResponse(
-        new ArrayList<HashResult>(hashResultMap.values()),
-        errorList,
+        new ArrayList<>(hashResultMap.values()),
+        (errorList.size() > 0) ? errorList : null,
+        (ignoredList.size() > 0) ? ignoredList : null,
         new Summary(
           hashResultMap.size(),
           errorList.size(),
-          hashList.size() - hashResultMap.size() - errorList.size()
+          ignoredList.size(),
+          (hashList.size() > 0) ? hashList.size() : al.size()
         )
       ))
       .log();
   }
 
-  private Flux<Archive> getArchivesToCancel(Collection<String> strings) {
+  private Flux<Archive> getArchivesToCancel(Collection<String> strings, Boolean force) {
     return Mono.just(strings)
       .flatMapMany(
         s -> (s.size() > 0)
-          ? searchBuildingArchivesByIds(s)
-          : searchBuildingArchives()
+          ? searchBuildingArchivesByIds(s, force)
+          : searchBuildingArchives(force)
     ).log();
   }
 
-  private Flux<Archive> searchBuildingArchivesByIds(Collection<String> strings) {
-    return archivesRepo
-      .findBuildingArchivesByHashList(new ArrayList<>(strings));
+  private Flux<Archive> searchBuildingArchivesByIds(Collection<String> strings, Boolean force) {
+    return (force) ?
+      archivesRepo.findBuildingArchivesByHashList(new ArrayList<>(strings)) :
+      archivesRepo.findBuildingArchivesByHashListOlderThan(new ArrayList<>(strings), Instant.now().minusSeconds(cancelPeriodSeconds).getEpochSecond());
   }
 
-  private Flux<Archive> searchBuildingArchives() {
-    return archivesRepo
-      .findBuildingArchivesOlderThan(Instant.now().minusSeconds(cancelPeriodSeconds).toEpochMilli());
+  private Flux<Archive> searchBuildingArchives(Boolean force) {
+    return (force) ?
+      archivesRepo.findBuildingArchives() :
+      archivesRepo.findBuildingArchivesOlderThan(Instant.now().minusSeconds(cancelPeriodSeconds).getEpochSecond());
   }
 
 }
