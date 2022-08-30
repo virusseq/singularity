@@ -74,7 +74,7 @@ public class CancelSetArchive implements BiFunction<Collection<String>, Boolean,
           hashResultMap.size(),
           errorList.size(),
           ignoredList.size(),
-          hashResultMap.size() + errorList.size() + ignoredList.size()
+          (hashList.size() > 0) ? hashList.size() : al.size()
         )
       ))
       .log();
