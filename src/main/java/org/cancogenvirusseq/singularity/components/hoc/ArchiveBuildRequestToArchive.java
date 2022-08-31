@@ -71,7 +71,14 @@ public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildReques
                       return archivesRepo.save(archiveBuildRequestCtx.getArchive());
                     }))
         .doFinally(
-            signalType -> deleteFileBundleForArchive.accept(archiveBuildRequest.getArchive()))
+            signalType -> {
+              archiveBuildRequest.getArchive().setStatus(ArchiveStatus.CANCELLED);
+              archivesRepo.save(archiveBuildRequest.getArchive());
+              log.info(
+                "archive hash '{}' tagged as CANCELLED",
+                archiveBuildRequest.getArchive().getHash());
+              deleteFileBundleForArchive.accept(archiveBuildRequest.getArchive());
+            })
         .contextWrite(ctx -> ctx.put("archiveBuildRequest", archiveBuildRequest))
         .log("ArchiveBuildRequestToArchive");
   }
