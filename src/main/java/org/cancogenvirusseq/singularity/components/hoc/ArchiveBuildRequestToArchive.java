@@ -71,18 +71,37 @@ public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildReques
                       return archivesRepo.save(archiveBuildRequestCtx.getArchive());
                     }))
         .doFinally(
-          signalType -> deleteFileBundleForArchive.accept(archiveBuildRequest.getArchive()))
-        .doOnCancel(() ->
+          signalType -> {
+            log.info("doFinally archive hash {} current status:{}",
+              archiveBuildRequest.getArchive().getHash(),
+              archiveBuildRequest.getArchive().getStatus());
             withArchiveBuildRequestContext(
               archiveBuildRequestCtx -> {
+                log.info("doFinally:withArchiveBuildRequestContext archive hash {} current status:{}",
+                  archiveBuildRequestCtx.getArchive().getHash(),
+                  archiveBuildRequestCtx.getArchive().getStatus());
                 archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.CANCELLED);
-                log.info(
-                  "archive hash '{}' tagged as CANCELLED",
-                  archiveBuildRequestCtx.getArchive().getHash());
                 return archivesRepo.save(archiveBuildRequestCtx.getArchive());
-              }
-            )
-        )
+              });
+            deleteFileBundleForArchive.accept(archiveBuildRequest.getArchive());
+          })
+        .doOnCancel(() -> {
+          archiveBuildRequest.getArchive().setStatus(ArchiveStatus.CANCELLED);
+          log.info(
+            "doOnCancel archive hash '{}' tagged as {}",
+            archiveBuildRequest.getArchive().getHash(),
+            archiveBuildRequest.getArchive().getStatus()
+            );
+          archivesRepo.save(archiveBuildRequest.getArchive()).log();
+          withArchiveBuildRequestContext(
+            archiveBuildRequestCtx -> {
+              log.info("doOnCancel:withArchiveBuildRequestContext archive hash {} current status:{}",
+                archiveBuildRequestCtx.getArchive().getHash(),
+                archiveBuildRequestCtx.getArchive().getStatus());
+              archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.CANCELLED);
+              return archivesRepo.save(archiveBuildRequestCtx.getArchive());
+            });
+        })
         .contextWrite(ctx -> ctx.put("archiveBuildRequest", archiveBuildRequest))
         .log("ArchiveBuildRequestToArchive");
   }
