@@ -88,19 +88,21 @@ public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildReques
         .doOnCancel(() -> {
           archiveBuildRequest.getArchive().setStatus(ArchiveStatus.CANCELLED);
           log.info(
-            "doOnCancel archive hash '{}' tagged as {}",
+            "doOnCancel archive id:{} hash'{}' tagged as {}",
+            archiveBuildRequest.getArchive().getId(),
             archiveBuildRequest.getArchive().getHash(),
             archiveBuildRequest.getArchive().getStatus()
             );
-          archivesRepo.save(archiveBuildRequest.getArchive()).log();
+          archivesRepo.save(archiveBuildRequest.getArchive()).log().subscribe();
           withArchiveBuildRequestContext(
             archiveBuildRequestCtx -> {
-              log.info("doOnCancel:withArchiveBuildRequestContext archive hash {} current status:{}",
+              log.info("doOnCancel:withArchiveBuildRequestContext archive id: hash:{} current status:{}",
+                archiveBuildRequestCtx.getArchive().getId(),
                 archiveBuildRequestCtx.getArchive().getHash(),
                 archiveBuildRequestCtx.getArchive().getStatus());
               archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.CANCELLED);
               return archivesRepo.save(archiveBuildRequestCtx.getArchive());
-            });
+            }).subscribe();
         })
         .contextWrite(ctx -> ctx.put("archiveBuildRequest", archiveBuildRequest))
         .log("ArchiveBuildRequestToArchive");
