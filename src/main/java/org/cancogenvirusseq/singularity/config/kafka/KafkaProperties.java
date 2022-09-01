@@ -32,6 +32,6 @@ public class KafkaProperties {
   private String clientId;
   private String groupId;
   private String autoOffsetReset;
-  private String songUploadTopic;
+  private String topic;
   private String archiveBuildTopic;
 }

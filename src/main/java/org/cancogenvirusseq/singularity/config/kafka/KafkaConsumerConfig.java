@@ -55,7 +55,7 @@ public class KafkaConsumerConfig {
                     ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class),
                 new AbstractMap.SimpleEntry<>(
                     ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, properties.getAutoOffsetReset())))
-         .subscription(Collections.singleton(properties.getSongUploadTopic()))
+         .subscription(Collections.singleton(properties.getTopic()))
         .addAssignListener(partitions -> log.debug("onPartitionsAssigned {}", partitions))
         .addRevokeListener(partitions -> log.debug("onPartitionsRevoked {}", partitions));
   }
