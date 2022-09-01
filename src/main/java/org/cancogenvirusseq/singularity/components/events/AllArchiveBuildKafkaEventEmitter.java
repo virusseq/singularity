@@ -35,7 +35,6 @@ public class AllArchiveBuildKafkaEventEmitter implements EventEmitter<String>  {
   public void init() {
     // setup disposable to events to proxy sink
     kafkaArchiveConsumerDisposable = triggerAllArchiveBuildDisposable();
-    log.info("****** INIT CALLED IN AllArchiveBuildKafkaEventEmitter ****** ");
   }
 
   private Disposable triggerAllArchiveBuildDisposable(){

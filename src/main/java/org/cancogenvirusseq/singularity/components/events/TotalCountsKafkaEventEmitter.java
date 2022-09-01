@@ -26,7 +26,7 @@ import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.cancogenvirusseq.singularity.config.kafka.KafkaConsumerConfig;
+import org.cancogenvirusseq.singularity.config.kafka.KafkaSongUploadConsumerConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -39,7 +39,7 @@ import reactor.core.publisher.Sinks;
 @Profile("kafka")
 @RequiredArgsConstructor
 public class TotalCountsKafkaEventEmitter implements EventEmitter<Instant> {
-  private final KafkaConsumerConfig kafkaConsumerConfig;
+  private final KafkaSongUploadConsumerConfig kafkaSongUploadConsumerConfig;
 
   @Value("${files.finalEventCheckSeconds}")
   private final Integer finalEventCheckSeconds = 60; // default to 1 minute
@@ -66,7 +66,7 @@ public class TotalCountsKafkaEventEmitter implements EventEmitter<Instant> {
   }
 
   private Disposable createKafkaConsumeAndSinkDisposable() {
-    return kafkaConsumerConfig
+    return kafkaSongUploadConsumerConfig
         .getReceiver()
         .receiveAutoAck()
         .concatMap(r -> r)
