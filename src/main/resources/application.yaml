@@ -42,7 +42,7 @@ kafka:
   clientId: singularity-instance
   groupId: singularity-instance
   autoOffsetReset: latest
-  topic: song_analysis
+  songUploadTopic: song_analysis
   archiveBuildTopic: release_archive
 
 contributors:
