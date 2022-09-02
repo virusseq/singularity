@@ -79,7 +79,6 @@ spec:
             when {
                 anyOf {
                     branch 'develop'
-                    branch 'cancelbuild'
                 }
             }
             steps {
@@ -101,7 +100,6 @@ spec:
             when {
                 anyOf {
                     branch 'develop'
-                    branch 'cancelbuild'
                 }
             }
             steps {
