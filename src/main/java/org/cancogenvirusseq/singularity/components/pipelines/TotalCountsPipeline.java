@@ -12,12 +12,12 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.cancogenvirusseq.singularity.components.events.EventEmitter;
 import org.cancogenvirusseq.singularity.components.model.TotalCounts;
 import org.cancogenvirusseq.singularity.config.elasticsearch.ElasticsearchProperties;
+import org.cancogenvirusseq.singularity.repository.TotalCountsRepo;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -50,7 +50,8 @@ public class TotalCountsPipeline {
   private final ReactiveElasticsearchClient client;
   private final EventEmitter<Instant> eventEmitter;
 
-  @Setter private TotalCounts cachedTotalCounts;
+  private final TotalCountsRepo totalCountsRepo;
+
   @Getter private Disposable pipelineDisposable;
   private Disposable calculatorDisposable;
 
@@ -66,7 +67,17 @@ public class TotalCountsPipeline {
   }
 
   public Mono<TotalCounts> getTotalCounts() {
-    return cachedTotalCounts == null ? Mono.empty() : Mono.just(cachedTotalCounts);
+    return totalCountsRepo
+      .findTopByOrderByTimestampDesc()
+      .map(tc -> TotalCounts
+        .builder()
+        .files(tc.getFiles())
+        .samples(tc.getSamples())
+        .studies(tc.getStudies())
+        .fileSizeBytes(tc.getFileSizeBytes())
+        .fileSizeHumanReadable(tc.getFileSizeHumanReadable())
+        .timestamp(tc.getTimestamp())
+        .build());
   }
 
   private Disposable createTotalCountsPipelineDisposable() {
@@ -88,13 +99,14 @@ public class TotalCountsPipeline {
   }
 
   private Disposable createCalculatorDisposable(Instant instant) {
+    log.info("starting totalCounts:");
     return createBuilderWithStudiesAndFilesCount()
         .flatMap(
             totalCountsBuilder ->
                 countUniqueGenomes().map(count -> totalCountsBuilder.samples(count.longValue())))
         .map(totalCountsBuilder -> totalCountsBuilder.timestamp(instant.toEpochMilli()))
         .map(TotalCounts.TotalCountsBuilder::build)
-        .doOnNext(this::setCachedTotalCounts)
+        .flatMap(this::updateTotalCount)
         .subscribe(tc -> log.info("CachedTotalCounts calculated - " + tc.toString()));
   }
 
@@ -172,5 +184,21 @@ public class TotalCountsPipeline {
               .filter(id -> !id.isEmpty()));
     }
     return Flux.empty();
+  }
+
+  private Mono<TotalCounts> updateTotalCount(TotalCounts totalCounts){
+      return totalCountsRepo
+        .findTopByOrderByTimestampDesc()
+        .flatMap(o -> {
+          if (!o.getFiles().equals(totalCounts.getFiles())
+            || !o.getSamples().equals(totalCounts.getSamples())
+            || !o.getStudies().equals(totalCounts.getStudies())
+            || !o.getFileSizeBytes().equals(totalCounts.getFileSizeBytes())){
+            log.info("Updating database with totalCounts");
+            return totalCountsRepo.save(totalCounts);
+          } else {
+            return Mono.just(o);
+          }
+        }).switchIfEmpty(totalCountsRepo.save(totalCounts));
   }
 }
