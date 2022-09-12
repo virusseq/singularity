@@ -19,15 +19,29 @@
 package org.cancogenvirusseq.singularity.components.utils;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import org.cancogenvirusseq.singularity.components.model.AnalysisDocument;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
 
+@Configuration
 public class TsvUtils {
+
+  private static String LIST_SEPARATOR;
+
+  @Value("${utils.tsvListSeparator}")
+  public void setListSeparator(String listSeparator) {
+    LIST_SEPARATOR = listSeparator;
+  }
+
   @Getter
   private static final byte[] header =
       (String.join(
@@ -98,7 +112,7 @@ public class TsvUtils {
   }
 
   private static String analysisDocumentToTsvRow(AnalysisDocument analysisDocument) {
-    return stringsToTsvRow(
+    return stringsToTsvRow(jsonNodeToString(
         analysisDocument.getStudyId(),
         analysisDocument.getDonors().get(0).getSubmitterDonorId(),
         analysisDocument.getAnalysis().getSampleCollection().getSampleCollectedBy(),
@@ -145,7 +159,19 @@ public class TsvUtils {
             .getAnalysis()
             .getPathogenDiagnosticTesting()
             .getDiagnosticPcrCtValueNullReason(),
-        analysisDocument.getAnalysis().getDatabaseIdentifiers().getGisaidAccession());
+        analysisDocument.getAnalysis().getDatabaseIdentifiers().getGisaidAccession()));
+  }
+
+  private static String[] jsonNodeToString(JsonNode... jsonNodeList) {
+    return Arrays.stream(jsonNodeList).map(jsonNode -> {
+      if (jsonNode.isArray()) {
+        List<String> newList = new ArrayList<>();
+        jsonNode.iterator().forEachRemaining(e -> newList.add(e.textValue()));
+        return String.join(LIST_SEPARATOR, newList);
+      } else {
+        return jsonNode.textValue();
+      }
+    }).toArray(String[]::new);
   }
 
   private static String stringsToTsvRow(String... strings) {

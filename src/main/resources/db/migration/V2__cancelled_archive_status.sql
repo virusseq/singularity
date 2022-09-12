@@ -1,0 +1,1 @@
+ALTER TYPE archive_status ADD VALUE 'CANCELLED';

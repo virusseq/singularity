@@ -33,7 +33,7 @@ import reactor.core.Disposable;
 @Component
 @RequiredArgsConstructor
 public class AllArchiveBuild {
-  private final EventEmitter<Instant> eventEmitter;
+  private final EventEmitter<String> eventEmitter;
   private final InstantToArchiveBuildRequest instantToArchiveBuildRequest;
   private final ArchiveBuildRequestToArchive archiveBuildRequestToArchive;
 
@@ -62,7 +62,7 @@ public class AllArchiveBuild {
               }
 
               log.info("Spawning new archive build...");
-              this.buildAllArchiveDisposable = createBuildAllArchiveDisposable(instant);
+              this.buildAllArchiveDisposable = createBuildAllArchiveDisposable(Instant.now());
             })
         .log("Files::createAllArchiveDisposable")
         .subscribe();
