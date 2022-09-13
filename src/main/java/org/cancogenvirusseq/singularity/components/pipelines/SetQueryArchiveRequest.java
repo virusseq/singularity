@@ -115,20 +115,19 @@ public class SetQueryArchiveRequest implements Function<UUID, Mono<Archive>> {
                     .map(
                       uniqueConstraint -> archivesRepo
                         .findArchiveByHashInfoEquals(archive.getHashInfo())
-                        .flatMap(a -> {
-                          if(ArchiveStatus.CANCELLED.equals(a.getStatus()) ||
-                            (ArchiveStatus.BUILDING.equals(a.getStatus()) && a.getCreatedAt() < Instant.now().minusSeconds(archiveProperties.getMaxBuildingSeconds()).getEpochSecond())){
-                            log.info("restarting the build of archive hash:{} ", a.getHash());
-                            a.setStatus(ArchiveStatus.BUILDING);
-                            a.setCreatedAt(Instant.now().getEpochSecond());
+                        .flatMap(existingArchive -> {
+                          if(shouldRestartBuild(existingArchive)){
+                            log.info("restarting the build of archive hash:{} ", existingArchive.getHash());
+                            existingArchive.setStatus(ArchiveStatus.BUILDING);
+                            existingArchive.setCreatedAt(Instant.now().getEpochSecond());
                             // returning the updated archive
                             return archivesRepo
-                              .save(a)
+                              .save(existingArchive)
                               .flatMap(archivesRepo::findByArchiveObject)
                               .doOnSuccess(triggerBuildArchive(setId));
                           }
                           // returning the existing archive
-                          return Mono.just(a);
+                          return Mono.just(existingArchive);
                         }))
                     .orElseThrow(() -> dataViolation).log()
             );
@@ -140,5 +139,11 @@ public class SetQueryArchiveRequest implements Function<UUID, Mono<Archive>> {
         .getSink()
         .tryEmitNext(
           new ArchiveBuildRequest(createdArchive, arrangerSetTermsQuery(setId)));
+  }
+
+  private boolean shouldRestartBuild(Archive archive){
+    return (ArchiveStatus.CANCELLED.equals(archive.getStatus()) ||
+      (ArchiveStatus.BUILDING.equals(archive.getStatus()) &&
+        archive.getCreatedAt() < Instant.now().minusSeconds(archiveProperties.getMaxBuildingSeconds()).getEpochSecond()));
   }
 }
