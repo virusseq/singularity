@@ -60,3 +60,4 @@ utils:
 
 archive:
   cancelPeriodSeconds: 14400
+  maxBuildingSeconds: 14400
