@@ -3,7 +3,9 @@ package org.cancogenvirusseq.singularity.components.pipelines;
 import static org.cancogenvirusseq.singularity.components.utils.PostgresUtils.getSqlStateOptionalFromException;
 import static org.cancogenvirusseq.singularity.components.utils.PostgresUtils.isUniqueViolationError;
 
+import java.time.Instant;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import lombok.RequiredArgsConstructor;
@@ -15,10 +17,12 @@ import org.cancogenvirusseq.singularity.components.model.ArchiveBuildRequest;
 import org.cancogenvirusseq.singularity.components.model.ArrangerSetDocument;
 import org.cancogenvirusseq.singularity.components.model.CountAndLastUpdatedResult;
 import org.cancogenvirusseq.singularity.components.model.SetQueryArchiveHashInfo;
+import org.cancogenvirusseq.singularity.config.archive.ArchiveProperties;
 import org.cancogenvirusseq.singularity.config.elasticsearch.ElasticsearchProperties;
 import org.cancogenvirusseq.singularity.exceptions.runtime.InconsistentSetQueryException;
 import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
+import org.cancogenvirusseq.singularity.repository.model.ArchiveStatus;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.indices.TermsLookup;
@@ -35,12 +39,15 @@ public class SetQueryArchiveRequest implements Function<UUID, Mono<Archive>> {
   private final ElasticsearchProperties elasticsearchProperties;
   private final ArchivesRepo archivesRepo;
 
+  private final ArchiveProperties archiveProperties;
+
   private final GetArrangerSetDocument getArrangerSetDocument;
   private final CountAndLastUpdatedAggregation countAndLastUpdatedAggregation;
 
   // aggregation name constants
   private static final String TERMS_LOOKUP_FIELD = "_id";
   private static final String TERMS_LOOKUP_PATH = "ids";
+
 
   @Override
   public Mono<Archive> apply(UUID setId) {
@@ -99,20 +106,39 @@ public class SetQueryArchiveRequest implements Function<UUID, Mono<Archive>> {
             // triggered by
             // the onErrorResume
             .doOnSuccess(
-                createdArchive ->
-                    archiveBuildRequestEmitter
-                        .getSink()
-                        .tryEmitNext(
-                            new ArchiveBuildRequest(createdArchive, arrangerSetTermsQuery(setId))))
+              triggerBuildArchive(setId))
             // in the event of a duplicate insert, return the existing archive
             .onErrorResume(
                 DataIntegrityViolationException.class,
-                dataViolation ->
-                    getSqlStateOptionalFromException(dataViolation)
-                        .filter(isUniqueViolationError)
-                        .map(
-                            uniqueConstraint ->
-                                archivesRepo.findArchiveByHashInfoEquals(archive.getHashInfo()))
-                        .orElseThrow(() -> dataViolation));
+                dataViolation -> getSqlStateOptionalFromException(dataViolation)
+                    .filter(isUniqueViolationError)
+                    .map(
+                      uniqueConstraint -> archivesRepo
+                        .findArchiveByHashInfoEquals(archive.getHashInfo())
+                        .flatMap(a -> {
+                          if(ArchiveStatus.CANCELLED.equals(a.getStatus()) ||
+                            (ArchiveStatus.BUILDING.equals(a.getStatus()) && a.getCreatedAt() < Instant.now().minusSeconds(archiveProperties.getMaxBuildingSeconds()).getEpochSecond())){
+                            log.info("restarting the build of archive hash:{} ", a.getHash());
+                            a.setStatus(ArchiveStatus.BUILDING);
+                            a.setCreatedAt(Instant.now().getEpochSecond());
+                            // returning the updated archive
+                            return archivesRepo
+                              .save(a)
+                              .flatMap(archivesRepo::findByArchiveObject)
+                              .doOnSuccess(triggerBuildArchive(setId));
+                          }
+                          // returning the existing archive
+                          return Mono.just(a);
+                        }))
+                    .orElseThrow(() -> dataViolation).log()
+            );
+  }
+
+  private Consumer<Archive> triggerBuildArchive(UUID setId) {
+    return createdArchive ->
+      archiveBuildRequestEmitter
+        .getSink()
+        .tryEmitNext(
+          new ArchiveBuildRequest(createdArchive, arrangerSetTermsQuery(setId)));
   }
 }

@@ -1,16 +1,15 @@
 package org.cancogenvirusseq.singularity.components.pipelines;
 
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.singularity.api.model.CancelListResponse;
 import org.cancogenvirusseq.singularity.api.model.ErrorArchive;
 import org.cancogenvirusseq.singularity.api.model.HashResult;
 import org.cancogenvirusseq.singularity.api.model.Summary;
+import org.cancogenvirusseq.singularity.config.archive.ArchiveProperties;
 import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveStatus;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -22,14 +21,11 @@ import java.util.function.BiFunction;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConfigurationProperties("archive")
 public class CancelSetArchive implements BiFunction<Collection<String>, Boolean, Mono<CancelListResponse>> {
 
   private final ArchivesRepo archivesRepo;
 
-  // config value
-  @Setter
-  private long cancelPeriodSeconds;
+  private final ArchiveProperties archiveProperties;
 
   @Override
   public Mono<CancelListResponse> apply(Collection<String> hashList, Boolean force) {
@@ -92,13 +88,13 @@ public class CancelSetArchive implements BiFunction<Collection<String>, Boolean,
   private Flux<Archive> searchBuildingArchivesByIds(Collection<String> strings, Boolean force) {
     return (force) ?
       archivesRepo.findBuildingArchivesByHashList(new ArrayList<>(strings)) :
-      archivesRepo.findBuildingArchivesByHashListOlderThan(new ArrayList<>(strings), Instant.now().minusSeconds(cancelPeriodSeconds).getEpochSecond());
+      archivesRepo.findBuildingArchivesByHashListOlderThan(new ArrayList<>(strings), Instant.now().minusSeconds(archiveProperties.getCancelPeriodSeconds()).getEpochSecond());
   }
 
   private Flux<Archive> searchBuildingArchives(Boolean force) {
     return (force) ?
       archivesRepo.findBuildingArchives() :
-      archivesRepo.findBuildingArchivesOlderThan(Instant.now().minusSeconds(cancelPeriodSeconds).getEpochSecond());
+      archivesRepo.findBuildingArchivesOlderThan(Instant.now().minusSeconds(archiveProperties.getCancelPeriodSeconds()).getEpochSecond());
   }
 
 }
