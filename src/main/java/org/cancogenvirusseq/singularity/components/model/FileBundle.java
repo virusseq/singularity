@@ -38,6 +38,8 @@ import org.cancogenvirusseq.singularity.components.utils.TsvUtils;
 public class FileBundle {
   public static final String DOWNLOAD_DIR = "/tmp";
   public static final String FILE_NAME_TEMPLATE = "files-archive-";
+  public static final String MOLECULAR_PREFIX_FILE_NAME = "2-";
+  public static final String METADATA_PREFIX_FILE_NAME = "1-";
   public static final String MOLECULAR_FILE_EXTENSION = ".fasta";
   public static final String METADATA_FILE_EXTENSION = ".tsv";
   public static final String ARCHIVE_EXTENSION = ".tar.gz";
@@ -67,14 +69,14 @@ public class FileBundle {
 
     // record molecular filename and create FileOutputStream (buffered)
     this.molecularFilename =
-        format("%s%s%s", FILE_NAME_TEMPLATE, archiveId, MOLECULAR_FILE_EXTENSION);
+        format("%s%s%s%s", MOLECULAR_PREFIX_FILE_NAME,  FILE_NAME_TEMPLATE, archiveId, MOLECULAR_FILE_EXTENSION);
     this.molecularFileOutputStream =
         new BufferedOutputStream(
             new FileOutputStream(format("%s/%s", this.downloadDirectory, this.molecularFilename)));
 
     // record metadata filename and create FileOutputStream (buffered)
     this.metadataFilename =
-        format("%s%s%s", FILE_NAME_TEMPLATE, archiveId, METADATA_FILE_EXTENSION);
+        format("%s%s%s%s", METADATA_PREFIX_FILE_NAME, FILE_NAME_TEMPLATE, archiveId, METADATA_FILE_EXTENSION);
     this.metadataFileOutputStream =
         new BufferedOutputStream(
             new FileOutputStream(format("%s/%s", this.downloadDirectory, this.metadataFilename)));
