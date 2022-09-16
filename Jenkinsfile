@@ -75,6 +75,7 @@ spec:
                 }
             }
         }
+
         stage('Build & Publish Develop') {
             when {
                 anyOf {
@@ -93,21 +94,6 @@ spec:
                     sh "docker push ${dockerRepo}:${version}-${commit}"
                     sh "docker push ${dockerRepo}:edge"
                 }
-            }
-        }
-
-        stage('deploy to cancogen-virus-seq-dev') {
-            when {
-                anyOf {
-                    branch 'develop'
-                }
-            }
-            steps {
-                build(job: 'virusseq/update-app-version', parameters: [
-                    [$class: 'StringParameterValue', name: 'CANCOGEN_ENV', value: 'dev' ],
-                    [$class: 'StringParameterValue', name: 'TARGET_RELEASE', value: 'singularity'],
-                    [$class: 'StringParameterValue', name: 'NEW_APP_VERSION', value: "${version}-${commit}" ]
-                ])
             }
         }
 
@@ -131,6 +117,28 @@ spec:
 
                     sh "docker push ${dockerRepo}:${version}"
                     sh "docker push ${dockerRepo}:latest"
+                }
+            }
+        }
+
+        stage('deploy to cancogen-virus-seq-dev') {
+            when {
+                anyOf {
+                    branch 'develop'
+                }
+            }
+            steps {
+                script {
+                    // we don't want the build to be tagged as failed because it could not be deployed.
+                    try {
+                        build(job: 'virusseq/update-app-version', parameters: [
+                            [$class: 'StringParameterValue', name: 'CANCOGEN_ENV', value: 'dev' ],
+                            [$class: 'StringParameterValue', name: 'TARGET_RELEASE', value: 'singularity'],
+                            [$class: 'StringParameterValue', name: 'NEW_APP_VERSION', value: "${version}-${commit}" ]
+                        ])
+                    } catch (err) {
+                        echo 'The app built successfully, but could not be deployed'
+                    }
                 }
             }
         }
