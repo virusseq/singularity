@@ -113,22 +113,24 @@ public class SetQueryArchiveRequest implements Function<UUID, Mono<Archive>> {
                 dataViolation -> getSqlStateOptionalFromException(dataViolation)
                     .filter(isUniqueViolationError)
                     .map(
-                      uniqueConstraint -> archivesRepo
-                        .findArchiveByHashInfoEquals(archive.getHashInfo())
-                        .flatMap(existingArchive -> {
-                          if(shouldRestartBuild(existingArchive)){
-                            log.info("restarting the build of archive hash:{} ", existingArchive.getHash());
-                            existingArchive.setStatus(ArchiveStatus.BUILDING);
-                            existingArchive.setCreatedAt(Instant.now().getEpochSecond());
-                            // returning the updated archive
-                            return archivesRepo
-                              .save(existingArchive)
-                              .flatMap(archivesRepo::findByArchiveObject)
-                              .doOnSuccess(triggerBuildArchive(setId));
-                          }
-                          // returning the existing archive
-                          return Mono.just(existingArchive);
-                        }))
+                        uniqueConstraint -> archivesRepo
+                            .findArchiveByHashInfoEquals(archive.getHashInfo())
+                            .flatMap(existingArchive -> {
+                                log.info("Hash exists. Checking whether the archive should be rebuilt now...");
+                                if(shouldRestartBuild(existingArchive)){
+                                    log.info("restarting the build of archive hash:{} ", existingArchive.getHash());
+                                    existingArchive.setStatus(ArchiveStatus.BUILDING);
+                                    existingArchive.setCreatedAt(Instant.now().getEpochSecond());
+                                    // returning the updated archive
+                                    return archivesRepo
+                                        .save(existingArchive)
+                                        .flatMap(archivesRepo::findByArchiveObject)
+                                        .doOnSuccess(triggerBuildArchive(setId));
+                                }
+                                // returning the existing archive
+                                return Mono.just(existingArchive);
+                            })
+                    )
                     .orElseThrow(() -> dataViolation).log()
             );
   }
@@ -143,6 +145,7 @@ public class SetQueryArchiveRequest implements Function<UUID, Mono<Archive>> {
 
   private boolean shouldRestartBuild(Archive archive){
     return (ArchiveStatus.CANCELLED.equals(archive.getStatus()) ||
+      ArchiveStatus.FAILED.equals(archive.getStatus()) ||
       (ArchiveStatus.BUILDING.equals(archive.getStatus()) &&
         archive.getCreatedAt() < Instant.now().minusSeconds(archiveProperties.getMaxBuildingSeconds()).getEpochSecond()));
   }
