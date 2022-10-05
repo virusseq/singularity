@@ -40,53 +40,55 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildRequest, Flux<Archive>> {
 
-  private final ElasticSearchScroll elasticSearchScroll;
-  private final DownloadMolecularDataToPair downloadMolecularDataToPair;
-  private final FileBundleUpload fileBundleUpload;
-  private final ArchivesRepo archivesRepo;
+    private final ElasticSearchScroll elasticSearchScroll;
+    private final DownloadMolecularDataToPair downloadMolecularDataToPair;
+    private final FileBundleUpload fileBundleUpload;
+    private final ArchivesRepo archivesRepo;
 
-  @Override
-  public Flux<Archive> apply(ArchiveBuildRequest archiveBuildRequest) {
-    return elasticSearchScroll
-        .apply(archiveBuildRequest.getQueryBuilder())
-        .transform(downloadMolecularDataToPair)
-        .transform(createFileBundleFromPairsWithArchive(archiveBuildRequest.getArchive()))
-        .flatMap(fileBundleUpload)
-        .flatMap(
-            uploadObjectId ->
-                withArchiveBuildRequestContext(
-                    archiveBuildRequestCtx -> {
-                      archiveBuildRequestCtx.getArchive().setObjectId(uploadObjectId);
-                      archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.COMPLETE);
-                      log.debug("processArchiveBuildRequest is done!");
-                      return archivesRepo.save(archiveBuildRequestCtx.getArchive());
-                    }))
-        .onErrorResume(
-            throwable ->
-                withArchiveBuildRequestContext(
-                    archiveBuildRequestCtx -> {
-                      archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.FAILED);
-                      log.error(
-                          "processArchiveBuildRequest error: {}", throwable.getLocalizedMessage());
-                      return archivesRepo.save(archiveBuildRequestCtx.getArchive());
-                    }))
-        .doFinally(
-          signalType -> deleteFileBundleForArchive.accept(archiveBuildRequest.getArchive()))
-        .doOnCancel(() -> {
-          archiveBuildRequest.getArchive().setStatus(ArchiveStatus.CANCELLED);
-          log.info(
-            "doOnCancel archive id:{} hash'{}' tagged as {}",
-            archiveBuildRequest.getArchive().getId(),
-            archiveBuildRequest.getArchive().getHash(),
-            archiveBuildRequest.getArchive().getStatus()
-            );
-          archivesRepo.save(archiveBuildRequest.getArchive()).subscribe();
-        })
-        .contextWrite(ctx -> ctx.put("archiveBuildRequest", archiveBuildRequest))
-        .log("ArchiveBuildRequestToArchive");
-  }
+    @Override
+    public Flux<Archive> apply(ArchiveBuildRequest archiveBuildRequest) {
+        return elasticSearchScroll
+            .apply(archiveBuildRequest.getQueryBuilder())
+            .transform(downloadMolecularDataToPair)
+            .transform(createFileBundleFromPairsWithArchive(archiveBuildRequest.getArchive()))
+            .flatMap(fileBundleUpload)
+            .flatMap(
+                uploadObjectId ->
+                    withArchiveBuildRequestContext(
+                        archiveBuildRequestCtx -> {
+                            archiveBuildRequestCtx.getArchive().setObjectId(uploadObjectId);
+                            archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.COMPLETE);
+                            log.debug("processArchiveBuildRequest is done!");
 
-  private <R> Mono<R> withArchiveBuildRequestContext(Function<ArchiveBuildRequest, Mono<R>> func) {
-    return Mono.deferContextual(ctx -> func.apply(ctx.get("archiveBuildRequest")));
-  }
+                            return archivesRepo.save(archiveBuildRequestCtx.getArchive());
+                        }))
+            .onErrorResume(
+                throwable ->
+                    withArchiveBuildRequestContext(
+                        archiveBuildRequestCtx -> {
+                            archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.FAILED);
+                            log.error(
+                                "processArchiveBuildRequest error: {}",
+                                throwable.getLocalizedMessage());
+
+                            return archivesRepo.save(archiveBuildRequestCtx.getArchive());
+                        }))
+            .doFinally(signalType -> deleteFileBundleForArchive.accept(archiveBuildRequest.getArchive()))
+            .doOnCancel(() -> {
+                archiveBuildRequest.getArchive().setStatus(ArchiveStatus.CANCELLED);
+                log.info(
+                    "doOnCancel archive id:{} hash'{}' tagged as {}",
+                    archiveBuildRequest.getArchive().getId(),
+                    archiveBuildRequest.getArchive().getHash(),
+                    archiveBuildRequest.getArchive().getStatus()
+                );
+                archivesRepo.save(archiveBuildRequest.getArchive()).subscribe();
+            })
+            .contextWrite(ctx -> ctx.put("archiveBuildRequest", archiveBuildRequest))
+            .log("ArchiveBuildRequestToArchive");
+    }
+
+    private <R> Mono<R> withArchiveBuildRequestContext(Function<ArchiveBuildRequest, Mono<R>> func) {
+        return Mono.deferContextual(ctx -> func.apply(ctx.get("archiveBuildRequest")));
+    }
 }

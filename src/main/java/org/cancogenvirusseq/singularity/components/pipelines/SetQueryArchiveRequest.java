@@ -29,85 +29,85 @@ import reactor.core.publisher.Mono;
 @Component
 @RequiredArgsConstructor
 public class SetQueryArchiveRequest implements Function<UUID, Mono<Archive>> {
-  private final ArchiveBuildRequestEmitter archiveBuildRequestEmitter;
+    private final ArchiveBuildRequestEmitter archiveBuildRequestEmitter;
 
-  private final ElasticsearchProperties elasticsearchProperties;
-  private final ArchivesRepo archivesRepo;
+    private final ElasticsearchProperties elasticsearchProperties;
+    private final ArchivesRepo archivesRepo;
 
-  private final ArchiveProperties archiveProperties;
+    private final ArchiveProperties archiveProperties;
 
-  private final GetArrangerSetDocument getArrangerSetDocument;
-  private final CountAndLastUpdatedAggregation countAndLastUpdatedAggregation;
+    private final GetArrangerSetDocument getArrangerSetDocument;
+    private final CountAndLastUpdatedAggregation countAndLastUpdatedAggregation;
 
-  private final ExistingArchiveUtils existingArchiveUtils;
+    private final ExistingArchiveUtils existingArchiveUtils;
 
-  // aggregation name constants
-  private static final String TERMS_LOOKUP_FIELD = "_id";
-  private static final String TERMS_LOOKUP_PATH = "ids";
+    // aggregation name constants
+    private static final String TERMS_LOOKUP_FIELD = "_id";
+    private static final String TERMS_LOOKUP_PATH = "ids";
 
-  @Override
-  public Mono<Archive> apply(UUID setId) {
-    return getArrangerSetDocument
-        .apply(setId)
-        .flatMap(arrangerSetDocumentToSetQueryHashInfoFunctionForSetId(setId))
-        .map(Archive::newFromSetQueryArchiveHashInfo)
-        .flatMap(saveAndTriggerBuildOrGetArchiveFunctionForSetId(setId));
-  }
+    @Override
+    public Mono<Archive> apply(UUID setId) {
+        return getArrangerSetDocument
+            .apply(setId)
+            .flatMap(arrangerSetDocumentToSetQueryHashInfoFunctionForSetId(setId))
+            .map(Archive::newFromSetQueryArchiveHashInfo)
+            .flatMap(saveAndTriggerBuildOrGetArchiveFunctionForSetId(setId));
+    }
 
-  private Function<ArrangerSetDocument, Mono<SetQueryArchiveHashInfo>>
-      arrangerSetDocumentToSetQueryHashInfoFunctionForSetId(UUID setId) {
-    return arrangerSetDocument ->
-        Mono.just(arrangerSetTermsQuery(setId))
-            .flatMap(countAndLastUpdatedAggregation)
-            .map(checkSetQueryVsAggregation(arrangerSetDocument))
-            .map(
-                countAndLastUpdatedResult ->
-                    new SetQueryArchiveHashInfo(
-                        arrangerSetDocument.getSqon(),
-                        arrangerSetDocument.getSize(),
-                        countAndLastUpdatedResult.getLastUpdatedDate().getValueAsString()))
-            .onErrorStop();
-  }
+    private Function<ArrangerSetDocument, Mono<SetQueryArchiveHashInfo>>
+    arrangerSetDocumentToSetQueryHashInfoFunctionForSetId(UUID setId) {
+        return arrangerSetDocument ->
+            Mono.just(arrangerSetTermsQuery(setId))
+                .flatMap(countAndLastUpdatedAggregation)
+                .map(checkSetQueryVsAggregation(arrangerSetDocument))
+                .map(
+                    countAndLastUpdatedResult ->
+                        new SetQueryArchiveHashInfo(
+                            arrangerSetDocument.getSqon(),
+                            arrangerSetDocument.getSize(),
+                            countAndLastUpdatedResult.getLastUpdatedDate().getValueAsString()))
+                .onErrorStop();
+    }
 
-  private QueryBuilder arrangerSetTermsQuery(UUID setId) {
-    return QueryBuilders.termsLookupQuery(
-        TERMS_LOOKUP_FIELD,
-        new TermsLookup(
-            elasticsearchProperties.getArrangerSetsIndex(), setId.toString(), TERMS_LOOKUP_PATH));
-  }
+    private QueryBuilder arrangerSetTermsQuery(UUID setId) {
+        return QueryBuilders.termsLookupQuery(
+            TERMS_LOOKUP_FIELD,
+            new TermsLookup(
+                elasticsearchProperties.getArrangerSetsIndex(), setId.toString(), TERMS_LOOKUP_PATH));
+    }
 
-  private UnaryOperator<CountAndLastUpdatedResult> checkSetQueryVsAggregation(
-      ArrangerSetDocument arrangerSetDocument) {
-    return countAndLastUpdatedResult -> {
-      if (!arrangerSetDocument
-          .getSize()
-          .equals(countAndLastUpdatedResult.getNumDocuments().getValue())) {
-        throw new InconsistentSetQueryException(
-            arrangerSetDocument.getSize(), countAndLastUpdatedResult.getNumDocuments().getValue());
-      }
+    private UnaryOperator<CountAndLastUpdatedResult> checkSetQueryVsAggregation(
+        ArrangerSetDocument arrangerSetDocument) {
+        return countAndLastUpdatedResult -> {
+            if (!arrangerSetDocument
+                .getSize()
+                .equals(countAndLastUpdatedResult.getNumDocuments().getValue())) {
+                throw new InconsistentSetQueryException(
+                    arrangerSetDocument.getSize(), countAndLastUpdatedResult.getNumDocuments().getValue());
+            }
 
-      return countAndLastUpdatedResult;
-    };
-  }
+            return countAndLastUpdatedResult;
+        };
+    }
 
-  private Function<Archive, Mono<Archive>> saveAndTriggerBuildOrGetArchiveFunctionForSetId(
-      UUID setId) {
-    return archive ->
-        existingArchiveUtils
-            .createNewOrResetExistingArchiveInDatabase(archive)
-            // why this? because R2DBC does not hydrate fields
-            // (https://github.com/spring-projects/spring-data-r2dbc/issues/455)
-            .flatMap(archivesRepo::findByArchiveObject)
-            // this onSuccess will only execute when the archive is created and will not be
-            // triggered by
-            // the onErrorResume
-            .doOnSuccess(triggerBuildArchive(setId));
-  }
+    private Function<Archive, Mono<Archive>> saveAndTriggerBuildOrGetArchiveFunctionForSetId(
+        UUID setId) {
+        return archive ->
+            existingArchiveUtils
+                .createNewOrResetExistingArchiveInDatabase(archive)
+                // why this? because R2DBC does not hydrate fields
+                // (https://github.com/spring-projects/spring-data-r2dbc/issues/455)
+                .flatMap(archivesRepo::findByArchiveObject)
+                // this onSuccess will only execute when the archive is created and will not be
+                // triggered by
+                // the onErrorResume
+                .doOnSuccess(triggerBuildArchive(setId));
+    }
 
-  private Consumer<Archive> triggerBuildArchive(UUID setId) {
-    return createdArchive ->
-        archiveBuildRequestEmitter
-            .getSink()
-            .tryEmitNext(new ArchiveBuildRequest(createdArchive, arrangerSetTermsQuery(setId)));
-  }
+    private Consumer<Archive> triggerBuildArchive(UUID setId) {
+        return createdArchive ->
+            archiveBuildRequestEmitter
+                .getSink()
+                .tryEmitNext(new ArchiveBuildRequest(createdArchive, arrangerSetTermsQuery(setId)));
+    }
 }

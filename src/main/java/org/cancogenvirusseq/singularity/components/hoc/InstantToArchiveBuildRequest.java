@@ -20,24 +20,23 @@ import reactor.core.publisher.Mono;
 @Component
 @RequiredArgsConstructor
 public class InstantToArchiveBuildRequest implements Function<Instant, Mono<ArchiveBuildRequest>> {
-  private final CountAndLastUpdatedAggregation countAndLastUpdatedAggregation;
-  private final ArchivesRepo archivesRepo;
+    private final CountAndLastUpdatedAggregation countAndLastUpdatedAggregation;
+    private final ArchivesRepo archivesRepo;
 
-  private final ExistingArchiveUtils existingArchiveUtils;
+    private final ExistingArchiveUtils existingArchiveUtils;
 
-  @Override
-  public Mono<ArchiveBuildRequest> apply(Instant instant) {
-
-    return Mono.just(QueryBuilders.rangeQuery(LAST_UPDATED_AT_FIELD).to(instant))
-        .flatMap(countAndLastUpdatedAggregation)
-        .flatMap(this::createOrGetArchiveInDatabase)
-        // why this? because R2DBC does not hydrate fields
-        // (https://github.com/spring-projects/spring-data-r2dbc/issues/455)
-        .flatMap(archivesRepo::findByArchiveObject)
-        .map(transformToArchiveBuildRequest(instant))
-        .onErrorStop()
-        .log("InstantToArchiveBuildRequest");
-  }
+    @Override
+    public Mono<ArchiveBuildRequest> apply(Instant instant) {
+        return Mono.just(QueryBuilders.rangeQuery(LAST_UPDATED_AT_FIELD).to(instant))
+            .flatMap(countAndLastUpdatedAggregation)
+            .flatMap(this::createOrGetArchiveInDatabase)
+            // why this? because R2DBC does not hydrate fields
+            // (https://github.com/spring-projects/spring-data-r2dbc/issues/455)
+            .flatMap(archivesRepo::findByArchiveObject)
+            .map(transformToArchiveBuildRequest(instant))
+            .onErrorStop()
+            .log("InstantToArchiveBuildRequest");
+    }
 
   /**
    * Save archive to DB to track progress, if this fails due to hash collision, check if the
@@ -46,20 +45,15 @@ public class InstantToArchiveBuildRequest implements Function<Instant, Mono<Arch
    * @param countAndLastUpdatedResult
    * @return
    */
-  private Mono<Archive> createOrGetArchiveInDatabase(
-      CountAndLastUpdatedResult countAndLastUpdatedResult) {
+    private Mono<Archive> createOrGetArchiveInDatabase(CountAndLastUpdatedResult countAndLastUpdatedResult) {
+        Archive archiveTemplate = Archive.newAllArchiveFromCountAndLastUpdatedResult(countAndLastUpdatedResult);
 
-    Archive archiveTemplate =
-        Archive.newAllArchiveFromCountAndLastUpdatedResult(countAndLastUpdatedResult);
+        return existingArchiveUtils.createNewOrResetExistingArchiveInDatabase(archiveTemplate);
+    }
 
-    return existingArchiveUtils.createNewOrResetExistingArchiveInDatabase(archiveTemplate);
-  }
-
-  private Function<Archive, ArchiveBuildRequest> transformToArchiveBuildRequest(Instant instant) {
-
-    return archive ->
-        // include files up to this instant (don't include things added after this starts)
-        new ArchiveBuildRequest(
-            archive, QueryBuilders.rangeQuery(LAST_UPDATED_AT_FIELD).to(instant));
-  }
+    private Function<Archive, ArchiveBuildRequest> transformToArchiveBuildRequest(Instant instant) {
+        return archive ->
+            // include files up to this instant (don't include things added after this starts)
+            new ArchiveBuildRequest(archive, QueryBuilders.rangeQuery(LAST_UPDATED_AT_FIELD).to(instant));
+    }
 }
