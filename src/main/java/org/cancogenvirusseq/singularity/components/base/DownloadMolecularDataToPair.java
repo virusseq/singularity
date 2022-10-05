@@ -55,7 +55,7 @@ public class DownloadMolecularDataToPair
 
   private GetObjectRequest getObjectRequestForAnalysisDocument(AnalysisDocument analysisDocument) {
     return GetObjectRequest.builder()
-        .key(format("%s/%s", s3ClientProperties.getDataDir(), analysisDocument.getObjectId()))
+        .key(format("%s/%s", s3ClientProperties.getDataDir(), analysisDocument.getObjectId().textValue()))
         .bucket(s3ClientProperties.getBucket())
         .build();
   }

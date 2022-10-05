@@ -5,6 +5,7 @@ target/
 !**/src/test/**/target/
 pom.xml.versionsBackup
 .application.*
+**/.DS_Store
 
 ### STS ###
 .apt_generated

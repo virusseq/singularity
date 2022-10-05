@@ -42,7 +42,8 @@ kafka:
   clientId: singularity-instance
   groupId: singularity-instance
   autoOffsetReset: latest
-  topic: song_analysis
+  songUploadTopic: song_analysis
+  archiveBuildTopic: release_archive
 
 contributors:
   filterList:
@@ -53,3 +54,10 @@ files:
 
 intervalEventEmitter:
   intervalTimerSeconds: 600
+
+utils:
+  tsvListSeparator: ";"
+
+archive:
+  cancelPeriodSeconds: 14400
+  maxBuildingSeconds: 14400

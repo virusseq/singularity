@@ -33,10 +33,10 @@ import reactor.kafka.receiver.ReceiverOptions;
 @Slf4j
 @Configuration
 @Profile("kafka")
-public class KafkaConsumerConfig {
+public class KafkaSongUploadConsumerConfig {
   @Getter private final KafkaReceiver<String, String> receiver;
 
-  public KafkaConsumerConfig(KafkaProperties properties) {
+  public KafkaSongUploadConsumerConfig(KafkaProperties properties) {
     receiver = KafkaReceiver.create(buildOptions(properties));
   }
 
@@ -55,7 +55,7 @@ public class KafkaConsumerConfig {
                     ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class),
                 new AbstractMap.SimpleEntry<>(
                     ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, properties.getAutoOffsetReset())))
-        .subscription(Collections.singleton(properties.getTopic()))
+         .subscription(Collections.singleton(properties.getSongUploadTopic()))
         .addAssignListener(partitions -> log.debug("onPartitionsAssigned {}", partitions))
         .addRevokeListener(partitions -> log.debug("onPartitionsRevoked {}", partitions));
   }
