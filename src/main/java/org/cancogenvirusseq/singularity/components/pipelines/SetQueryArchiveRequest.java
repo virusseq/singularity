@@ -1,9 +1,5 @@
 package org.cancogenvirusseq.singularity.components.pipelines;
 
-import static org.cancogenvirusseq.singularity.components.utils.PostgresUtils.getSqlStateOptionalFromException;
-import static org.cancogenvirusseq.singularity.components.utils.PostgresUtils.isUniqueViolationError;
-
-import java.time.Instant;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -17,16 +13,15 @@ import org.cancogenvirusseq.singularity.components.model.ArchiveBuildRequest;
 import org.cancogenvirusseq.singularity.components.model.ArrangerSetDocument;
 import org.cancogenvirusseq.singularity.components.model.CountAndLastUpdatedResult;
 import org.cancogenvirusseq.singularity.components.model.SetQueryArchiveHashInfo;
+import org.cancogenvirusseq.singularity.components.utils.ExistingArchiveUtils;
 import org.cancogenvirusseq.singularity.config.archive.ArchiveProperties;
 import org.cancogenvirusseq.singularity.config.elasticsearch.ElasticsearchProperties;
 import org.cancogenvirusseq.singularity.exceptions.runtime.InconsistentSetQueryException;
 import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
-import org.cancogenvirusseq.singularity.repository.model.ArchiveStatus;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.indices.TermsLookup;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -44,10 +39,11 @@ public class SetQueryArchiveRequest implements Function<UUID, Mono<Archive>> {
   private final GetArrangerSetDocument getArrangerSetDocument;
   private final CountAndLastUpdatedAggregation countAndLastUpdatedAggregation;
 
+  private final ExistingArchiveUtils existingArchiveUtils;
+
   // aggregation name constants
   private static final String TERMS_LOOKUP_FIELD = "_id";
   private static final String TERMS_LOOKUP_PATH = "ids";
-
 
   @Override
   public Mono<Archive> apply(UUID setId) {
@@ -97,53 +93,21 @@ public class SetQueryArchiveRequest implements Function<UUID, Mono<Archive>> {
   private Function<Archive, Mono<Archive>> saveAndTriggerBuildOrGetArchiveFunctionForSetId(
       UUID setId) {
     return archive ->
-        archivesRepo
-            .save(archive)
+        existingArchiveUtils
+            .createNewOrResetExistingArchiveInDatabase(archive)
             // why this? because R2DBC does not hydrate fields
             // (https://github.com/spring-projects/spring-data-r2dbc/issues/455)
             .flatMap(archivesRepo::findByArchiveObject)
             // this onSuccess will only execute when the archive is created and will not be
             // triggered by
             // the onErrorResume
-            .doOnSuccess(
-              triggerBuildArchive(setId))
-            // in the event of a duplicate insert, return the existing archive
-            .onErrorResume(
-                DataIntegrityViolationException.class,
-                dataViolation -> getSqlStateOptionalFromException(dataViolation)
-                    .filter(isUniqueViolationError)
-                    .map(
-                      uniqueConstraint -> archivesRepo
-                        .findArchiveByHashInfoEquals(archive.getHashInfo())
-                        .flatMap(existingArchive -> {
-                          if(shouldRestartBuild(existingArchive)){
-                            log.info("restarting the build of archive hash:{} ", existingArchive.getHash());
-                            existingArchive.setStatus(ArchiveStatus.BUILDING);
-                            existingArchive.setCreatedAt(Instant.now().getEpochSecond());
-                            // returning the updated archive
-                            return archivesRepo
-                              .save(existingArchive)
-                              .flatMap(archivesRepo::findByArchiveObject)
-                              .doOnSuccess(triggerBuildArchive(setId));
-                          }
-                          // returning the existing archive
-                          return Mono.just(existingArchive);
-                        }))
-                    .orElseThrow(() -> dataViolation).log()
-            );
+            .doOnSuccess(triggerBuildArchive(setId));
   }
 
   private Consumer<Archive> triggerBuildArchive(UUID setId) {
     return createdArchive ->
-      archiveBuildRequestEmitter
-        .getSink()
-        .tryEmitNext(
-          new ArchiveBuildRequest(createdArchive, arrangerSetTermsQuery(setId)));
-  }
-
-  private boolean shouldRestartBuild(Archive archive){
-    return (ArchiveStatus.CANCELLED.equals(archive.getStatus()) ||
-      (ArchiveStatus.BUILDING.equals(archive.getStatus()) &&
-        archive.getCreatedAt() < Instant.now().minusSeconds(archiveProperties.getMaxBuildingSeconds()).getEpochSecond()));
+        archiveBuildRequestEmitter
+            .getSink()
+            .tryEmitNext(new ArchiveBuildRequest(createdArchive, arrangerSetTermsQuery(setId)));
   }
 }
