@@ -90,7 +90,9 @@ public class TsvUtils {
                       "gene name",
                       "diagnostic pcr Ct value",
                       "diagnostic pcr Ct value null reason",
-                      "GISAID accession"))
+                      "GISAID accession",
+                      "lineage name",
+                      "lineage analysis software name"))
               + "\n")
           .getBytes(StandardCharsets.UTF_8);
 
