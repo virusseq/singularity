@@ -61,6 +61,7 @@ public class AnalysisDocument {
     private SampleCollection sampleCollection = new SampleCollection();
     private SequenceAnalysis sequenceAnalysis = new SequenceAnalysis();
     private JsonNode firstPublishedAt;
+    private LineageAnalysis lineageAnalysis = new LineageAnalysis();
 
     public void setFirstPublishedAt(JsonNode firstPublishedAt) {
       try {
@@ -74,6 +75,19 @@ public class AnalysisDocument {
         this.firstPublishedAt = JsonNodeFactory.instance.textNode("");
       }
     }
+  }
+
+  @Data
+  @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+  public static class LineageAnalysis {
+    private JsonNode lineageName;
+    private JsonNode lineageAnalysisSoftwareName;
+    private JsonNode lineageAnalysisSoftwareVersion;
+    private JsonNode variantDesignation;
+    private JsonNode variantEvidence;
+    private JsonNode variantEvidenceDetails;
   }
 
   @Data

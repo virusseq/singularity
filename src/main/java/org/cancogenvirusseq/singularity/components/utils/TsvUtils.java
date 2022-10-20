@@ -159,7 +159,9 @@ public class TsvUtils {
             .getAnalysis()
             .getPathogenDiagnosticTesting()
             .getDiagnosticPcrCtValueNullReason(),
-        analysisDocument.getAnalysis().getDatabaseIdentifiers().getGisaidAccession()));
+        analysisDocument.getAnalysis().getDatabaseIdentifiers().getGisaidAccession(),
+        analysisDocument.getAnalysis().getLineageAnalysis().getLineageName(),
+        analysisDocument.getAnalysis().getLineageAnalysis().getLineageAnalysisSoftwareName()));
   }
 
   private static String[] jsonNodeToString(JsonNode... jsonNodeList) {
