@@ -80,6 +80,7 @@ spec:
             when {
                 anyOf {
                     branch 'develop'
+                    branch 'completed_sets'
                 }
             }
             steps {
