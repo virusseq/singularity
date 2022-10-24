@@ -16,6 +16,7 @@ import org.cancogenvirusseq.singularity.components.model.SetQueryArchiveHashInfo
 import org.cancogenvirusseq.singularity.components.utils.ExistingArchiveUtils;
 import org.cancogenvirusseq.singularity.config.archive.ArchiveProperties;
 import org.cancogenvirusseq.singularity.config.elasticsearch.ElasticsearchProperties;
+import org.cancogenvirusseq.singularity.exceptions.runtime.ExistingArchiveRestartException;
 import org.cancogenvirusseq.singularity.exceptions.runtime.InconsistentSetQueryException;
 import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
@@ -23,7 +24,6 @@ import org.cancogenvirusseq.singularity.repository.model.ArchiveStatus;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.indices.TermsLookup;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -105,19 +105,13 @@ public class SetQueryArchiveRequest implements Function<UUID, Mono<Archive>> {
             // the onErrorResume
             .doOnSuccess(triggerBuildArchive(setId))
             // in the event of an already built archive, return the existing archive
-            .onErrorResume(DataIntegrityViolationException.class,
+            .onErrorResume(ExistingArchiveRestartException.class,
                 dataViolation ->
                     archivesRepo
                         .findArchiveByHashInfoEquals(archive.getHashInfo())
-                        .flatMap(existingArchive ->
-                            ArchiveStatus.COMPLETE.equals(existingArchive.getStatus())
-                                // returning the existing archive
-                                ? Mono.just(existingArchive)
-                                : Mono.error(dataViolation)
-                        )
-            );
-
-
+                        .filter(existingArchive ->
+                            ArchiveStatus.COMPLETE.equals(existingArchive.getStatus()))
+                        .switchIfEmpty(Mono.error(dataViolation)));
   }
 
   private Consumer<Archive> triggerBuildArchive(UUID setId) {
