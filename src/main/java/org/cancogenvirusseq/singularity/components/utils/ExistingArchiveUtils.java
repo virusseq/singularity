@@ -23,14 +23,6 @@ public class ExistingArchiveUtils {
   private final ArchiveProperties archiveProperties;
   private final ArchivesRepo archivesRepo;
 
-
-  public Mono<Archive> findOrCreateArchive(Archive archive) {
-    return archivesRepo
-            .findArchiveByHashInfoEquals(archive.getHashInfo())
-            .flatMap(this.archiveCompleted())
-            .switchIfEmpty(createNewOrResetExistingArchiveInDatabase(archive));
-  }
-
   /**
    * Saves new archive in database, with logic for handling hash collisions:
    * If the archive is found in DB (hash collision) then we will check if it can be restarted,
@@ -87,11 +79,4 @@ public class ExistingArchiveUtils {
       return archivesRepo.save(existingArchive);
     };
   }
-
-  private Function<Archive, Mono<Archive>> archiveCompleted() {
-    return archive ->
-            ArchiveStatus.COMPLETE.equals(archive.getStatus())
-                    ? Mono.just(archive)
-                    : Mono.empty();
-    };
 }
