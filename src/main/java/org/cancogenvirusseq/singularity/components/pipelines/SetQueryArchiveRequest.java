@@ -97,28 +97,15 @@ public class SetQueryArchiveRequest implements Function<UUID, Mono<Archive>> {
       UUID setId) {
     return archive ->
       existingArchiveUtils
-        .createNewOrResetExistingArchiveInDatabase(archive)
+        .findOrCreateArchive(archive)
         // why this? because R2DBC does not hydrate fields
         // (https://github.com/spring-projects/spring-data-r2dbc/issues/455)
         .flatMap(archivesRepo::findByArchiveObject)
         // this onSuccess will only execute when the archive is created and will not be
         // triggered by
         // the onErrorResume
-        .doOnSuccess(triggerBuildArchive(setId))
+        .doOnSuccess(triggerBuildArchive(setId));
         // in the event of an already built archive, return the existing archive
-        .onErrorResume(
-          ExistingArchiveRestartException.class,
-          dataViolation -> {
-            archivesRepo
-              .findArchiveByHashInfoEquals(archive.getHashInfo())
-              .flatMap(existingArchive ->
-                ArchiveStatus.COMPLETE.equals(existingArchive.getStatus())
-                  // returning the existing archive
-                  ? Mono.just(existingArchive)
-                  : dataViolation
-              );
-          }
-        );
 
   }
 
