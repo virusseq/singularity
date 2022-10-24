@@ -1,5 +1,9 @@
 package org.cancogenvirusseq.singularity.components.pipelines;
 
+import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cancogenvirusseq.singularity.components.base.CountAndLastUpdatedAggregation;
@@ -12,7 +16,6 @@ import org.cancogenvirusseq.singularity.components.model.SetQueryArchiveHashInfo
 import org.cancogenvirusseq.singularity.components.utils.ExistingArchiveUtils;
 import org.cancogenvirusseq.singularity.config.archive.ArchiveProperties;
 import org.cancogenvirusseq.singularity.config.elasticsearch.ElasticsearchProperties;
-import org.cancogenvirusseq.singularity.exceptions.runtime.ExistingArchiveRestartException;
 import org.cancogenvirusseq.singularity.exceptions.runtime.InconsistentSetQueryException;
 import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
@@ -23,11 +26,6 @@ import org.elasticsearch.indices.TermsLookup;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
-
-import java.util.UUID;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
 
 @Slf4j
 @Component
@@ -97,27 +95,27 @@ public class SetQueryArchiveRequest implements Function<UUID, Mono<Archive>> {
   private Function<Archive, Mono<Archive>> saveAndTriggerBuildOrGetArchiveFunctionForSetId(
       UUID setId) {
     return archive ->
-      existingArchiveUtils
-        .createNewOrResetExistingArchiveInDatabase(archive)
-        // why this? because R2DBC does not hydrate fields
-        // (https://github.com/spring-projects/spring-data-r2dbc/issues/455)
-        .flatMap(archivesRepo::findByArchiveObject)
-        // this onSuccess will only execute when the archive is created and will not be
-        // triggered by
-        // the onErrorResume
-        .doOnSuccess(triggerBuildArchive(setId))
-        // in the event of an already built archive, return the existing archive
-        .onErrorResume(DataIntegrityViolationException.class,
-            dataViolation ->
-                archivesRepo
-                    .findArchiveByHashInfoEquals(archive.getHashInfo())
-                    .flatMap(existingArchive ->
-                        ArchiveStatus.COMPLETE.equals(existingArchive.getStatus())
-                            // returning the existing archive
-                            ? Mono.just(existingArchive)
-                            : Mono.error(dataViolation)
-                    )
-        );
+        existingArchiveUtils
+            .createNewOrResetExistingArchiveInDatabase(archive)
+            // why this? because R2DBC does not hydrate fields
+            // (https://github.com/spring-projects/spring-data-r2dbc/issues/455)
+            .flatMap(archivesRepo::findByArchiveObject)
+            // this onSuccess will only execute when the archive is created and will not be
+            // triggered by
+            // the onErrorResume
+            .doOnSuccess(triggerBuildArchive(setId))
+            // in the event of an already built archive, return the existing archive
+            .onErrorResume(DataIntegrityViolationException.class,
+                dataViolation ->
+                    archivesRepo
+                        .findArchiveByHashInfoEquals(archive.getHashInfo())
+                        .flatMap(existingArchive ->
+                            ArchiveStatus.COMPLETE.equals(existingArchive.getStatus())
+                                // returning the existing archive
+                                ? Mono.just(existingArchive)
+                                : Mono.error(dataViolation)
+                        )
+            );
 
 
   }
