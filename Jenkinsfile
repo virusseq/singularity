@@ -80,6 +80,7 @@ spec:
             when {
                 anyOf {
                     branch 'develop'
+                    branch 'building-sets'
                 }
             }
             steps {
@@ -125,6 +126,7 @@ spec:
             when {
                 anyOf {
                     branch 'develop'
+                    branch 'building-sets'
                 }
             }
             steps {
