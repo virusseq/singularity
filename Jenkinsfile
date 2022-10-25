@@ -125,7 +125,6 @@ spec:
             when {
                 anyOf {
                     branch 'develop'
-                    branch 'building-sets'
                 }
             }
             steps {
