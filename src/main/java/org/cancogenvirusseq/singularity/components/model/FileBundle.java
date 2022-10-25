@@ -32,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.cancogenvirusseq.singularity.components.utils.TsvUtils;
+import org.springframework.util.FileSystemUtils;
 
 @Slf4j
 @Getter
@@ -65,6 +66,11 @@ public class FileBundle {
 
     // create download directory for file downloads
     this.downloadDirectory = format("%s/%s%s", DOWNLOAD_DIR, FILE_NAME_TEMPLATE, archiveId);
+
+    FileSystemUtils.deleteRecursively(Paths.get(this.downloadDirectory));
+    Files.deleteIfExists(Paths.get(this.archiveFilenameFromArchiveId(archiveId)));
+    log.info("Cleaning up Download Directory({}) and compressed file({}).", this.downloadDirectory, this.archiveFilenameFromArchiveId(archiveId));
+    
     Files.createDirectory(Paths.get(this.downloadDirectory));
 
     // record molecular filename and create FileOutputStream (buffered)
