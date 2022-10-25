@@ -110,7 +110,8 @@ public class SetQueryArchiveRequest implements Function<UUID, Mono<Archive>> {
                     archivesRepo
                         .findArchiveByHashInfoEquals(archive.getHashInfo())
                         .filter(existingArchive ->
-                            ArchiveStatus.COMPLETE.equals(existingArchive.getStatus()))
+                            ArchiveStatus.COMPLETE.equals(existingArchive.getStatus()) ||
+                            ArchiveStatus.BUILDING.equals(existingArchive.getStatus()))
                         .switchIfEmpty(Mono.error(dataViolation)));
   }
 
