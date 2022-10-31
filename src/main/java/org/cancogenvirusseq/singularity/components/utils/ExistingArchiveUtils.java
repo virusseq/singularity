@@ -74,6 +74,8 @@ public class ExistingArchiveUtils {
   public Function<Archive, Mono<Archive>> resetArchiveForRestart() {
     return existingArchive -> {
       // reset the status of existing archive, save and return as mono
+      log.info("Restart building archive hash:{}, previous status was {} created at {}",
+              existingArchive.getHash(), existingArchive.getStatus(), existingArchive.getCreatedAt());
       existingArchive.setStatus(ArchiveStatus.BUILDING);
       existingArchive.setCreatedAt(Instant.now().getEpochSecond());
       return archivesRepo.save(existingArchive);
