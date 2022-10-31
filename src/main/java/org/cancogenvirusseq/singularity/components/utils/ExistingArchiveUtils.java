@@ -89,7 +89,7 @@ public class ExistingArchiveUtils {
               existingArchive.getHash(), existingArchive.getStatus(), existingArchive.getCreatedAt());
       existingArchive.setStatus(ArchiveStatus.BUILDING);
       existingArchive.setCreatedAt(Instant.now().getEpochSecond());
-      val message = new Message(existingArchive.getStatus(), existingArchive.getHash(), new Date(TimeUnit.SECONDS.toMillis(existingArchive.getCreatedAt())));
+      Message message = new Message(existingArchive.getStatus(), existingArchive.getHash(), new Date(TimeUnit.SECONDS.toMillis(existingArchive.getCreatedAt())));
       notifier.notify(new IndexerNotification(NotificationName.BUILDING_RELEASE, message.toLinkedHashMap()));
       return archivesRepo.save(existingArchive);
     };
