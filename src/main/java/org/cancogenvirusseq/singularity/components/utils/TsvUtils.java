@@ -92,7 +92,11 @@ public class TsvUtils {
                       "diagnostic pcr Ct value null reason",
                       "GISAID accession",
                       "lineage name",
-                      "lineage analysis software name"))
+                      "lineage analysis software name",
+                      "lineage analysis software version",
+                      "lineage analysis software data version",
+                      "scorpio call",
+                      "scorpio version"))
               + "\n")
           .getBytes(StandardCharsets.UTF_8);
 
@@ -163,7 +167,11 @@ public class TsvUtils {
             .getDiagnosticPcrCtValueNullReason(),
         analysisDocument.getAnalysis().getDatabaseIdentifiers().getGisaidAccession(),
         analysisDocument.getAnalysis().getLineageAnalysis().getLineageName(),
-        analysisDocument.getAnalysis().getLineageAnalysis().getLineageAnalysisSoftwareName()));
+        analysisDocument.getAnalysis().getLineageAnalysis().getLineageAnalysisSoftwareName(),
+        analysisDocument.getAnalysis().getLineageAnalysis().getLineageAnalysisSoftwareVersion(),
+        analysisDocument.getAnalysis().getLineageAnalysis().getLineageAnalysisSoftwareDataVersion(),
+        analysisDocument.getAnalysis().getLineageAnalysis().getScorpioCall(),
+        analysisDocument.getAnalysis().getLineageAnalysis().getScorpioVersion()));
   }
 
   private static String[] jsonNodeToString(JsonNode... jsonNodeList) {

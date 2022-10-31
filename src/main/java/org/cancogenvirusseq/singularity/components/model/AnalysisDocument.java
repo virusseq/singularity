@@ -85,6 +85,9 @@ public class AnalysisDocument {
     private JsonNode lineageName;
     private JsonNode lineageAnalysisSoftwareName;
     private JsonNode lineageAnalysisSoftwareVersion;
+    private JsonNode lineageAnalysisSoftwareDataVersion;
+    private JsonNode scorpioCall;
+    private JsonNode scorpioVersion;
     private JsonNode variantDesignation;
     private JsonNode variantEvidence;
     private JsonNode variantEvidenceDetails;
