@@ -49,6 +49,21 @@ contributors:
   filterList:
   appendList:
 
+notifications:
+  slack:
+    enabled: false
+    # the types to trigger a notification to this channel (see NotificationName.java)
+    notifiedOn:
+      - ALL
+    # webhook url defines to which channel post notifications
+    url: SOME_URL
+    # notifications has two parameters (TYPE [string], DATA[map])
+    templates:
+      error: ':bangbang: Error : ##TYPE## ##DATA##'
+      warning: ':warning: ##TYPE## ##DATA##'
+      info: ':information_source: ##TYPE## ##DATA##'
+
+
 files:
   finalEventCheckSeconds: 60
 

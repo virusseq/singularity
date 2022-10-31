@@ -21,6 +21,8 @@ package org.cancogenvirusseq.singularity.components.hoc;
 import static org.cancogenvirusseq.singularity.components.utils.FileBundleUtils.createFileBundleFromPairsWithArchive;
 import static org.cancogenvirusseq.singularity.components.utils.FileBundleUtils.deleteFileBundleForArchive;
 
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +30,10 @@ import org.cancogenvirusseq.singularity.components.base.DownloadMolecularDataToP
 import org.cancogenvirusseq.singularity.components.base.ElasticSearchScroll;
 import org.cancogenvirusseq.singularity.components.base.FileBundleUpload;
 import org.cancogenvirusseq.singularity.components.model.ArchiveBuildRequest;
+import org.cancogenvirusseq.singularity.components.notifications.IndexerNotification;
+import org.cancogenvirusseq.singularity.components.notifications.Message;
+import org.cancogenvirusseq.singularity.components.notifications.NotificationName;
+import org.cancogenvirusseq.singularity.components.notifications.Notifier;
 import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveStatus;
@@ -45,6 +51,8 @@ public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildReques
   private final FileBundleUpload fileBundleUpload;
   private final ArchivesRepo archivesRepo;
 
+  private final Notifier notifier;
+
   @Override
   public Flux<Archive> apply(ArchiveBuildRequest archiveBuildRequest) {
     return elasticSearchScroll
@@ -56,9 +64,15 @@ public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildReques
             uploadObjectId ->
                 withArchiveBuildRequestContext(
                     archiveBuildRequestCtx -> {
-                      archiveBuildRequestCtx.getArchive().setObjectId(uploadObjectId);
-                      archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.COMPLETE);
-                      log.debug("processArchiveBuildRequest is done!");
+                        archiveBuildRequestCtx.getArchive().setObjectId(uploadObjectId);
+                        archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.COMPLETE);
+
+                        log.debug("processArchiveBuildRequest is done!");
+                        Message message = new Message(
+                            archiveBuildRequestCtx.getArchive().getStatus(),
+                            archiveBuildRequestCtx.getArchive().getHash(),
+                            new Date(TimeUnit.SECONDS.toMillis(archiveBuildRequestCtx.getArchive().getCreatedAt())));
+                        notifier.notify(new IndexerNotification(NotificationName.COMPLETE_RELEASE, message.toLinkedHashMap()));
                       return archivesRepo.save(archiveBuildRequestCtx.getArchive());
                     }))
         .onErrorResume(
@@ -68,6 +82,11 @@ public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildReques
                       archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.FAILED);
                       log.error(
                           "processArchiveBuildRequest error: {}", throwable.getLocalizedMessage());
+                      Message message = new Message(
+                          archiveBuildRequestCtx.getArchive().getStatus(),
+                          archiveBuildRequestCtx.getArchive().getHash(),
+                          new Date(TimeUnit.SECONDS.toMillis(archiveBuildRequestCtx.getArchive().getCreatedAt())));
+                      notifier.notify(new IndexerNotification(NotificationName.FAILED_RELEASE, message.toLinkedHashMap()));
                       return archivesRepo.save(archiveBuildRequestCtx.getArchive());
                     }))
         .doFinally(
@@ -80,6 +99,11 @@ public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildReques
             archiveBuildRequest.getArchive().getHash(),
             archiveBuildRequest.getArchive().getStatus()
             );
+          Message message = new Message(
+                  archiveBuildRequest.getArchive().getStatus(),
+                  archiveBuildRequest.getArchive().getHash(),
+                  new Date(TimeUnit.SECONDS.toMillis(archiveBuildRequest.getArchive().getCreatedAt())));
+          notifier.notify(new IndexerNotification(NotificationName.CANCELLED_RELEASE, message.toLinkedHashMap()));
           archivesRepo.save(archiveBuildRequest.getArchive()).subscribe();
         })
         .contextWrite(ctx -> ctx.put("archiveBuildRequest", archiveBuildRequest))
