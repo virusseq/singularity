@@ -43,7 +43,7 @@ public class ExistingArchiveUtils {
     return archivesRepo
         .save(archive)
         .doOnSuccess((newArchive) -> {
-          if(ArchiveType.ALL.equals(newArchive.getType())) {
+          if(newArchive != null && ArchiveType.ALL.equals(newArchive.getType())) {
             Message message = new Message(newArchive.getStatus(), newArchive.getHash(), new Date(TimeUnit.SECONDS.toMillis(newArchive.getCreatedAt())));
             notifier.notify(new IndexerNotification(NotificationName.BUILDING_RELEASE, message.toLinkedHashMap()));
           }
