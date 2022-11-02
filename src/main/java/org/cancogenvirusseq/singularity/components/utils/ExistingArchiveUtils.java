@@ -18,6 +18,7 @@ import org.cancogenvirusseq.singularity.exceptions.runtime.ExistingArchiveRestar
 import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveStatus;
+import org.cancogenvirusseq.singularity.repository.model.ArchiveType;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -42,8 +43,10 @@ public class ExistingArchiveUtils {
     return archivesRepo
         .save(archive)
         .doOnSuccess((newArchive) -> {
-          Message message = new Message(newArchive.getStatus(), newArchive.getHash(), new Date(TimeUnit.SECONDS.toMillis(newArchive.getCreatedAt())));
-          notifier.notify(new IndexerNotification(NotificationName.BUILDING_RELEASE, message.toLinkedHashMap()));
+          if(ArchiveType.ALL.equals(newArchive.getType())) {
+            Message message = new Message(newArchive.getStatus(), newArchive.getHash(), new Date(TimeUnit.SECONDS.toMillis(newArchive.getCreatedAt())));
+            notifier.notify(new IndexerNotification(NotificationName.BUILDING_RELEASE, message.toLinkedHashMap()));
+          }
         })
         .onErrorResume(
             DataIntegrityViolationException.class,
