@@ -1,4 +1,4 @@
-package org.cancogenvirusseq.singularity.components.notifications;
+package org.cancogenvirusseq.singularity.components.notifications.archives;
 
 import lombok.AllArgsConstructor;
 import lombok.val;

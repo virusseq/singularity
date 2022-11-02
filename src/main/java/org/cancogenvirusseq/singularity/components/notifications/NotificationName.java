@@ -5,10 +5,10 @@ import lombok.Getter;
 @Getter
 public enum NotificationName {
     ALL("", null),
-    BUILDING_RELEASE("Release status", NotificationCategory.INFO),
-    COMPLETE_RELEASE("Release status", NotificationCategory.INFO),
-    FAILED_RELEASE("Release status", NotificationCategory.ERROR),
-    CANCELLED_RELEASE("Release status", NotificationCategory.INFO),
+    RELEASE("Release status", NotificationCategory.INFO),
+    RELEASE_ERROR("Release status", NotificationCategory.ERROR),
+    SETS("SetQuery status", NotificationCategory.INFO),
+    SETS_ERROR("SetQuery status", NotificationCategory.ERROR),
     UNHANDLED_ERROR("Release status", NotificationCategory.ERROR);
 
     private final NotificationCategory category;

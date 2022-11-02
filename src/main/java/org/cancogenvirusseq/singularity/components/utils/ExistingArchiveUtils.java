@@ -4,21 +4,15 @@ import static org.cancogenvirusseq.singularity.components.utils.PostgresUtils.ge
 import static org.cancogenvirusseq.singularity.components.utils.PostgresUtils.isUniqueViolationError;
 
 import java.time.Instant;
-import java.util.Date;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.cancogenvirusseq.singularity.components.notifications.IndexerNotification;
-import org.cancogenvirusseq.singularity.components.notifications.Message;
-import org.cancogenvirusseq.singularity.components.notifications.NotificationName;
-import org.cancogenvirusseq.singularity.components.notifications.Notifier;
+import org.cancogenvirusseq.singularity.components.notifications.archives.ArchiveNotifier;
 import org.cancogenvirusseq.singularity.config.archive.ArchiveProperties;
 import org.cancogenvirusseq.singularity.exceptions.runtime.ExistingArchiveRestartException;
 import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveStatus;
-import org.cancogenvirusseq.singularity.repository.model.ArchiveType;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -29,7 +23,7 @@ import reactor.core.publisher.Mono;
 public class ExistingArchiveUtils {
   private final ArchiveProperties archiveProperties;
   private final ArchivesRepo archivesRepo;
-  private final Notifier notifier;
+  private final ArchiveNotifier notifier;
 
   /**
    * Saves new archive in database, with logic for handling hash collisions:
@@ -43,10 +37,7 @@ public class ExistingArchiveUtils {
     return archivesRepo
         .save(archive)
         .doOnSuccess((newArchive) -> {
-          if(newArchive != null && ArchiveType.ALL.equals(newArchive.getType())) {
-            Message message = new Message(newArchive.getStatus(), newArchive.getHash(), new Date(TimeUnit.SECONDS.toMillis(newArchive.getCreatedAt())));
-            notifier.notify(new IndexerNotification(NotificationName.BUILDING_RELEASE, message.toLinkedHashMap()));
-          }
+          notifier.notify(newArchive);
         })
         .onErrorResume(
             DataIntegrityViolationException.class,
@@ -92,8 +83,7 @@ public class ExistingArchiveUtils {
               existingArchive.getHash(), existingArchive.getStatus(), existingArchive.getCreatedAt());
       existingArchive.setStatus(ArchiveStatus.BUILDING);
       existingArchive.setCreatedAt(Instant.now().getEpochSecond());
-      Message message = new Message(existingArchive.getStatus(), existingArchive.getHash(), new Date(TimeUnit.SECONDS.toMillis(existingArchive.getCreatedAt())));
-      notifier.notify(new IndexerNotification(NotificationName.BUILDING_RELEASE, message.toLinkedHashMap()));
+      notifier.notify(existingArchive);
       return archivesRepo.save(existingArchive);
     };
   }
