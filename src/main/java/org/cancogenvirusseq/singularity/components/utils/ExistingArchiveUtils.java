@@ -36,6 +36,9 @@ public class ExistingArchiveUtils {
   public Mono<Archive> createNewOrResetExistingArchiveInDatabase(Archive archive) {
     return archivesRepo
         .save(archive)
+        // why this? because R2DBC does not hydrate fields
+        // (https://github.com/spring-projects/spring-data-r2dbc/issues/455)
+        .flatMap(archivesRepo::findByArchiveObject)
         .doOnSuccess((newArchive) -> {
           notifier.notify(newArchive);
         })
