@@ -85,12 +85,6 @@ public class AnalysisDocument {
     private JsonNode lineageName;
     private JsonNode lineageAnalysisSoftwareName;
     private JsonNode lineageAnalysisSoftwareVersion;
-    private JsonNode lineageAnalysisSoftwareDataVersion;
-    private JsonNode scorpioCall;
-    private JsonNode scorpioVersion;
-    private JsonNode variantDesignation;
-    private JsonNode variantEvidence;
-    private JsonNode variantEvidenceDetails;
   }
 
   @Data
@@ -248,6 +242,10 @@ public class AnalysisDocument {
         "analysis.sequence_analysis.raw_sequence_data_processing_method",
         "analysis.sequence_analysis.bioinformatics_protocol",
         // donors
-        "donors.submitter_donor_id"
+        "donors.submitter_donor_id",
+        //lineage
+        "analysis.lineage_analysis.lineage_name",
+        "analysis.lineage_analysis.lineage_analysis_software_name",
+        "analysis.lineage_analysis.lineage_analysis_software_version"
       };
 }

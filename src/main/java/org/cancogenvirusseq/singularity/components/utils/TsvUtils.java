@@ -93,10 +93,7 @@ public class TsvUtils {
                       "GISAID accession",
                       "lineage name",
                       "lineage analysis software name",
-                      "lineage analysis software version",
-                      "lineage analysis software data version",
-                      "scorpio call",
-                      "scorpio version"))
+                      "lineage analysis software version"))
               + "\n")
           .getBytes(StandardCharsets.UTF_8);
 
@@ -168,15 +165,14 @@ public class TsvUtils {
         analysisDocument.getAnalysis().getDatabaseIdentifiers().getGisaidAccession(),
         analysisDocument.getAnalysis().getLineageAnalysis().getLineageName(),
         analysisDocument.getAnalysis().getLineageAnalysis().getLineageAnalysisSoftwareName(),
-        analysisDocument.getAnalysis().getLineageAnalysis().getLineageAnalysisSoftwareVersion(),
-        analysisDocument.getAnalysis().getLineageAnalysis().getLineageAnalysisSoftwareDataVersion(),
-        analysisDocument.getAnalysis().getLineageAnalysis().getScorpioCall(),
-        analysisDocument.getAnalysis().getLineageAnalysis().getScorpioVersion()));
+        analysisDocument.getAnalysis().getLineageAnalysis().getLineageAnalysisSoftwareVersion()));
   }
 
   private static String[] jsonNodeToString(JsonNode... jsonNodeList) {
     return Arrays.stream(jsonNodeList).map(jsonNode -> {
-      if (jsonNode.isArray()) {
+      if (jsonNode == null) {
+        return "";
+      }else if (jsonNode.isArray()) {
         List<String> newList = new ArrayList<>();
         jsonNode.iterator().forEachRemaining(e -> newList.add(e.textValue()));
         return String.join(LIST_SEPARATOR, newList);
