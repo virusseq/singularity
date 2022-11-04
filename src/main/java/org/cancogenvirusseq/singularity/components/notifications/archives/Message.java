@@ -4,14 +4,14 @@ import lombok.AllArgsConstructor;
 import lombok.val;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveStatus;
 
-import java.util.Date;
+import java.time.ZonedDateTime;
 import java.util.LinkedHashMap;
 
 @AllArgsConstructor
 public class Message {
     ArchiveStatus status;
     String hash;
-    Date createdAt;
+    ZonedDateTime createdAt;
 
     public LinkedHashMap<String, ? extends Object> toLinkedHashMap(){
         val newHashMap = new LinkedHashMap<String, Object>();

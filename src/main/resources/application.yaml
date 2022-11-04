@@ -72,6 +72,8 @@ intervalEventEmitter:
 
 utils:
   tsvListSeparator: ";"
+  # use a zoneId format {area}/{city} to handle daylight savings. Default value is the system default time-zone
+  timezone: America/Toronto
 
 archive:
   cancelPeriodSeconds: 14400
