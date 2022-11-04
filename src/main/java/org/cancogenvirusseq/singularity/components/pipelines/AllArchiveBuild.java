@@ -52,6 +52,12 @@ public class AllArchiveBuild {
         .doOnNext(
             instant -> {
               log.info("createAllArchiveDisposable received instant: {}", instant);
+
+              if (buildAllArchiveDisposable != null && !buildAllArchiveDisposable.isDisposed()) {
+                log.info("Killing existing archive build!");
+                this.buildAllArchiveDisposable.dispose();
+              }
+
               log.info("Spawning new archive build...");
               this.buildAllArchiveDisposable = createBuildAllArchiveDisposable(Instant.now());
             })
