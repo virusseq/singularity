@@ -42,9 +42,6 @@ public class AllArchiveBuild {
 
   @PostConstruct
   public void init() {
-    // build file archive on app start
-    buildAllArchiveDisposable = createBuildAllArchiveDisposable(Instant.now());
-
     // start file bundle update disposable
     allArchiveDisposable = createAllArchiveDisposable();
   }
@@ -56,7 +53,7 @@ public class AllArchiveBuild {
             instant -> {
               log.info("createAllArchiveDisposable received instant: {}", instant);
 
-              if (!buildAllArchiveDisposable.isDisposed()) {
+              if (buildAllArchiveDisposable != null && !buildAllArchiveDisposable.isDisposed()) {
                 log.info("Killing existing archive build!");
                 this.buildAllArchiveDisposable.dispose();
               }
