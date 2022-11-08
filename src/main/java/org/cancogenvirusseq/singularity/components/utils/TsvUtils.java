@@ -174,7 +174,7 @@ public class TsvUtils {
           .getPathogenDiagnosticTesting()
           .getDiagnosticPcrCtValueNullReason(),
         analysisDocument.getAnalysis().getDatabaseIdentifiers().getGisaidAccession(),
-        analysisDocument.getAnalysis().getLastUpdatedAt()
+        analysisDocument.getAnalysis().getUpdatedAt()
       )
     );
   }

@@ -19,7 +19,6 @@
 package org.cancogenvirusseq.singularity.components.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
@@ -67,9 +66,7 @@ public class AnalysisDocument {
     private SampleCollection sampleCollection = new SampleCollection();
     private SequenceAnalysis sequenceAnalysis = new SequenceAnalysis();
     private JsonNode firstPublishedAt;
-
-    @JsonProperty("updated_at")
-    private JsonNode lastUpdatedAt;
+    private JsonNode updatedAt;
 
     public void setFirstPublishedAt(JsonNode firstPublishedAt) {
       try {
