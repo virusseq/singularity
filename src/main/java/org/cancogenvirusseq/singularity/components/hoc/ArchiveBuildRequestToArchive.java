@@ -28,6 +28,7 @@ import org.cancogenvirusseq.singularity.components.base.DownloadMolecularDataToP
 import org.cancogenvirusseq.singularity.components.base.ElasticSearchScroll;
 import org.cancogenvirusseq.singularity.components.base.FileBundleUpload;
 import org.cancogenvirusseq.singularity.components.model.ArchiveBuildRequest;
+import org.cancogenvirusseq.singularity.components.notifications.archives.ArchiveNotifier;
 import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveStatus;
@@ -45,6 +46,8 @@ public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildReques
   private final FileBundleUpload fileBundleUpload;
   private final ArchivesRepo archivesRepo;
 
+  private final ArchiveNotifier notifier;
+
   @Override
   public Flux<Archive> apply(ArchiveBuildRequest archiveBuildRequest) {
     return elasticSearchScroll
@@ -56,10 +59,13 @@ public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildReques
             uploadObjectId ->
                 withArchiveBuildRequestContext(
                     archiveBuildRequestCtx -> {
-                      archiveBuildRequestCtx.getArchive().setObjectId(uploadObjectId);
-                      archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.COMPLETE);
-                      log.debug("processArchiveBuildRequest is done!");
-                      return archivesRepo.save(archiveBuildRequestCtx.getArchive());
+                        archiveBuildRequestCtx.getArchive().setObjectId(uploadObjectId);
+                        archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.COMPLETE);
+
+                        log.debug("processArchiveBuildRequest is done!");
+
+                        notifier.notify(archiveBuildRequestCtx.getArchive());
+                        return archivesRepo.save(archiveBuildRequestCtx.getArchive());
                     }))
         .onErrorResume(
             throwable ->
@@ -68,6 +74,7 @@ public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildReques
                       archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.FAILED);
                       log.error(
                           "processArchiveBuildRequest error: {}", throwable.getLocalizedMessage());
+                      notifier.notify(archiveBuildRequestCtx.getArchive());
                       return archivesRepo.save(archiveBuildRequestCtx.getArchive());
                     }))
         .doFinally(
@@ -80,6 +87,7 @@ public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildReques
             archiveBuildRequest.getArchive().getHash(),
             archiveBuildRequest.getArchive().getStatus()
             );
+          notifier.notify(archiveBuildRequest.getArchive());
           archivesRepo.save(archiveBuildRequest.getArchive()).subscribe();
         })
         .contextWrite(ctx -> ctx.put("archiveBuildRequest", archiveBuildRequest))

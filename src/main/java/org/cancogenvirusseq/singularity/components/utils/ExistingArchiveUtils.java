@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.cancogenvirusseq.singularity.components.notifications.archives.ArchiveNotifier;
 import org.cancogenvirusseq.singularity.config.archive.ArchiveProperties;
 import org.cancogenvirusseq.singularity.exceptions.runtime.ExistingArchiveRestartException;
 import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
@@ -22,6 +23,7 @@ import reactor.core.publisher.Mono;
 public class ExistingArchiveUtils {
   private final ArchiveProperties archiveProperties;
   private final ArchivesRepo archivesRepo;
+  private final ArchiveNotifier notifier;
 
   /**
    * Saves new archive in database, with logic for handling hash collisions:
@@ -34,6 +36,12 @@ public class ExistingArchiveUtils {
   public Mono<Archive> createNewOrResetExistingArchiveInDatabase(Archive archive) {
     return archivesRepo
         .save(archive)
+        // why this? because R2DBC does not hydrate fields
+        // (https://github.com/spring-projects/spring-data-r2dbc/issues/455)
+        .flatMap(archivesRepo::findByArchiveObject)
+        .doOnSuccess((newArchive) -> {
+          notifier.notify(newArchive);
+        })
         .onErrorResume(
             DataIntegrityViolationException.class,
             // Save failed due to our uniqueness constraints
@@ -78,6 +86,7 @@ public class ExistingArchiveUtils {
               existingArchive.getHash(), existingArchive.getStatus(), existingArchive.getCreatedAt());
       existingArchive.setStatus(ArchiveStatus.BUILDING);
       existingArchive.setCreatedAt(Instant.now().getEpochSecond());
+      notifier.notify(existingArchive);
       return archivesRepo.save(existingArchive);
     };
   }
