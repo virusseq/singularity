@@ -83,6 +83,19 @@ public class AnalysisDocument {
         this.firstPublishedAt = JsonNodeFactory.instance.textNode("");
       }
     }
+
+    public void setLastUpdatedAt(JsonNode updatedAt) {
+      try {
+        // updatedAt is stored in Epoch millisecond which should be a long
+        long epoch = Long.parseLong(updatedAt.toString());
+        Date date = Date.from(Instant.ofEpochMilli(epoch));
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        this.lastUpdatedAt = JsonNodeFactory.instance.textNode(dateFormat.format(date));
+      } catch (Exception e) {
+        log.error("Couldn't convert analysis.lastUpdatedAt", e);
+        this.lastUpdatedAt = JsonNodeFactory.instance.textNode("");
+      }
+    }
   }
 
   @Data
