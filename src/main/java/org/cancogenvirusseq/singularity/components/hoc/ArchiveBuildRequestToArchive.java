@@ -58,15 +58,21 @@ public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildReques
         .flatMap(
             uploadObjectId ->
                 withArchiveBuildRequestContext(
-                    archiveBuildRequestCtx -> {
-                        archiveBuildRequestCtx.getArchive().setObjectId(uploadObjectId);
-                        archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.COMPLETE);
+                    archiveBuildRequestCtx ->
+                        archivesRepo
+                            .findByArchiveObject(archiveBuildRequestCtx.getArchive())
+                            .filter(archive -> ArchiveStatus.BUILDING.equals(archive.getStatus()))
+                            .flatMap(archive -> {
+                                archiveBuildRequestCtx.getArchive().setObjectId(uploadObjectId);
+                                archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.COMPLETE);
 
-                        log.debug("processArchiveBuildRequest is done!");
+                                log.debug("processArchiveBuildRequest is done!");
 
-                        notifier.notify(archiveBuildRequestCtx.getArchive());
-                        return archivesRepo.save(archiveBuildRequestCtx.getArchive());
-                    }))
+                                notifier.notify(archiveBuildRequestCtx.getArchive());
+                                return archivesRepo.save(archiveBuildRequestCtx.getArchive());
+                            })
+                            .defaultIfEmpty(archiveBuildRequestCtx.getArchive())
+                    ))
         .onErrorResume(
             throwable ->
                 withArchiveBuildRequestContext(
