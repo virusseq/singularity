@@ -52,8 +52,8 @@ public interface ArchivesRepo extends ReactiveCrudRepository<Archive, UUID> {
     return findByHashInAndStatusAndCreatedAtLessThan(hashList, ArchiveStatus.BUILDING, fromTime);
   }
 
-  default Flux<Archive> findBuildingArchives(){
-    return findByStatus(ArchiveStatus.BUILDING);
+  default Flux<Archive> findLatestAllBuildingArchive(){
+    return findTopByTypeAndStatusOrderByCreatedAtDesc(ArchiveType.ALL, ArchiveStatus.BUILDING).flux();
   }
 
   default Flux<Archive> findBuildingArchivesOlderThan(Long fromTime){

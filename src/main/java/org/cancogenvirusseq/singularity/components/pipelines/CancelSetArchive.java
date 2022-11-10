@@ -11,6 +11,7 @@ import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
 import org.cancogenvirusseq.singularity.repository.model.ArchiveStatus;
 import org.springframework.stereotype.Component;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import java.time.Instant;
@@ -26,6 +27,8 @@ public class CancelSetArchive implements BiFunction<Collection<String>, Boolean,
   private final ArchivesRepo archivesRepo;
 
   private final ArchiveProperties archiveProperties;
+
+  private final AllArchiveBuild allArchiveBuild;
 
   @Override
   public Mono<CancelListResponse> apply(Collection<String> hashList, Boolean force) {
@@ -62,6 +65,16 @@ public class CancelSetArchive implements BiFunction<Collection<String>, Boolean,
           });
       })
       .collectList()
+      .doOnNext(l -> {
+          // Kill the existing archive build if this is a force cancel request without passing any hashId
+          if(force && hashList.isEmpty()) {
+              Disposable buildAllArchiveDisposable = allArchiveBuild.getBuildAllArchiveDisposable();
+              if(buildAllArchiveDisposable != null && !buildAllArchiveDisposable.isDisposed()){
+                  log.info("Killing existing archive build!");
+                  buildAllArchiveDisposable.dispose();
+              }
+          }
+      })
       .map(al -> new CancelListResponse(
         new ArrayList<>(hashResultMap.values()),
         (errorList.size() > 0) ? errorList : null,
@@ -93,7 +106,7 @@ public class CancelSetArchive implements BiFunction<Collection<String>, Boolean,
 
   private Flux<Archive> searchBuildingArchives(Boolean force) {
     return (force) ?
-      archivesRepo.findBuildingArchives() :
+      archivesRepo.findLatestAllBuildingArchive() :
       archivesRepo.findBuildingArchivesOlderThan(Instant.now().minusSeconds(archiveProperties.getCancelPeriodSeconds()).getEpochSecond());
   }
 
