@@ -6,6 +6,7 @@ import org.cancogenvirusseq.singularity.api.model.CancelListResponse;
 import org.cancogenvirusseq.singularity.api.model.ErrorArchive;
 import org.cancogenvirusseq.singularity.api.model.HashResult;
 import org.cancogenvirusseq.singularity.api.model.Summary;
+import org.cancogenvirusseq.singularity.components.notifications.archives.ArchiveNotifier;
 import org.cancogenvirusseq.singularity.config.archive.ArchiveProperties;
 import org.cancogenvirusseq.singularity.repository.ArchivesRepo;
 import org.cancogenvirusseq.singularity.repository.model.Archive;
@@ -29,6 +30,8 @@ public class CancelSetArchive implements BiFunction<Collection<String>, Boolean,
   private final ArchiveProperties archiveProperties;
 
   private final AllArchiveBuild allArchiveBuild;
+
+  private final ArchiveNotifier notifier;
 
   @Override
   public Mono<CancelListResponse> apply(Collection<String> hashList, Boolean force) {
@@ -57,7 +60,10 @@ public class CancelSetArchive implements BiFunction<Collection<String>, Boolean,
         return archivesRepo
           .save(a)
           .flatMap(archivesRepo::findByArchiveObject)
-          .doOnSuccess(savedArchive -> hashResultMap.get(savedArchive.getHash()).setNewStatus(savedArchive.getStatus().toString()))
+          .doOnSuccess(savedArchive -> {
+              hashResultMap.get(savedArchive.getHash()).setNewStatus(savedArchive.getStatus().toString());
+              notifier.notify(savedArchive);
+          })
           .onErrorResume(err -> {
             errorList.add(new ErrorArchive(a.getHash(), null, err.getMessage()));
             hashResultMap.remove(a.getHash());

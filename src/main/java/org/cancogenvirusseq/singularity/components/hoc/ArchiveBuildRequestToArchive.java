@@ -93,8 +93,7 @@ public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildReques
             archiveBuildRequest.getArchive().getHash(),
             archiveBuildRequest.getArchive().getStatus()
             );
-          notifier.notify(archiveBuildRequest.getArchive());
-          archivesRepo.save(archiveBuildRequest.getArchive()).subscribe();
+          archivesRepo.save(archiveBuildRequest.getArchive()).doOnSuccess(archive -> notifier.notify(archive)).subscribe();
         })
         .contextWrite(ctx -> ctx.put("archiveBuildRequest", archiveBuildRequest))
         .log("ArchiveBuildRequestToArchive");
