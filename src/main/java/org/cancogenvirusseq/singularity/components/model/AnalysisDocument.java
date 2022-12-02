@@ -19,22 +19,21 @@
 package org.cancogenvirusseq.singularity.components.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.util.Date;
+import java.util.List;
+
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.util.Date;
-import java.util.List;
 
 @Slf4j
 @Data
@@ -45,14 +44,10 @@ public class AnalysisDocument {
   public static final String ID_FIELD = "_id";
   public static final String LAST_UPDATED_AT_FIELD = "analysis.updated_at";
 
-  @NonNull
-  private JsonNode objectId;
-  @NonNull
-  private JsonNode studyId;
-  @NonNull
-  private Analysis analysis;
-  @NonNull
-  private List<Donor> donors;
+  @NonNull private JsonNode objectId;
+  @NonNull private JsonNode studyId;
+  @NonNull private Analysis analysis;
+  @NonNull private List<Donor> donors;
 
   @Data
   @NoArgsConstructor
@@ -62,14 +57,10 @@ public class AnalysisDocument {
     private Experiment experiment = new Experiment();
     private DatabaseIdentifiers databaseIdentifiers = new DatabaseIdentifiers();
     private Host host = new Host();
-    private LineageAnalysis lineageAnalysis = new LineageAnalysis();
     private PathogenDiagnosticTesting pathogenDiagnosticTesting = new PathogenDiagnosticTesting();
     private SampleCollection sampleCollection = new SampleCollection();
     private SequenceAnalysis sequenceAnalysis = new SequenceAnalysis();
     private JsonNode firstPublishedAt;
-
-    @JsonProperty("updated_at")
-    private JsonNode lastUpdatedAt;
 
     public void setFirstPublishedAt(JsonNode firstPublishedAt) {
       try {
@@ -83,32 +74,6 @@ public class AnalysisDocument {
         this.firstPublishedAt = JsonNodeFactory.instance.textNode("");
       }
     }
-
-    public void setLastUpdatedAt(JsonNode updatedAt) {
-      try {
-        // updatedAt is stored in Epoch millisecond which should be a long
-        long epoch = Long.parseLong(updatedAt.toString());
-        Date date = Date.from(Instant.ofEpochMilli(epoch));
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        this.lastUpdatedAt = JsonNodeFactory.instance.textNode(dateFormat.format(date));
-      } catch (Exception e) {
-        log.error("Couldn't convert analysis.lastUpdatedAt", e);
-        this.lastUpdatedAt = JsonNodeFactory.instance.textNode("");
-      }
-    }
-  }
-
-  @Data
-  @NoArgsConstructor
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-  public static class LineageAnalysis {
-    private JsonNode lineageName;
-    private JsonNode lineageAnalysisSoftwareName;
-    private JsonNode lineageAnalysisSoftwareVersion;
-    private JsonNode lineageAnalysisSoftwareDataVersion;
-    private JsonNode scorpioCall;
-    private JsonNode scorpioVersion;
   }
 
   @Data
@@ -188,8 +153,7 @@ public class AnalysisDocument {
     private JsonNode consensusSequenceSoftwareName;
     private JsonNode consensusSequenceSoftwareVersion;
     private JsonNode dehostingMethod;
-    @NonNull
-    private Metrics metrics;
+    @NonNull private Metrics metrics;
     private JsonNode referenceGenomeAccession;
     private JsonNode rawSequenceDataProcessingMethod;
     private JsonNode bioinformaticsProtocol;
@@ -209,73 +173,64 @@ public class AnalysisDocument {
   @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class Donor {
-    @NonNull
-    private JsonNode submitterDonorId;
+    @NonNull private JsonNode submitterDonorId;
   }
 
   @Getter
   private static final String[] esIncludeFields =
-    new String[]{
-      "object_id",
-      "study_id",
-      // analysis
-      "analysis.first_published_at",
-      "analysis.updated_at",
-      // experiment
-      "analysis.experiment.purpose_of_sequencing",
-      "analysis.experiment.purpose_of_sequencing_details",
-      "analysis.experiment.sequencing_instrument",
-      "analysis.experiment.sequencing_protocol",
-      // database_identifiers
-      "analysis.database_identifiers.gisaid_accession",
-      // host
-      "analysis.host.host_age",
-      "analysis.host.host_age_null_reason",
-      "analysis.host.host_gender",
-      "analysis.host.host_age_bin",
-      "analysis.host.host_disease",
-      "analysis.host.host_age_unit",
-      "analysis.host.host_scientific_name",
-      //lineage
-      "analysis.lineage_analysis.lineage_name",
-      "analysis.lineage_analysis.lineage_analysis_software_name",
-      "analysis.lineage_analysis.lineage_analysis_software_version",
-      "analysis.lineage_analysis.lineage_analysis_software_data_version",
-      "analysis.lineage_analysis.scorpio_call",
-      "analysis.lineage_analysis.scorpio_version",
-      // pathogen diagnostic testing
-      "analysis.pathogen_diagnostic_testing.gene_name",
-      "analysis.pathogen_diagnostic_testing.diagnostic_pcr_ct_value",
-      "analysis.pathogen_diagnostic_testing.diagnostic_pcr_ct_value_null_reason",
-      // sample_collection
-      "analysis.sample_collection.isolate",
-      "analysis.sample_collection.fasta_header_name",
-      "analysis.sample_collection.organism",
-      "analysis.sample_collection.body_product",
-      "analysis.sample_collection.anatomical_part",
-      "analysis.sample_collection.geo_loc_country",
-      "analysis.sample_collection.geo_loc_province",
-      "analysis.sample_collection.collection_device",
-      "analysis.sample_collection.collection_method",
-      "analysis.sample_collection.environmental_site",
-      "analysis.sample_collection.anatomical_material",
-      "analysis.sample_collection.purpose_of_sampling",
-      "analysis.sample_collection.sample_collected_by",
-      "analysis.sample_collection.sequence_submitted_by",
-      "analysis.sample_collection.environmental_material",
-      "analysis.sample_collection.sample_collection_date",
-      "analysis.sample_collection.purpose_of_sampling_details",
-      "analysis.sample_collection.sample_collection_date_null_reason",
-      // sequence_analysis
-      "analysis.sequence_analysis.consensus_sequence_software_name",
-      "analysis.sequence_analysis.consensus_sequence_software_version",
-      "analysis.sequence_analysis.dehosting_method",
-      "analysis.sequence_analysis.metrics.breadth_of_coverage",
-      "analysis.sequence_analysis.metrics.depth_of_coverage",
-      "analysis.sequence_analysis.reference_genome_accession",
-      "analysis.sequence_analysis.raw_sequence_data_processing_method",
-      "analysis.sequence_analysis.bioinformatics_protocol",
-      // donors
-      "donors.submitter_donor_id",
-    };
+      new String[] {
+        "object_id",
+        "study_id",
+        // analysis
+        "analysis.first_published_at",
+        // experiment
+        "analysis.experiment.purpose_of_sequencing",
+        "analysis.experiment.purpose_of_sequencing_details",
+        "analysis.experiment.sequencing_instrument",
+        "analysis.experiment.sequencing_protocol",
+        // database_identifiers
+        "analysis.database_identifiers.gisaid_accession",
+        // host
+        "analysis.host.host_age",
+        "analysis.host.host_age_null_reason",
+        "analysis.host.host_gender",
+        "analysis.host.host_age_bin",
+        "analysis.host.host_disease",
+        "analysis.host.host_age_unit",
+        "analysis.host.host_scientific_name",
+        // pathogen diagnostic testing
+        "analysis.pathogen_diagnostic_testing.gene_name",
+        "analysis.pathogen_diagnostic_testing.diagnostic_pcr_ct_value",
+        "analysis.pathogen_diagnostic_testing.diagnostic_pcr_ct_value_null_reason",
+        // sample_collection
+        "analysis.sample_collection.isolate",
+        "analysis.sample_collection.fasta_header_name",
+        "analysis.sample_collection.organism",
+        "analysis.sample_collection.body_product",
+        "analysis.sample_collection.anatomical_part",
+        "analysis.sample_collection.geo_loc_country",
+        "analysis.sample_collection.geo_loc_province",
+        "analysis.sample_collection.collection_device",
+        "analysis.sample_collection.collection_method",
+        "analysis.sample_collection.environmental_site",
+        "analysis.sample_collection.anatomical_material",
+        "analysis.sample_collection.purpose_of_sampling",
+        "analysis.sample_collection.sample_collected_by",
+        "analysis.sample_collection.sequence_submitted_by",
+        "analysis.sample_collection.environmental_material",
+        "analysis.sample_collection.sample_collection_date",
+        "analysis.sample_collection.purpose_of_sampling_details",
+        "analysis.sample_collection.sample_collection_date_null_reason",
+        // sequence_analysis
+        "analysis.sequence_analysis.consensus_sequence_software_name",
+        "analysis.sequence_analysis.consensus_sequence_software_version",
+        "analysis.sequence_analysis.dehosting_method",
+        "analysis.sequence_analysis.metrics.breadth_of_coverage",
+        "analysis.sequence_analysis.metrics.depth_of_coverage",
+        "analysis.sequence_analysis.reference_genome_accession",
+        "analysis.sequence_analysis.raw_sequence_data_processing_method",
+        "analysis.sequence_analysis.bioinformatics_protocol",
+        // donors
+        "donors.submitter_donor_id"
+      };
 }
