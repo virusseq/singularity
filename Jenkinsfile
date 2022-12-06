@@ -80,7 +80,6 @@ spec:
             when {
                 anyOf {
                     branch 'develop'
-                    branch 'remove_host_age'
                 }
             }
             steps {
@@ -126,7 +125,6 @@ spec:
             when {
                 anyOf {
                     branch 'develop'
-                    branch 'remove_host_age'
                 }
             }
             steps {
