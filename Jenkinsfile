@@ -80,6 +80,7 @@ spec:
             when {
                 anyOf {
                     branch 'develop'
+                    branch 'fix/s3-upgrade'
                 }
             }
             steps {
@@ -125,6 +126,7 @@ spec:
             when {
                 anyOf {
                     branch 'develop'
+                    branch 'fix/s3-upgrade'
                 }
             }
             steps {
