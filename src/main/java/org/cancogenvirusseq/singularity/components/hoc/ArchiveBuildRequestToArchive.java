@@ -54,19 +54,32 @@ public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildReques
         .apply(archiveBuildRequest.getQueryBuilder())
         .transform(downloadMolecularDataToPair)
         .transform(createFileBundleFromPairsWithArchive(archiveBuildRequest.getArchive()))
+        .filter(fileBundlePath ->
+            archivesRepo
+                .findByArchiveObject(archiveBuildRequest.getArchive())
+                .filter(archive -> ArchiveStatus.BUILDING.equals(archive.getStatus()))
+                .hasElement()
+                .block()
+        )
         .flatMap(fileBundleUpload)
         .flatMap(
             uploadObjectId ->
                 withArchiveBuildRequestContext(
-                    archiveBuildRequestCtx -> {
-                        archiveBuildRequestCtx.getArchive().setObjectId(uploadObjectId);
-                        archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.COMPLETE);
+                    archiveBuildRequestCtx ->
+                        archivesRepo
+                            .findByArchiveObject(archiveBuildRequestCtx.getArchive())
+                            .filter(archive -> ArchiveStatus.BUILDING.equals(archive.getStatus()))
+                            .flatMap(archive -> {
+                                archiveBuildRequestCtx.getArchive().setObjectId(uploadObjectId);
+                                archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.COMPLETE);
 
-                        log.debug("processArchiveBuildRequest is done!");
+                                log.debug("processArchiveBuildRequest is done!");
 
-                        notifier.notify(archiveBuildRequestCtx.getArchive());
-                        return archivesRepo.save(archiveBuildRequestCtx.getArchive());
-                    }))
+                                notifier.notify(archiveBuildRequestCtx.getArchive());
+                                return archivesRepo.save(archiveBuildRequestCtx.getArchive());
+                            })
+                            .defaultIfEmpty(archiveBuildRequestCtx.getArchive())
+                    ))
         .onErrorResume(
             throwable ->
                 withArchiveBuildRequestContext(
@@ -79,17 +92,25 @@ public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildReques
                     }))
         .doFinally(
           signalType -> deleteFileBundleForArchive.accept(archiveBuildRequest.getArchive()))
-        .doOnCancel(() -> {
-          archiveBuildRequest.getArchive().setStatus(ArchiveStatus.CANCELLED);
-          log.info(
-            "doOnCancel archive id:{} hash'{}' tagged as {}",
-            archiveBuildRequest.getArchive().getId(),
-            archiveBuildRequest.getArchive().getHash(),
-            archiveBuildRequest.getArchive().getStatus()
-            );
-          notifier.notify(archiveBuildRequest.getArchive());
-          archivesRepo.save(archiveBuildRequest.getArchive()).subscribe();
-        })
+        .doOnCancel(() ->
+            withArchiveBuildRequestContext(
+                archiveBuildRequestCtx ->
+                    archivesRepo
+                        .findByArchiveObject(archiveBuildRequestCtx.getArchive())
+                        .filter(archive -> ArchiveStatus.BUILDING.equals(archive.getStatus()))
+                        .flatMap(archive -> {
+                            archiveBuildRequestCtx.getArchive().setStatus(ArchiveStatus.CANCELLED);
+                            log.info(
+                                    "doOnCancel archive id:{} hash'{}' tagged as {}",
+                                    archiveBuildRequestCtx.getArchive().getId(),
+                                    archiveBuildRequestCtx.getArchive().getHash(),
+                                    archiveBuildRequestCtx.getArchive().getStatus()
+                            );
+                            notifier.notify(archiveBuildRequestCtx.getArchive());
+                            return archivesRepo.save(archiveBuildRequestCtx.getArchive());
+                        })
+                )
+        )
         .contextWrite(ctx -> ctx.put("archiveBuildRequest", archiveBuildRequest))
         .log("ArchiveBuildRequestToArchive");
   }
