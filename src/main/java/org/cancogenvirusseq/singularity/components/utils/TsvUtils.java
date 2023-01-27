@@ -179,14 +179,14 @@ public class TsvUtils {
 
   private static String[] jsonNodeToString(JsonNode... jsonNodeList) {
     return Arrays.stream(jsonNodeList).map(jsonNode -> {
-      if (jsonNode == null) {
+      if (jsonNode == null || jsonNode.isNull()) {
         return "";
       } else if (jsonNode.isArray()) {
         List<String> newList = new ArrayList<>();
-        jsonNode.iterator().forEachRemaining(e -> newList.add(e.textValue()));
+        jsonNode.iterator().forEachRemaining(e -> newList.add(e.asText()));
         return String.join(LIST_SEPARATOR, newList);
       } else {
-        return jsonNode.textValue();
+        return jsonNode.asText();
       }
     }).toArray(String[]::new);
   }
