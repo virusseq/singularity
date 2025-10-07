@@ -67,19 +67,19 @@ public class FileBundleUpload implements Function<Path, Mono<UUID>> {
               .contentType(ARCHIVE_MEDIA_TYPE)
               .build();
 
-  private final Function<PutObjectRequest, PutObjectPresignRequest> createPutObjectPresignRequest =
-      putObjectRequest ->
-          PutObjectPresignRequest.builder()
-              .signatureDuration(Duration.ofMinutes(s3ClientProperties.getPresignURLExpiresMins()))
-              .putObjectRequest(putObjectRequest)
-              .build();
+  private PutObjectPresignRequest createPutObjectPresignRequest(PutObjectRequest putObjectRequest) {
+    return PutObjectPresignRequest.builder()
+            .signatureDuration(Duration.ofMinutes(s3ClientProperties.getPresignURLExpiresMins()))
+            .putObjectRequest(putObjectRequest)
+            .build();
+  }
 
   private final BiFunction<S3Presigner, PutObjectPresignRequest, PresignedPutObjectRequest>
       createPresignedPutObjectRequest = S3Presigner::presignPutObject;
 
   private String getPresignedUrlStringForFileBundle(Path fileBundlePath) {
     return createPutObjectRequest
-        .andThen(createPutObjectPresignRequest)
+        .andThen(putObjectRequest -> createPutObjectPresignRequest(putObjectRequest))
         .andThen(
             putObjectPreSignRequest ->
                 createPresignedPutObjectRequest.apply(s3Presigner, putObjectPreSignRequest))
