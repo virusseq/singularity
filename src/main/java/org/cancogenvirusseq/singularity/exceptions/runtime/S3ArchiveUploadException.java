@@ -8,6 +8,6 @@ public class S3ArchiveUploadException extends RuntimeException {
   public S3ArchiveUploadException(HttpClientResponse response) {
     super(
         format(
-            "ArchiveUpload failed to send archive to object storage with response: %s", response));
+            "ArchiveUpload failed to send archive to object storage with response: [%s]: %s - %s", response.status(), response.responseHeaders(), response));
   }
 }
