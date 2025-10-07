@@ -25,6 +25,7 @@ s3:
   dataDir: data
   maxConcurrency: 64
   acquisitionTimeoutMs: 30000
+  presignURLExpiresMins: 10
 
 elastic:
   host: localhost

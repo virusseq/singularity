@@ -70,7 +70,7 @@ public class FileBundleUpload implements Function<Path, Mono<UUID>> {
   private final Function<PutObjectRequest, PutObjectPresignRequest> createPutObjectPresignRequest =
       putObjectRequest ->
           PutObjectPresignRequest.builder()
-              .signatureDuration(Duration.ofMinutes(10))
+              .signatureDuration(Duration.ofMinutes(s3ClientProperties.getPresignURLExpiresMins()))
               .putObjectRequest(putObjectRequest)
               .build();
 
