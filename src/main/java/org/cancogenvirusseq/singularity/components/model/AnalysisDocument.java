@@ -64,6 +64,7 @@ public class AnalysisDocument {
     private PathogenDiagnosticTesting pathogenDiagnosticTesting = new PathogenDiagnosticTesting();
     private SampleCollection sampleCollection = new SampleCollection();
     private SequenceAnalysis sequenceAnalysis = new SequenceAnalysis();
+    @JsonProperty("firstPublishedAt")
     private JsonNode firstPublishedAt;
     @NonNull
     private List<Sample> samples;
@@ -182,7 +183,7 @@ public class AnalysisDocument {
   @Data
   @NoArgsConstructor
   @JsonIgnoreProperties(ignoreUnknown = true)
-  @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+  @JsonNaming(PropertyNamingStrategies.LowerCamelCaseStrategy.class)
   public static class Donor {
     @NonNull
     private JsonNode submitterDonorId;
