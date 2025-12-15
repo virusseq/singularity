@@ -121,7 +121,7 @@ public class TsvUtils {
   private static String analysisDocumentToTsvRow(AnalysisDocument analysisDocument) {
     return stringsToTsvRow(jsonNodeToString(
         analysisDocument.getStudyId(),
-        analysisDocument.getDonors().get(0).getSubmitterDonorId(),
+        analysisDocument.getAnalysis().getSamples().get(0).getDonor().getSubmitterDonorId(),
         analysisDocument.getAnalysis().getLineageAnalysis().getLineageName(),
         analysisDocument.getAnalysis().getLineageAnalysis().getLineageAnalysisSoftwareName(),
         analysisDocument.getAnalysis().getLineageAnalysis().getLineageAnalysisSoftwareVersion(),

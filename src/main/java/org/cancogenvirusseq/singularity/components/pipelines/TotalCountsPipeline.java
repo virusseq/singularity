@@ -4,10 +4,7 @@ import static org.cancogenvirusseq.singularity.components.model.AnalysisDocument
 import static org.cancogenvirusseq.singularity.components.utils.ConverterUtils.convertBytesToHumanReadable;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
@@ -39,12 +36,22 @@ import reactor.core.publisher.Mono;
 public class TotalCountsPipeline {
   private static final Integer MAX_AGGREGATE_BUCKETS = 1000;
   private static final Integer SIZE = 10000;
-  private static final String FIELD_DONORS = "donors";
-  private static final String FIELD_SUBMITTER_DONOR_ID = "submitter_donor_id";
+  private static final String FIELD_ANALYSIS = "analysis";
+  private static final String FIELD_SAMPLES = "samples";
+  private static final String FIELD_DONOR = "donor";
+  private static final String FIELD_SUBMITTER_DONOR_ID = "submitterDonorId";
   private static final String FIELD_STUDY_ID = "study_id";
   private static final String FIELD_FILE_SIZE = "file.size";
 
-  private static final String[] ES_INCLUDE = {FIELD_DONORS + "." + FIELD_SUBMITTER_DONOR_ID};
+  private static final String[] ES_INCLUDE = {
+      FIELD_ANALYSIS +
+          "." +
+          FIELD_SAMPLES +
+          "." +
+          FIELD_DONOR +
+          "." +
+          FIELD_SUBMITTER_DONOR_ID
+  };
 
   private final ElasticsearchProperties properties;
   private final ReactiveElasticsearchClient client;
@@ -169,21 +176,36 @@ public class TotalCountsPipeline {
 
   private Flux<String> extractSubmitterDonorIdsFromSearchHit(SearchHit searchHit) {
     Map<String, Object> source = searchHit.getSourceAsMap();
-    if (source.get(FIELD_DONORS) instanceof List) {
-      List<Object> donors = (List<Object>) source.getOrDefault(FIELD_DONORS, new ArrayList<>());
-      return Flux.fromStream(
-          donors.stream()
-              .map(
-                  d -> {
-                    if (d instanceof Map) {
-                      val castedD = (Map<String, Object>) d;
-                      return castedD.getOrDefault(FIELD_SUBMITTER_DONOR_ID, "").toString();
-                    }
-                    return "";
-                  })
-              .filter(id -> !id.isEmpty()));
+
+    Object analysisObj = source.get(FIELD_ANALYSIS);
+
+    if (!(analysisObj instanceof Map)) {
+      return Flux.empty();
     }
-    return Flux.empty();
+
+    Map<String, Object> analysis = (Map<String, Object>) analysisObj;
+    Object samplesObj = analysis.get(FIELD_SAMPLES);
+
+    if (!(samplesObj instanceof List)) {
+      return Flux.empty();
+    }
+
+    List<?> samples = (List<?>) samplesObj;
+
+    return Flux.fromIterable(samples)
+        .filter(sample -> sample instanceof Map)
+        .map(sample -> {
+          Map<?, ?> sampleMap = (Map<?, ?>) sample;
+          Object donorObj = sampleMap.get(FIELD_DONOR);
+
+          if (donorObj instanceof Map) {
+            Map<String, Object> donorMap = (Map<String, Object>) donorObj;
+            String donorId = donorMap.getOrDefault(FIELD_SUBMITTER_DONOR_ID, "").toString();
+            return donorId;
+          }
+          return "";
+        })
+        .filter(id -> !id.isEmpty());
   }
 
   private Mono<TotalCounts> updateTotalCount(TotalCounts totalCounts){

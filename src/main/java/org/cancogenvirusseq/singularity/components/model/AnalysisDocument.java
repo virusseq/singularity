@@ -43,7 +43,7 @@ import java.util.List;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class AnalysisDocument {
   public static final String ID_FIELD = "_id";
-  public static final String LAST_UPDATED_AT_FIELD = "analysis.updated_at";
+  public static final String LAST_UPDATED_AT_FIELD = "analysis.updatedAt";
 
   @NonNull
   private JsonNode objectId;
@@ -51,8 +51,6 @@ public class AnalysisDocument {
   private JsonNode studyId;
   @NonNull
   private Analysis analysis;
-  @NonNull
-  private List<Donor> donors;
 
   @Data
   @NoArgsConstructor
@@ -66,36 +64,14 @@ public class AnalysisDocument {
     private PathogenDiagnosticTesting pathogenDiagnosticTesting = new PathogenDiagnosticTesting();
     private SampleCollection sampleCollection = new SampleCollection();
     private SequenceAnalysis sequenceAnalysis = new SequenceAnalysis();
+    @JsonProperty("firstPublishedAt")
     private JsonNode firstPublishedAt;
+    @NonNull
+    private List<Sample> samples;
 
-    @JsonProperty("updated_at")
+    @JsonProperty("updatedAt")
     private JsonNode lastUpdatedAt;
-
-    public void setFirstPublishedAt(JsonNode firstPublishedAt) {
-      try {
-        // firstPublishedAt is stored in Epoch millisecond which should be a long
-        long epoch = Long.parseLong(firstPublishedAt.toString());
-        Date date = Date.from(Instant.ofEpochMilli(epoch));
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        this.firstPublishedAt = JsonNodeFactory.instance.textNode(dateFormat.format(date));
-      } catch (Exception e) {
-        log.error("Couldn't convert analysis.firstPublishedAt", e);
-        this.firstPublishedAt = JsonNodeFactory.instance.textNode("");
-      }
-    }
-
-    public void setLastUpdatedAt(JsonNode updatedAt) {
-      try {
-        // updatedAt is stored in Epoch millisecond which should be a long
-        long epoch = Long.parseLong(updatedAt.toString());
-        Date date = Date.from(Instant.ofEpochMilli(epoch));
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        this.lastUpdatedAt = JsonNodeFactory.instance.textNode(dateFormat.format(date));
-      } catch (Exception e) {
-        log.error("Couldn't convert analysis.lastUpdatedAt", e);
-        this.lastUpdatedAt = JsonNodeFactory.instance.textNode("");
-      }
-    }
+    
   }
 
   @Data
@@ -207,11 +183,21 @@ public class AnalysisDocument {
   @Data
   @NoArgsConstructor
   @JsonIgnoreProperties(ignoreUnknown = true)
-  @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+  @JsonNaming(PropertyNamingStrategies.LowerCamelCaseStrategy.class)
   public static class Donor {
     @NonNull
     private JsonNode submitterDonorId;
   }
+
+  @Data
+  @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+  public static class Sample {
+    @NonNull
+    private Donor donor;
+  }
+
 
   @Getter
   private static final String[] esIncludeFields =
@@ -219,8 +205,8 @@ public class AnalysisDocument {
       "object_id",
       "study_id",
       // analysis
-      "analysis.first_published_at",
-      "analysis.updated_at",
+      "analysis.firstPublishedAt",
+      "analysis.updatedAt",
       // experiment
       "analysis.experiment.purpose_of_sequencing",
       "analysis.experiment.purpose_of_sequencing_details",
@@ -276,6 +262,6 @@ public class AnalysisDocument {
       "analysis.sequence_analysis.raw_sequence_data_processing_method",
       "analysis.sequence_analysis.bioinformatics_protocol",
       // donors
-      "donors.submitter_donor_id",
+      "analysis.samples.donor.submitterDonorId",
     };
 }
