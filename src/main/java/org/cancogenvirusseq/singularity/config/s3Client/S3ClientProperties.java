@@ -34,4 +34,5 @@ public class S3ClientProperties {
   private String dataDir;
   private Integer maxConcurrency;
   private Long acquisitionTimeoutMs;
+  private Long presignURLExpiresMins;
 }
