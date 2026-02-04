@@ -54,12 +54,10 @@ public class ArchiveBuildRequestToArchive implements Function<ArchiveBuildReques
         .apply(archiveBuildRequest.getQueryBuilder())
         .transform(downloadMolecularDataToPair)
         .transform(createFileBundleFromPairsWithArchive(archiveBuildRequest.getArchive()))
-        .filter(fileBundlePath ->
+        .filterWhen(fileBundlePath ->
             archivesRepo
                 .findByArchiveObject(archiveBuildRequest.getArchive())
-                .filter(archive -> ArchiveStatus.BUILDING.equals(archive.getStatus()))
-                .hasElement()
-                .block()
+                .map(archive -> ArchiveStatus.BUILDING.equals(archive.getStatus()))
         )
         .flatMap(fileBundleUpload)
         .flatMap(
