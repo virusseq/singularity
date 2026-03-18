@@ -119,62 +119,67 @@ public class TsvUtils {
   }
 
   private static String analysisDocumentToTsvRow(AnalysisDocument analysisDocument) {
-    return stringsToTsvRow(jsonNodeToString(
-        analysisDocument.getStudyId(),
-        analysisDocument.getAnalysis().getSamples().get(0).getDonor().getSubmitterDonorId(),
-        analysisDocument.getAnalysis().getLineageAnalysis().getLineageName(),
-        analysisDocument.getAnalysis().getLineageAnalysis().getLineageAnalysisSoftwareName(),
-        analysisDocument.getAnalysis().getLineageAnalysis().getLineageAnalysisSoftwareVersion(),
-        analysisDocument.getAnalysis().getLineageAnalysis().getLineageAnalysisSoftwareDataVersion(),
-        analysisDocument.getAnalysis().getLineageAnalysis().getScorpioCall(),
-        analysisDocument.getAnalysis().getLineageAnalysis().getScorpioVersion(),
-        analysisDocument.getAnalysis().getSampleCollection().getSampleCollectedBy(),
-        analysisDocument.getAnalysis().getSampleCollection().getSequenceSubmittedBy(),
-        analysisDocument.getAnalysis().getFirstPublishedAt(),
-        analysisDocument.getAnalysis().getSampleCollection().getSampleCollectionDate(),
-        analysisDocument.getAnalysis().getSampleCollection().getSampleCollectionDateNullReason(),
-        analysisDocument.getAnalysis().getSampleCollection().getGeoLocCountry(),
-        analysisDocument.getAnalysis().getSampleCollection().getGeoLocProvince(),
-        analysisDocument.getAnalysis().getSampleCollection().getOrganism(),
-        analysisDocument.getAnalysis().getSampleCollection().getIsolate(),
-        analysisDocument.getAnalysis().getSampleCollection().getFastaHeaderName(),
-        analysisDocument.getAnalysis().getSampleCollection().getPurposeOfSampling(),
-        analysisDocument.getAnalysis().getSampleCollection().getPurposeOfSamplingDetails(),
-        analysisDocument.getAnalysis().getSampleCollection().getAnatomicalMaterial(),
-        analysisDocument.getAnalysis().getSampleCollection().getAnatomicalPart(),
-        analysisDocument.getAnalysis().getSampleCollection().getBodyProduct(),
-        analysisDocument.getAnalysis().getSampleCollection().getEnvironmentalMaterial(),
-        analysisDocument.getAnalysis().getSampleCollection().getEnvironmentalSite(),
-        analysisDocument.getAnalysis().getSampleCollection().getCollectionDevice(),
-        analysisDocument.getAnalysis().getSampleCollection().getCollectionMethod(),
-        analysisDocument.getAnalysis().getHost().getHostScientificName(),
-        analysisDocument.getAnalysis().getHost().getHostDisease(),
-        analysisDocument.getAnalysis().getHost().getHostAgeNullReason(),
-        analysisDocument.getAnalysis().getHost().getHostAgeUnit(),
-        analysisDocument.getAnalysis().getHost().getHostAgeBin(),
-        analysisDocument.getAnalysis().getHost().getHostGender(),
-        analysisDocument.getAnalysis().getExperiment().getPurposeOfSequencing(),
-        analysisDocument.getAnalysis().getExperiment().getPurposeOfSequencingDetails(),
-        analysisDocument.getAnalysis().getExperiment().getSequencingInstrument(),
-        analysisDocument.getAnalysis().getExperiment().getSequencingProtocol(),
-        analysisDocument.getAnalysis().getSequenceAnalysis().getRawSequenceDataProcessingMethod(),
-        analysisDocument.getAnalysis().getSequenceAnalysis().getDehostingMethod(),
-        analysisDocument.getAnalysis().getSequenceAnalysis().getConsensusSequenceSoftwareName(),
-        analysisDocument.getAnalysis().getSequenceAnalysis().getConsensusSequenceSoftwareVersion(),
-        analysisDocument.getAnalysis().getSequenceAnalysis().getMetrics().getBreadthOfCoverage(),
-        analysisDocument.getAnalysis().getSequenceAnalysis().getMetrics().getDepthOfCoverage(),
-        analysisDocument.getAnalysis().getSequenceAnalysis().getReferenceGenomeAccession(),
-        analysisDocument.getAnalysis().getSequenceAnalysis().getBioinformaticsProtocol(),
-        analysisDocument.getAnalysis().getPathogenDiagnosticTesting().getGeneName(),
-        analysisDocument.getAnalysis().getPathogenDiagnosticTesting().getDiagnosticPcrCtValue(),
-        analysisDocument
-          .getAnalysis()
-          .getPathogenDiagnosticTesting()
-          .getDiagnosticPcrCtValueNullReason(),
-        analysisDocument.getAnalysis().getDatabaseIdentifiers().getGisaidAccession(),
-        analysisDocument.getAnalysis().getLastUpdatedAt()
-      )
-    );
+    try {
+      return stringsToTsvRow(jsonNodeToString(
+          analysisDocument.getStudyId(),
+          analysisDocument.getAnalysis().getSamples().get(0).getDonor().getSubmitterDonorId(),
+          analysisDocument.getAnalysis().getLineageAnalysis().getLineageName(),
+          analysisDocument.getAnalysis().getLineageAnalysis().getLineageAnalysisSoftwareName(),
+          analysisDocument.getAnalysis().getLineageAnalysis().getLineageAnalysisSoftwareVersion(),
+          analysisDocument.getAnalysis().getLineageAnalysis().getLineageAnalysisSoftwareDataVersion(),
+          analysisDocument.getAnalysis().getLineageAnalysis().getScorpioCall(),
+          analysisDocument.getAnalysis().getLineageAnalysis().getScorpioVersion(),
+          analysisDocument.getAnalysis().getSampleCollection().getSampleCollectedBy(),
+          analysisDocument.getAnalysis().getSampleCollection().getSequenceSubmittedBy(),
+          analysisDocument.getAnalysis().getFirstPublishedAt(),
+          analysisDocument.getAnalysis().getSampleCollection().getSampleCollectionDate(),
+          analysisDocument.getAnalysis().getSampleCollection().getSampleCollectionDateNullReason(),
+          analysisDocument.getAnalysis().getSampleCollection().getGeoLocCountry(),
+          analysisDocument.getAnalysis().getSampleCollection().getGeoLocProvince(),
+          analysisDocument.getAnalysis().getSampleCollection().getOrganism(),
+          analysisDocument.getAnalysis().getSampleCollection().getIsolate(),
+          analysisDocument.getAnalysis().getSampleCollection().getFastaHeaderName(),
+          analysisDocument.getAnalysis().getSampleCollection().getPurposeOfSampling(),
+          analysisDocument.getAnalysis().getSampleCollection().getPurposeOfSamplingDetails(),
+          analysisDocument.getAnalysis().getSampleCollection().getAnatomicalMaterial(),
+          analysisDocument.getAnalysis().getSampleCollection().getAnatomicalPart(),
+          analysisDocument.getAnalysis().getSampleCollection().getBodyProduct(),
+          analysisDocument.getAnalysis().getSampleCollection().getEnvironmentalMaterial(),
+          analysisDocument.getAnalysis().getSampleCollection().getEnvironmentalSite(),
+          analysisDocument.getAnalysis().getSampleCollection().getCollectionDevice(),
+          analysisDocument.getAnalysis().getSampleCollection().getCollectionMethod(),
+          analysisDocument.getAnalysis().getHost().getHostScientificName(),
+          analysisDocument.getAnalysis().getHost().getHostDisease(),
+          analysisDocument.getAnalysis().getHost().getHostAgeNullReason(),
+          analysisDocument.getAnalysis().getHost().getHostAgeUnit(),
+          analysisDocument.getAnalysis().getHost().getHostAgeBin(),
+          analysisDocument.getAnalysis().getHost().getHostGender(),
+          analysisDocument.getAnalysis().getExperiment().getPurposeOfSequencing(),
+          analysisDocument.getAnalysis().getExperiment().getPurposeOfSequencingDetails(),
+          analysisDocument.getAnalysis().getExperiment().getSequencingInstrument(),
+          analysisDocument.getAnalysis().getExperiment().getSequencingProtocol(),
+          analysisDocument.getAnalysis().getSequenceAnalysis().getRawSequenceDataProcessingMethod(),
+          analysisDocument.getAnalysis().getSequenceAnalysis().getDehostingMethod(),
+          analysisDocument.getAnalysis().getSequenceAnalysis().getConsensusSequenceSoftwareName(),
+          analysisDocument.getAnalysis().getSequenceAnalysis().getConsensusSequenceSoftwareVersion(),
+          analysisDocument.getAnalysis().getSequenceAnalysis().getMetrics().getBreadthOfCoverage(),
+          analysisDocument.getAnalysis().getSequenceAnalysis().getMetrics().getDepthOfCoverage(),
+          analysisDocument.getAnalysis().getSequenceAnalysis().getReferenceGenomeAccession(),
+          analysisDocument.getAnalysis().getSequenceAnalysis().getBioinformaticsProtocol(),
+          analysisDocument.getAnalysis().getPathogenDiagnosticTesting().getGeneName(),
+          analysisDocument.getAnalysis().getPathogenDiagnosticTesting().getDiagnosticPcrCtValue(),
+          analysisDocument
+              .getAnalysis()
+              .getPathogenDiagnosticTesting()
+              .getDiagnosticPcrCtValueNullReason(),
+          analysisDocument.getAnalysis().getDatabaseIdentifiers().getGisaidAccession(),
+          analysisDocument.getAnalysis().getLastUpdatedAt()
+      ));
+    } catch(NullPointerException e){
+      String objectId = analysisDocument != null ? analysisDocument.getObjectId().toString() : "unknown";
+      System.out.println(("NullPointerException encountered for AnalysisDocument with Object ID: " + objectId));
+      throw e;
+    }
   }
 
   private static String[] jsonNodeToString(JsonNode... jsonNodeList) {
